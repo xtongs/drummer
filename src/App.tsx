@@ -7,7 +7,7 @@ function App() {
   const [beat, setBeat] = useState(0)
   const [timeSignature, setTimeSignature] = useState(4)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<number | null>(null)
 
   const playClick = () => {
     if (!audioContextRef.current) {
