@@ -1,0 +1,245 @@
+.app {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.metronome {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 30px;
+  letter-spacing: -1px;
+}
+
+.beat-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.beat-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.beat-dot.active {
+  background: #667eea;
+  transform: scale(1.4);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+.bpm-control {
+  margin-bottom: 30px;
+}
+
+.bpm-label {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.bpm-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #e0e0e0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.bpm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+}
+
+.bpm-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+.bpm-slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+}
+
+.bpm-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+.time-signature-control {
+  margin-bottom: 40px;
+}
+
+.time-signature-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.time-signature-select {
+  width: 100%;
+  padding: 12px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-signature-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.play-button {
+  width: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: 15px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  background: #667eea;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.play-button:hover {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+}
+
+.play-button:active {
+  transform: translateY(0);
+}
+
+.play-button.playing {
+  background: #e74c3c;
+  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+}
+
+.play-button.playing:hover {
+  background: #c0392b;
+  box-shadow: 0 12px 25px rgba(231, 76, 60, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .app {
+    padding: 15px;
+  }
+  
+  .metronome {
+    padding: 30px 20px;
+  }
+  
+  .title {
+    font-size: 2rem;
+    margin-bottom: 25px;
+  }
+  
+  .beat-indicator {
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  
+  .beat-dot {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .beat-dot.active {
+    transform: scale(1.3);
+  }
+  
+  .bpm-control {
+    margin-bottom: 25px;
+  }
+  
+  .bpm-label {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+  
+  .time-signature-control {
+    margin-bottom: 30px;
+  }
+  
+  .time-signature-label {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .time-signature-select {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+  
+  .play-button {
+    padding: 18px;
+    font-size: 1.2rem;
+  }
+}
+
+/* 防止文本选择 */
+.metronome {
+  user-select: none;
+}
+
+/* 优化触摸体验 */
+button, input[type="range"], select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 确保在横屏模式下也能正常显示 */
+@media (orientation: landscape) {
+  .metronome {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
