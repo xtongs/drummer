@@ -59,6 +59,7 @@ function App() {
   }
 
   const handleTimeSignatureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // 更新拍号并重置节拍
     setTimeSignature(parseInt(e.target.value))
     setBeat(0)
   }
