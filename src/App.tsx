@@ -45,6 +45,7 @@ function App() {
     }
   }, [isPlaying, bpm, timeSignature])
 
+  // 切换播放状态
   const handleTogglePlay = () => {
     setIsPlaying(!isPlaying)
     if (!isPlaying) {
