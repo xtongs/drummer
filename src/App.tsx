@@ -19,7 +19,6 @@ function App() {
       {/* 顶部状态栏 */}
       <header className="top-bar">
         <div className="beat-section">
-          <span className="beat-label">BEAT:</span>
           <div className="beat-indicator">
             {Array.from({ length: timeSignature }).map((_, index) => (
               <div
@@ -31,12 +30,10 @@ function App() {
         </div>
 
         <div className="bpm-section">
-          <span className="bpm-label">BPM:</span>
           <span className="bpm-value">{bpm}</span>
         </div>
 
         <div className="time-signature-section">
-          <span className="time-label">TIME:</span>
           <select
             value={timeSignature}
             onChange={(e) => setTimeSignature(parseInt(e.target.value))}
@@ -59,7 +56,20 @@ function App() {
             min="60"
             max="300"
             value={bpm}
-            onChange={(e) => setBpm(parseInt(e.target.value))}
+            onChange={(e) => {
+              const rawValue = parseInt(e.target.value);
+              // 实现snap功能：中间值(180)左边整10，右边整5
+              const middleValue = 180;
+              let snappedValue;
+              if (rawValue <= middleValue) {
+                // 左边整10
+                snappedValue = Math.round(rawValue / 10) * 10;
+              } else {
+                // 右边整5
+                snappedValue = Math.round(rawValue / 5) * 5;
+              }
+              setBpm(snappedValue);
+            }}
             className="bpm-slider"
           />
         </div>
@@ -84,9 +94,7 @@ function App() {
 
         {/* 主场景占位符 */}
         <div className="main-scene">
-          <div className="placeholder">
-            <span className="terminal-text">$ drummer --mode=edit</span>
-          </div>
+          <div className="placeholder"></div>
         </div>
       </main>
 

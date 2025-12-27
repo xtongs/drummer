@@ -18,7 +18,7 @@
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   height: 50px;
-  font-size: 12px;
+  font-size: 14px;
   box-shadow: 0 2px 4px var(--shadow-color);
 }
 
@@ -48,8 +48,8 @@
 }
 
 .beat-dot.active {
-  background-color: var(--accent-primary);
-  box-shadow: 0 0 10px var(--accent-primary);
+  background-color: var(--accent-secondary);
+  box-shadow: 0 0 10px var(--accent-secondary);
   transform: scale(1.5);
 }
 
@@ -68,7 +68,7 @@
 .bpm-value {
   color: var(--accent-secondary);
   font-weight: bold;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .time-signature-section {
@@ -212,7 +212,7 @@
   border: none;
   border-radius: 50%;
   background-color: var(--bg-tertiary);
-  color: var(--accent-primary);
+  color: var(--text-primary);
   font-size: 30px;
   cursor: pointer;
   display: flex;
@@ -220,14 +220,11 @@
   align-items: center;
   transition: all 0.3s ease;
   border: 2px solid var(--border-color);
-  box-shadow: 0 0 20px var(--shadow-color);
 }
 
 .play-button:hover {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
+  background-color: var(--bg-secondary);
   transform: scale(1.1);
-  box-shadow: 0 0 30px var(--accent-primary);
 }
 
 .play-button:active {
@@ -235,17 +232,16 @@
 }
 
 .play-button.playing {
-  background-color: var(--accent-secondary);
-  color: var(--bg-primary);
-  box-shadow: 0 0 20px var(--accent-secondary);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .play-button.playing:hover {
-  background-color: var(--accent-secondary);
-  box-shadow: 0 0 30px var(--accent-secondary);
+  background-color: var(--bg-secondary);
 }
 
-.play-icon, .pause-icon {
+.play-icon,
+.pause-icon {
   font-size: 32px;
 }
 
@@ -276,23 +272,7 @@
   height: 100%;
 }
 
-.terminal-text {
-  color: var(--accent-primary);
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 18px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 50% {
-    opacity: 1;
-  }
-  51%, 100% {
-    opacity: 0;
-  }
-}
+/* 终端文字样式已移除 */
 
 /* 底部状态栏 */
 .bottom-bar {
@@ -308,53 +288,39 @@
 }
 
 .status-text {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
+  /* 脉冲动画已移除 */
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .top-bar {
     padding: 10px 15px;
-    font-size: 10px;
+    font-size: 12px;
   }
-  
+
   .beat-dot {
     width: 6px;
     height: 6px;
   }
-  
+
   .bpm-value {
-    font-size: 12px;
+    font-size: 14px;
   }
-  
+
   .speed-control {
     padding: 15px;
   }
-  
+
   .bpm-button {
     width: 35px;
     height: 35px;
     font-size: 18px;
   }
-  
+
   .play-button {
     width: 70px;
     height: 70px;
     font-size: 28px;
-  }
-  
-  .terminal-text {
-    font-size: 14px;
-    letter-spacing: 1px;
   }
 }
 
@@ -365,35 +331,33 @@
     height: auto;
     gap: 8px;
   }
-  
-  .beat-section, .bpm-section, .time-signature-section {
+
+  .beat-section,
+  .bpm-section,
+  .time-signature-section {
     flex: 1;
     justify-content: center;
   }
-  
+
   .speed-control {
     padding: 10px;
     gap: 10px;
   }
-  
+
   .bpm-button {
     width: 30px;
     height: 30px;
     font-size: 16px;
   }
-  
+
   .play-button {
     width: 60px;
     height: 60px;
     font-size: 24px;
   }
-  
+
   .main-scene {
     border-radius: 5px;
-  }
-  
-  .terminal-text {
-    font-size: 12px;
   }
 }
 
@@ -402,11 +366,11 @@
   .speed-control {
     padding: 10px;
   }
-  
+
   .play-button-container {
     bottom: 20%;
   }
-  
+
   .play-button {
     width: 60px;
     height: 60px;
@@ -420,29 +384,10 @@
 }
 
 /* 优化触摸体验 */
-button, input[type="range"], select {
+button,
+input[type="range"],
+select {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 终端效果 */
-.main-content::before {
-  content: "$ drummer -v 1.0.0";
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: var(--text-muted);
-  font-size: 10px;
-  font-family: 'Courier New', Courier, monospace;
-  z-index: 5;
-}
-
-.main-content::after {
-  content: "READY";
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: var(--text-muted);
-  font-size: 10px;
-  font-family: 'Courier New', Courier, monospace;
-  z-index: 5;
-}
+/* 终端效果已移除 */
