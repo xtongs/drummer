@@ -68,7 +68,7 @@ function App() {
   return (
     <div className="app">
       <div className="metronome">
-        <h1 className="title">节拍器</h1>
+        <h1 className="title">Drummer节拍器</h1>
 
         <div className="beat-indicator">
           {Array.from({ length: timeSignature }).map((_, index) => (
