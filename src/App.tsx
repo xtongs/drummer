@@ -47,6 +47,7 @@ function App() {
 
   // 切换播放状态
   const handleTogglePlay = () => {
+    // 切换播放/停止状态
     setIsPlaying(!isPlaying)
     if (!isPlaying) {
       setBeat(0)
