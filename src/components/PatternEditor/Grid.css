@@ -1,0 +1,78 @@
+.grid-container {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.grid-wrapper {
+  display: flex;
+  min-width: fit-content;
+}
+
+.grid-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-beat-labels {
+  display: flex;
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  height: 28px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.grid-beat-label-group {
+  position: relative;
+  border: none;
+}
+
+.grid-beat-label {
+  position: absolute;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-primary);
+  border: none;
+  background-color: transparent;
+}
+
+.grid-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-row {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  height: var(--grid-cell-size);
+  min-height: var(--grid-cell-size);
+  max-height: var(--grid-cell-size);
+  box-sizing: border-box;
+}
+
+.grid-row:last-child {
+  border-bottom: none;
+}
+
+/* 小节分隔线 */
+.grid-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: transparent;
+}
+
+

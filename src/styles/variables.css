@@ -1,0 +1,53 @@
+:root {
+  /* 颜色 - 暗色主题 */
+  --bg-color: #0a0a0a;
+  --card-bg: #1a1a1a;
+  --color-bg: #0a0a0a;
+  --color-bg-secondary: #1a1a1a;
+  --color-text: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-text-dim: #a1a1aa;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-primary: #3b82f6; /* Blue */
+  --color-primary-hover: #2563eb;
+  --color-secondary: #22c55e; /* Green */
+  --color-active: #22c55e;
+  --color-active-bg: rgba(34, 197, 94, 0.3);
+  --accent-glow: rgba(59, 130, 246, 0.2);
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 字体 */
+  --font-family: "Courier New", "Monaco", "Consolas", "Menlo", monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+
+  /* 圆角 */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 24px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* 节拍器条高度 */
+  --metronome-bar-height: 70px;
+
+  /* 网格单元格大小（16分音符，更小） */
+  --grid-cell-size: 32px;
+
+  /* 节拍分隔线 */
+  --beat-divider-color: #3b82f6;
+  --subdivision-divider-color: rgba(255, 255, 255, 0.1);
+}

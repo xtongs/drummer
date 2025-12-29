@@ -1,0 +1,16 @@
+.drum-notation-container {
+  width: max-content;
+  min-width: 100%;
+  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  flex-shrink: 0;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.drum-notation-svg {
+  display: block;
+}

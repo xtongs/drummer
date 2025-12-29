@@ -1,0 +1,113 @@
+.metronome-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.metronome-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.metronome-row-top {
+  position: relative;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.metronome-row-bottom {
+  width: 100%;
+}
+
+.bpm-control-group {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+.bpm-control-group > * {
+  pointer-events: auto;
+}
+
+.bpm-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.bpm-control-button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bpm-control-button:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.bpm-control-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.bpm-value {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primary);
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.bpm-unit {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+  .metronome-bar {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+
+  .bpm-value {
+    font-size: 2rem;
+  }
+
+  .metronome-row-top {
+    gap: var(--spacing-xs);
+  }
+}

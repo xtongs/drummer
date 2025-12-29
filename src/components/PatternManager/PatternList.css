@@ -1,0 +1,110 @@
+.pattern-list-content {
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.pattern-list {
+  margin-bottom: var(--spacing-lg);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.pattern-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pattern-item:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.pattern-item.active {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.pattern-item-info {
+  flex: 1;
+}
+
+.pattern-item-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.pattern-item-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.pattern-item-delete {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pattern-item-delete:hover {
+  background-color: #ff4444;
+  color: white;
+  border-color: #ff4444;
+}
+
+.empty-message {
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* 滚动条样式 */
+.pattern-list::-webkit-scrollbar,
+.pattern-list-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pattern-list::-webkit-scrollbar-track,
+.pattern-list-content::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 0;
+}
+
+.pattern-list::-webkit-scrollbar-thumb,
+.pattern-list-content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 0;
+}
+
+.pattern-list::-webkit-scrollbar-thumb:hover,
+.pattern-list-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
