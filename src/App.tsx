@@ -4,7 +4,13 @@ import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { useMetronome } from "./hooks/useMetronome";
 import { usePatternPlayer } from "./hooks/usePatternPlayer";
-import { savePattern, loadPatterns, deletePattern, setCurrentPatternId, getCurrentPatternId, generateId } from "./utils/storage";
+import {
+  savePattern,
+  loadPatterns,
+  deletePattern,
+  setCurrentPatternId,
+  generateId,
+} from "./utils/storage";
 import type { Pattern } from "./types";
 import "./index.css";
 
@@ -30,7 +36,7 @@ function App() {
   }, []);
 
   // 节拍器可视化（四个点）
-  const { currentBeat } = useMetronome({
+  useMetronome({
     bpm: pattern.bpm,
     timeSignature: pattern.timeSignature,
     isPlaying,
@@ -49,12 +55,14 @@ function App() {
 
   const handleSave = () => {
     // 找到下一个可用的slot编号
-    const existingNumbers = savedPatterns.map((p) => parseInt(p.name, 10)).filter((n) => !isNaN(n));
+    const existingNumbers = savedPatterns
+      .map((p) => parseInt(p.name, 10))
+      .filter((n) => !isNaN(n));
     let nextSlot = 1;
     if (existingNumbers.length > 0) {
       nextSlot = Math.max(...existingNumbers) + 1;
     }
-    
+
     const patternToSave: Pattern = {
       ...pattern,
       id: generateId(),
@@ -111,4 +119,3 @@ function App() {
 }
 
 export default App;
-

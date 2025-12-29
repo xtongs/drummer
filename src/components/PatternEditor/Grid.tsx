@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { GridCell } from "./GridCell";
 import type { Pattern } from "../../types";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
@@ -15,7 +14,7 @@ export function Grid({
   pattern,
   onCellClick,
   currentBeat,
-  scrollContainerRef,
+  scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
 
   const [beatsPerBar] = pattern.timeSignature;

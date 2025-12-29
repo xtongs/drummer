@@ -10,7 +10,7 @@ import { DRUM_NOTATION } from "./constants";
  */
 export function getSymbolY(
   line: number,
-  staffHeight: number,
+  _staffHeight: number,
   staffTop: number,
   lineSpacing: number
 ): number {

@@ -19,7 +19,7 @@ const SYMBOL_SIZE = 7;
 export function DrumNotation({
   pattern,
   currentBeat,
-  scrollContainerRef,
+  scrollContainerRef: _scrollContainerRef,
 }: DrumNotationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

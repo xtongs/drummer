@@ -41,7 +41,6 @@ export function usePatternPlayer({
   const beatDuration = (60.0 / pattern.bpm) * (4.0 / pattern.timeSignature[1]);
   const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
   const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-  const totalSubdivisions = pattern.bars * subdivisionsPerBar;
 
   // 计算循环范围
   const loopRange = pattern.loopRange || [0, pattern.bars - 1];
