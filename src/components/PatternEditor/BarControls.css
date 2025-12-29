@@ -6,7 +6,7 @@
   background: transparent;
   backdrop-filter: none;
   border: none;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
 }
 
 .bar-count {
@@ -19,10 +19,10 @@
 }
 
 .bar-control-button {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: var(--grid-cell-actual-size);
+  height: var(--grid-cell-actual-size);
+  min-width: var(--grid-cell-actual-size);
+  min-height: var(--grid-cell-actual-size);
   padding: 0;
   display: flex;
   align-items: center;
@@ -31,7 +31,7 @@
   color: white;
   font-size: var(--font-size-sm);
   font-weight: 600;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   transition: all 0.2s ease;
   border: none;
   box-shadow: none;

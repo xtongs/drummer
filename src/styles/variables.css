@@ -1,19 +1,47 @@
 :root {
-  /* 颜色 - 暗色主题 */
-  --bg-color: #0a0a0a;
-  --card-bg: #1a1a1a;
-  --color-bg: #0a0a0a;
-  --color-bg-secondary: #1a1a1a;
-  --color-text: #ffffff;
-  --color-text-secondary: #a1a1aa;
-  --color-text-dim: #a1a1aa;
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-primary: #3b82f6; /* Blue */
-  --color-primary-hover: #2563eb;
-  --color-secondary: #22c55e; /* Green */
-  --color-active: #22c55e;
-  --color-active-bg: rgba(34, 197, 94, 0.3);
-  --accent-glow: rgba(59, 130, 246, 0.2);
+  /* 颜色 - Dracula 配色方案 */
+  --bg-color: #282a36; /* Dracula 背景 */
+  --card-bg: #44475a; /* Dracula 选择/卡片背景 */
+  --color-bg: #282a36;
+  --color-bg-secondary: #21222c; /* 更深的背景 */
+  --color-text: #f8f8f2; /* Dracula 前景 */
+  --color-text-secondary: #6272a4; /* Dracula 注释 */
+  --color-text-dim: #6272a4;
+  --color-border: rgba(139, 233, 253, 0.3); /* 青色边框 */
+  --color-primary: #bd93f9; /* Dracula 紫色 */
+  --color-primary-hover: #ff79c6; /* Dracula 粉色 */
+  --color-secondary: #50fa7b; /* Dracula 绿色 */
+  --color-active: #50fa7b;
+  --color-active-bg: rgba(80, 250, 123, 0.2);
+  --accent-glow: rgba(189, 147, 249, 0.3); /* 紫色光晕 */
+
+  /* 危险色（删除按钮） */
+  --color-danger: #ff5555; /* Dracula 红色 */
+  --color-danger-hover: #ff6e6e;
+
+  /* 警告色（清除按钮、高亮） */
+  --color-warning: #f2f28c; /* Dracula 黄色 */
+  --color-warning-hover: #ffb86c; /* Dracula 橙色 */
+
+  /* 玻璃态效果 */
+  --glass-bg: rgba(68, 71, 90, 0.5);
+  --glass-bg-hover: rgba(68, 71, 90, 0.7);
+  --glass-border: rgba(139, 233, 253, 0.3);
+
+  /* 遮罩层 */
+  --overlay-bg: rgba(40, 42, 54, 0.9);
+
+  /* 网格边框 */
+  --grid-border: rgba(139, 233, 253, 0.2);
+
+  /* 文本颜色（三级） */
+  --color-text-tertiary: #6272a4;
+
+  /* 节拍分隔线颜色 */
+  --color-beat-line: #8be9fd; /* Dracula 青色 */
+
+  /* 主题色（与 constants.ts 中的 THEME_COLOR 保持一致） */
+  --theme-color: #282a36;
 
   /* 间距 */
   --spacing-xs: 4px;
@@ -22,8 +50,9 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  /* 字体 */
-  --font-family: "Courier New", "Monaco", "Consolas", "Menlo", monospace;
+  /* 字体 - 经典终端字体 */
+  --font-family: "Consolas", "Monaco", "Courier New", "Menlo", "Fira Code",
+    "Source Code Pro", monospace;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
@@ -31,7 +60,7 @@
   --font-size-xl: 24px;
 
   /* 圆角 */
-  --border-radius-sm: 4px;
+  --border-radius-sm: 2px;
   --border-radius-md: 8px;
   --border-radius-lg: 12px;
   --border-radius-xl: 24px;
@@ -45,9 +74,11 @@
   --metronome-bar-height: 70px;
 
   /* 网格单元格大小（16分音符，更小） */
-  --grid-cell-size: 32px;
+  --grid-cell-size: 27px;
+  --grid-cell-actual-size: 24px;
+  --grid-cell-real-size: 24px;
 
   /* 节拍分隔线 */
-  --beat-divider-color: #3b82f6;
-  --subdivision-divider-color: rgba(255, 255, 255, 0.1);
+  --beat-divider-color: #bd93f9; /* Dracula 紫色 */
+  --subdivision-divider-color: rgba(139, 233, 253, 0.2); /* Dracula 青色 */
 }

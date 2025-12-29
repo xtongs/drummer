@@ -17,11 +17,7 @@ export function PlayButton({ isPlaying, onClick }: PlayButtonProps) {
           width="24"
           height="24"
           viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fill="currentColor"
         >
           <rect x="6" y="4" width="4" height="16" />
           <rect x="14" y="4" width="4" height="16" />
@@ -31,11 +27,7 @@ export function PlayButton({ isPlaying, onClick }: PlayButtonProps) {
           width="24"
           height="24"
           viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fill="currentColor"
         >
           <polygon points="5 3 19 12 5 21 5 3" />
         </svg>

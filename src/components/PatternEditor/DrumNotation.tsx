@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import type { Pattern } from "../../types";
 import { getDrumNotation, getSymbolY } from "../../utils/drumNotation";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
@@ -10,11 +10,11 @@ interface DrumNotationProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
-const STAFF_TOP = 30; // 顶部和底部留白
-const LINE_SPACING = 40; // 线间距，增大以让符号不挤在一起
+const STAFF_TOP = 26; // 顶部和底部留白
+const LINE_SPACING = 34; // 线间距，增大以让符号不挤在一起
 const STAFF_HEIGHT = 4 * LINE_SPACING; // 五条线之间有4个间隔，让五条线平分高度
-const CELL_WIDTH = 32; // 与grid cell size一致（16分音符）
-const SYMBOL_SIZE = 8;
+const CELL_WIDTH = 27; // 与grid cell size一致（16分音符）
+const SYMBOL_SIZE = 7;
 
 export function DrumNotation({
   pattern,
@@ -23,6 +23,18 @@ export function DrumNotation({
 }: DrumNotationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // 获取 CSS 变量值
+  const getCSSVariable = (varName: string) => {
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(varName)
+      .trim();
+  };
+
+  const colorText = getCSSVariable("--color-text");
+  const colorTextTertiary = getCSSVariable("--color-text-tertiary");
+  const colorBeatLine = getCSSVariable("--color-beat-line");
+  const colorWarning = getCSSVariable("--color-warning");
 
   const [beatsPerBar] = pattern.timeSignature;
   const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
@@ -56,7 +68,7 @@ export function DrumNotation({
       >
         {/* 五线谱背景 */}
         {Array.from({ length: 5 }, (_, i) => {
-          const y = STAFF_TOP + (i * LINE_SPACING);
+          const y = STAFF_TOP + i * LINE_SPACING;
           return (
             <line
               key={`staff-line-${i}`}
@@ -64,7 +76,7 @@ export function DrumNotation({
               y1={y}
               x2={totalWidth}
               y2={y}
-              stroke="#ffffff"
+              stroke={colorText}
               strokeWidth={1}
               opacity={0.8}
             />
@@ -79,7 +91,7 @@ export function DrumNotation({
             y1={STAFF_TOP - 10}
             x2={bar.x}
             y2={STAFF_TOP + STAFF_HEIGHT + 10}
-            stroke={bar.isFirst || bar.isLast ? "#ffffff" : "#888"}
+            stroke={bar.isFirst || bar.isLast ? colorText : colorTextTertiary}
             strokeWidth={bar.isFirst || bar.isLast ? 3 : 2}
             strokeDasharray={bar.isFirst || bar.isLast ? "0" : "4,4"}
             opacity={bar.isFirst || bar.isLast ? 1 : 0.6}
@@ -97,7 +109,7 @@ export function DrumNotation({
               y1={STAFF_TOP - 5}
               x2={beat.x}
               y2={STAFF_TOP + STAFF_HEIGHT + 5}
-              stroke="#4a90e2"
+              stroke={colorBeatLine}
               strokeWidth={1}
               opacity={0.4}
             />
@@ -111,7 +123,7 @@ export function DrumNotation({
             y={STAFF_TOP - 10}
             width={CELL_WIDTH}
             height={STAFF_HEIGHT + 20}
-            fill="#ffd700"
+            fill={colorWarning}
             opacity={0.4}
           />
         )}
@@ -144,7 +156,7 @@ export function DrumNotation({
                       y1={symbolY - SYMBOL_SIZE}
                       x2={symbolX + SYMBOL_SIZE}
                       y2={symbolY + SYMBOL_SIZE}
-                      stroke="#ffffff"
+                      stroke={colorText}
                       strokeWidth={2}
                       strokeLinecap="round"
                     />
@@ -153,7 +165,7 @@ export function DrumNotation({
                       y1={symbolY - SYMBOL_SIZE}
                       x2={symbolX - SYMBOL_SIZE}
                       y2={symbolY + SYMBOL_SIZE}
-                      stroke="#ffffff"
+                      stroke={colorText}
                       strokeWidth={2}
                       strokeLinecap="round"
                     />
@@ -167,7 +179,7 @@ export function DrumNotation({
                     cy={symbolY}
                     r={SYMBOL_SIZE}
                     fill="none"
-                    stroke="#ffffff"
+                    stroke={colorText}
                     strokeWidth={2}
                   />
                 );
@@ -178,7 +190,7 @@ export function DrumNotation({
                     cx={symbolX}
                     cy={symbolY}
                     r={SYMBOL_SIZE}
-                    fill="#ffffff"
+                    fill={colorText}
                   />
                 );
               case "○":
@@ -189,7 +201,7 @@ export function DrumNotation({
                     cy={symbolY}
                     r={SYMBOL_SIZE}
                     fill="none"
-                    stroke="#ffffff"
+                    stroke={colorText}
                     strokeWidth={2}
                   />
                 );
@@ -202,4 +214,3 @@ export function DrumNotation({
     </div>
   );
 }
-

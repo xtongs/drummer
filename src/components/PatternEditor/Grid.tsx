@@ -19,7 +19,7 @@ export function Grid({
 }: GridProps) {
 
   const [beatsPerBar] = pattern.timeSignature;
-  const cellSize = 32; // 与CSS变量一致
+  const cellSize = 27; // 与CSS变量一致
 
   return (
     <div className="grid-container">

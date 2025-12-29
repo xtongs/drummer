@@ -4,12 +4,10 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs);
   background: transparent;
   backdrop-filter: none;
   border: none;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   box-shadow: none;
 }
 
@@ -23,7 +21,7 @@
   position: relative;
   justify-content: space-between;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
 }
 
 .metronome-row-bottom {
@@ -53,10 +51,10 @@
 }
 
 .bpm-control-button {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: var(--grid-cell-actual-size);
+  height: var(--grid-cell-actual-size);
+  min-width: var(--grid-cell-actual-size);
+  min-height: var(--grid-cell-actual-size);
   padding: 0;
   display: flex;
   align-items: center;
@@ -66,7 +64,7 @@
   color: var(--color-text);
   background-color: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -98,11 +96,6 @@
 }
 
 @media (max-width: 768px) {
-  .metronome-bar {
-    padding: var(--spacing-xs);
-    gap: var(--spacing-xs);
-  }
-
   .bpm-value {
     font-size: 2rem;
   }

@@ -3,7 +3,7 @@
   min-width: 100%;
   overflow: hidden;
   border: none;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   background: transparent;
   backdrop-filter: none;
   flex-shrink: 0;

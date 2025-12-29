@@ -3,7 +3,7 @@
   flex: 1;
   min-height: 0;
   border: none;
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   background: transparent;
   backdrop-filter: none;
 }
@@ -16,14 +16,15 @@
 .grid-content {
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--grid-border);
 }
 
 .grid-beat-labels {
   display: flex;
   background: transparent;
   backdrop-filter: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  height: 28px;
+  border-bottom: 1px solid var(--grid-border);
+  height: 24px;
   position: relative;
   flex-shrink: 0;
 }
@@ -41,7 +42,7 @@
   justify-content: center;
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text);
   border: none;
   background-color: transparent;
 }
@@ -53,7 +54,6 @@
 
 .grid-row {
   display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   height: var(--grid-cell-size);
   min-height: var(--grid-cell-size);
@@ -74,5 +74,3 @@
   height: 1px;
   background-color: transparent;
 }
-
-

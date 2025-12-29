@@ -17,24 +17,24 @@
   justify-content: space-between;
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .pattern-item:hover {
   border-color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg-hover);
   transform: translateX(4px);
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .pattern-item.active {
   border-color: var(--color-primary);
-  background: rgba(59, 130, 246, 0.2);
+  background: var(--accent-glow);
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
@@ -64,7 +64,7 @@
   background-color: transparent;
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   font-size: var(--font-size-xl);
   font-weight: bold;
   cursor: pointer;
@@ -73,9 +73,9 @@
 }
 
 .pattern-item-delete:hover {
-  background-color: #ff4444;
+  background-color: var(--color-danger);
   color: white;
-  border-color: #ff4444;
+  border-color: var(--color-danger);
 }
 
 .empty-message {
@@ -94,17 +94,16 @@
 .pattern-list::-webkit-scrollbar-track,
 .pattern-list-content::-webkit-scrollbar-track {
   background: var(--color-bg-secondary);
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
 }
 
 .pattern-list::-webkit-scrollbar-thumb,
 .pattern-list-content::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
 }
 
 .pattern-list::-webkit-scrollbar-thumb:hover,
 .pattern-list-content::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-secondary);
 }
-

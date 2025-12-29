@@ -13,7 +13,7 @@ export function LoopRangeSelector({
 }: LoopRangeSelectorProps) {
   // 如果没有设置循环范围，使用默认值[0, bars-1]，但不保存到pattern
   const currentRange = loopRange !== undefined ? loopRange : [0, bars - 1];
-  
+
   // 当loopRange为undefined时，点击按钮会设置默认值
   const updateRange = (newRange: [number, number]) => {
     onLoopRangeChange(newRange);
@@ -49,7 +49,7 @@ export function LoopRangeSelector({
 
   return (
     <div className="loop-range-selector">
-      <span className="loop-range-text">Loop:</span>
+      <span className="loop-range-text"></span>
       <div className="loop-range-controls">
         <div className="loop-range-item">
           <button
@@ -58,7 +58,18 @@ export function LoopRangeSelector({
             disabled={currentRange[0] <= 0}
             aria-label="Decrease start bar"
           >
-            −
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
           <span className="loop-range-value">{currentRange[0] + 1}</span>
           <button
@@ -67,7 +78,19 @@ export function LoopRangeSelector({
             disabled={currentRange[0] >= currentRange[1]}
             aria-label="Increase start bar"
           >
-            +
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </div>
         <span className="loop-range-separator">-</span>
@@ -78,7 +101,18 @@ export function LoopRangeSelector({
             disabled={currentRange[1] <= currentRange[0]}
             aria-label="Decrease end bar"
           >
-            −
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
           <span className="loop-range-value">{currentRange[1] + 1}</span>
           <button
@@ -87,7 +121,19 @@ export function LoopRangeSelector({
             disabled={currentRange[1] >= bars - 1}
             aria-label="Increase end bar"
           >
-            +
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </div>
       </div>

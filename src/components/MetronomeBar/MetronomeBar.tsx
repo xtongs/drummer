@@ -50,7 +50,18 @@ export function MetronomeBar({
             disabled={bpm <= min}
             aria-label="Decrease BPM"
           >
-            −
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
           <div className="bpm-display">
             <span className="bpm-value">{bpm}</span>
@@ -61,7 +72,19 @@ export function MetronomeBar({
             disabled={bpm >= max}
             aria-label="Increase BPM"
           >
-            +
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </div>
         <PlayButton isPlaying={isPlaying} onClick={onPlayToggle} />

@@ -6,10 +6,10 @@
 }
 
 .pattern-tab {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+  width: var(--grid-cell-actual-size);
+  height: var(--grid-cell-actual-size);
+  min-width: var(--grid-cell-actual-size);
+  min-height: var(--grid-cell-actual-size);
   padding: 0;
   display: flex;
   align-items: center;
@@ -19,7 +19,7 @@
   color: var(--color-text);
   background: transparent;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -35,4 +35,3 @@
   border-color: var(--color-primary);
   color: white;
 }
-

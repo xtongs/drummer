@@ -45,3 +45,6 @@ export const DRUM_NOTATION: Record<
   Kick: { position: "below", symbol: "●", line: 2 },
 };
 
+// 主题颜色（与 CSS 变量 --theme-color 保持一致）
+export const THEME_COLOR = "#282a36";
+
