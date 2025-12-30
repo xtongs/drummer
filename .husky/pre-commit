@@ -9,4 +9,8 @@ npm run typecheck || { echo "❌ Type check failed! Commit aborted."; exit 1; }
 echo "🔨 Running build..."
 npm run build || { echo "❌ Build failed! Commit aborted."; exit 1; }
 
+# 将 build 产生的 dist 文件添加到暂存区
+echo "📦 Adding dist files..."
+git add dist/
+
 echo "✅ All checks passed!"
