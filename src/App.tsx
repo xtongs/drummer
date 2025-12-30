@@ -77,6 +77,23 @@ function App() {
     };
   }, []);
 
+  // 页面可见性变化时暂停播放（切换应用、标签页、弹窗等）
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 页面被隐藏时暂停所有播放
+        setIsMetronomePlaying(false);
+        setIsPatternPlaying(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   // 节奏型播放
   usePatternPlayer({
     pattern,
@@ -181,6 +198,11 @@ function App() {
     setCurrentPatternId(loadedPattern.id);
   };
 
+  const handleStopAllPlaying = () => {
+    setIsMetronomePlaying(false);
+    setIsPatternPlaying(false);
+  };
+
   const handleDeletePattern = (patternId: string) => {
     deletePattern(patternId);
     if (pattern.id === patternId) {
@@ -212,6 +234,7 @@ function App() {
           onSave={handleSave}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
+          onStopAllPlaying={handleStopAllPlaying}
           savedPatterns={savedPatterns}
           currentBeat={currentSubdivision}
           isPlaying={isPatternPlaying}

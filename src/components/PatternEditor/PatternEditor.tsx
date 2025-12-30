@@ -22,10 +22,10 @@ function smoothScrollTo(
   function animate(currentTime: number) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
+
     // 使用 easeOutCubic 缓动函数
     const easeProgress = 1 - Math.pow(1 - progress, 3);
-    
+
     element.scrollLeft = startLeft + distance * easeProgress;
 
     if (progress < 1) {
@@ -48,6 +48,7 @@ interface PatternEditorProps {
   onSave: () => void;
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
+  onStopAllPlaying?: () => void;
   savedPatterns: Pattern[];
   currentBeat?: number;
   isPlaying?: boolean;
@@ -64,6 +65,7 @@ export function PatternEditor({
   onSave,
   onLoadFromSlot,
   onDeletePattern,
+  onStopAllPlaying,
   savedPatterns,
   currentBeat,
   isPlaying = false,
@@ -80,7 +82,7 @@ export function PatternEditor({
     if (lastScrollTargetRef.current === targetLeft) {
       return;
     }
-    
+
     // 如果正在滚动中，不触发新的滚动
     if (isScrollingRef.current) {
       return;
@@ -105,7 +107,7 @@ export function PatternEditor({
     const containerWidth = container.clientWidth;
     const scrollLeft = container.scrollLeft;
     const scrollRight = scrollLeft + containerWidth;
-    
+
     // 提前量：在游标距离右边界还有 20% 容器宽度时就开始滚动
     const rightLeadAmount = containerWidth * 0.2;
     // 左边界提前量稍小
@@ -181,9 +183,16 @@ export function PatternEditor({
             <button
               className="action-button delete-button"
               onClick={() => {
-                if (window.confirm("Delete this pattern?")) {
-                  onDeletePattern(pattern.id);
+                // 先暂停所有播放，避免 confirm 弹窗时继续播放
+                if (onStopAllPlaying) {
+                  onStopAllPlaying();
                 }
+                // 使用 setTimeout 让 React 先更新 UI，再显示 confirm
+                setTimeout(() => {
+                  if (window.confirm("Delete this pattern?")) {
+                    onDeletePattern(pattern.id);
+                  }
+                }, 0);
               }}
               aria-label="Delete"
             >

@@ -2,6 +2,37 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { playAccent, playBeat, getAudioContext } from "../utils/audioEngine";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 
+// WakeLock 管理：防止播放时手机锁屏
+let wakeLock: WakeLockSentinel | null = null;
+
+async function requestWakeLock() {
+  if ("wakeLock" in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      console.log("Metronome WakeLock acquired");
+
+      // 监听 WakeLock 释放事件
+      wakeLock.addEventListener("release", () => {
+        console.log("Metronome WakeLock released");
+      });
+    } catch (err) {
+      console.log("Metronome WakeLock request failed:", err);
+    }
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock !== null) {
+    try {
+      await wakeLock.release();
+      wakeLock = null;
+      console.log("Metronome WakeLock released manually");
+    } catch (err) {
+      console.log("Metronome WakeLock release failed:", err);
+    }
+  }
+}
+
 // 使用 setTimeout + requestAnimationFrame 来同步动画更新
 // 确保动画与音频播放时间对齐
 function scheduleMetronomeAnimationUpdate(
@@ -119,7 +150,10 @@ export function useMetronome({
     }
 
     // 等待一帧，确保 AudioContext 完全准备好
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    // 请求 WakeLock 防止手机锁屏
+    requestWakeLock();
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
@@ -151,6 +185,8 @@ export function useMetronome({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
+    // 释放 WakeLock
+    releaseWakeLock();
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 

@@ -10,6 +10,37 @@ import {
   getAudioContext,
 } from "../utils/audioEngine";
 
+// WakeLock 管理：防止播放时手机锁屏
+let wakeLock: WakeLockSentinel | null = null;
+
+async function requestWakeLock() {
+  if ("wakeLock" in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      console.log("WakeLock acquired");
+
+      // 监听 WakeLock 释放事件
+      wakeLock.addEventListener("release", () => {
+        console.log("WakeLock released");
+      });
+    } catch (err) {
+      console.log("WakeLock request failed:", err);
+    }
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock !== null) {
+    try {
+      await wakeLock.release();
+      wakeLock = null;
+      console.log("WakeLock released manually");
+    } catch (err) {
+      console.log("WakeLock release failed:", err);
+    }
+  }
+}
+
 // 使用 setTimeout + requestAnimationFrame 来同步动画更新
 // 确保动画与音频播放时间对齐
 function scheduleAnimationUpdate(
@@ -108,7 +139,10 @@ export function usePatternPlayer({
 
     const currentTime = ctx.currentTime;
 
-    while (nextNoteTimeRef.current < currentTime + scheduleAheadTimeRef.current) {
+    while (
+      nextNoteTimeRef.current <
+      currentTime + scheduleAheadTimeRef.current
+    ) {
       let subdivisionIndex = currentSubdivisionRef.current;
 
       // 检查是否在循环范围内
@@ -128,10 +162,10 @@ export function usePatternPlayer({
 
       // 确保播放时间不早于当前时间
       const playTime = Math.max(nextNoteTimeRef.current, currentTime);
-      
+
       // 计算动画延迟时间（毫秒），使动画与声音同步
       const delayMs = (playTime - currentTime) * 1000;
-      
+
       // 播放当前subdivision
       playSubdivision(subdivisionIndex, playTime);
 
@@ -163,15 +197,20 @@ export function usePatternPlayer({
     }
 
     // 等待一帧，确保 AudioContext 完全准备好
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    // 请求 WakeLock 防止手机锁屏
+    requestWakeLock();
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
-    
+
     // 如果当前位置不在循环范围内，则重置到开始位置
     // 否则保持当前位置（从暂停恢复）
-    if (currentSubdivisionRef.current < startSubdivision || 
-        currentSubdivisionRef.current >= endSubdivision) {
+    if (
+      currentSubdivisionRef.current < startSubdivision ||
+      currentSubdivisionRef.current >= endSubdivision
+    ) {
       currentSubdivisionRef.current = startSubdivision;
       if (onSubdivisionChange) {
         scheduleAnimationUpdate(startSubdivision, onSubdivisionChange, 0);
@@ -180,10 +219,10 @@ export function usePatternPlayer({
 
     // 设置初始时间，立即开始调度
     nextNoteTimeRef.current = currentTime;
-    
+
     // 立即运行一次调度器，确保第一个声音立即播放
     scheduler();
-    
+
     // 启动调度器
     schedulerIntervalRef.current = window.setInterval(
       scheduler,
@@ -198,6 +237,8 @@ export function usePatternPlayer({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
+    // 释放 WakeLock
+    releaseWakeLock();
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 
@@ -222,4 +263,3 @@ export function usePatternPlayer({
     }
   }, [pattern.bpm, pattern.bars, pattern.loopRange, isPlaying, start, stop]);
 }
-
