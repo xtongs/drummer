@@ -12,7 +12,8 @@ let isResuming = false;
  */
 export function getAudioContext(): AudioContext {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
   }
   return audioContext;
 }
@@ -186,7 +187,10 @@ export function playTom(time: number, frequency: number = 200): void {
   gainNode.connect(ctx.destination);
 
   oscillator.frequency.setValueAtTime(frequency, time);
-  oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.5, time + 0.1);
+  oscillator.frequency.exponentialRampToValueAtTime(
+    frequency * 0.5,
+    time + 0.1
+  );
   oscillator.type = "sine";
 
   gainNode.gain.setValueAtTime(0.4, time);
@@ -241,4 +245,3 @@ export async function playDrumSound(drumType: DrumType): Promise<void> {
       playSnare(time);
   }
 }
-

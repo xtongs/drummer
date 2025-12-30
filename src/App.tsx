@@ -37,7 +37,7 @@ function App() {
   useEffect(() => {
     const patterns = loadPatterns();
     setSavedPatterns(patterns);
-    
+
     // 获取上次选中的pattern ID
     const savedPatternId = getCurrentPatternId();
     if (savedPatternId) {
@@ -65,7 +65,9 @@ function App() {
     };
 
     document.addEventListener("click", handleUserInteraction, { once: true });
-    document.addEventListener("touchstart", handleUserInteraction, { once: true });
+    document.addEventListener("touchstart", handleUserInteraction, {
+      once: true,
+    });
     document.addEventListener("keydown", handleUserInteraction, { once: true });
 
     return () => {
@@ -116,7 +118,7 @@ function App() {
 
   // 使用 ref 来跟踪上次保存的 pattern，避免不必要的保存
   const lastSavedPatternRef = useRef<string>("");
-  
+
   // 实时保存：当pattern改变且当前已选中tab时，自动保存
   useEffect(() => {
     // 检查当前pattern是否是已保存的tab
@@ -131,7 +133,7 @@ function App() {
         grid: pattern.grid,
         loopRange: pattern.loopRange,
       });
-      
+
       // 只在 pattern 真正改变时才保存
       if (patternKey !== lastSavedPatternRef.current) {
         lastSavedPatternRef.current = patternKey;
@@ -159,14 +161,14 @@ function App() {
     if (existingNumbers.length > 0) {
       nextSlot = Math.max(...existingNumbers) + 1;
     }
-    
+
     const patternToSave: Pattern = {
       ...pattern,
       id: generateId(),
       name: String(nextSlot),
       updatedAt: Date.now(),
     };
-    
+
     savePattern(patternToSave);
     setCurrentPatternId(patternToSave.id);
     // 加载保存的pattern，这样会自动选中对应的tab
