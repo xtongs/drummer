@@ -33,3 +33,13 @@
   border-color: var(--color-primary);
   color: white;
 }
+
+/* 草稿 Tab */
+.pattern-tab.draft-tab {
+  color: var(--color-text);
+}
+
+.pattern-tab.draft-tab.active {
+  color: white;
+}
+

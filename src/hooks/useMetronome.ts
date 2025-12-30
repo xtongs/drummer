@@ -9,14 +9,8 @@ async function requestWakeLock() {
   if ("wakeLock" in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request("screen");
-      console.log("Metronome WakeLock acquired");
-
-      // 监听 WakeLock 释放事件
-      wakeLock.addEventListener("release", () => {
-        console.log("Metronome WakeLock released");
-      });
-    } catch (err) {
-      console.log("Metronome WakeLock request failed:", err);
+    } catch {
+      // WakeLock request failed
     }
   }
 }
@@ -26,30 +20,10 @@ async function releaseWakeLock() {
     try {
       await wakeLock.release();
       wakeLock = null;
-      console.log("Metronome WakeLock released manually");
-    } catch (err) {
-      console.log("Metronome WakeLock release failed:", err);
+    } catch {
+      // WakeLock release failed
     }
   }
-}
-
-// 使用 setTimeout + requestAnimationFrame 来同步动画更新
-// 确保动画与音频播放时间对齐
-function scheduleMetronomeAnimationUpdate(
-  subdivision: number,
-  beat: number,
-  setSubdivision: (sub: number) => void,
-  setBeat: (beat: number) => void,
-  delayMs: number
-) {
-  // 使用 setTimeout 延迟到声音播放时间，然后使用 requestAnimationFrame 确保在渲染帧更新
-  const timeoutDelay = Math.max(0, delayMs);
-  setTimeout(() => {
-    requestAnimationFrame(() => {
-      setSubdivision(subdivision);
-      setBeat(beat);
-    });
-  }, timeoutDelay);
 }
 
 interface UseMetronomeOptions {
@@ -65,129 +39,123 @@ export function useMetronome({
   isPlaying,
   onBeatChange,
 }: UseMetronomeOptions) {
-  const [currentBeat, setCurrentBeat] = useState(0); // beat number (0-3 for 4/4)
-  const [currentSubdivision, setCurrentSubdivision] = useState(0); // subdivision index (0-15 for 4 beats * 4)
+  const [currentBeat, setCurrentBeat] = useState(0);
+  const [currentSubdivision, setCurrentSubdivision] = useState(0);
+
+  // 使用 ref 存储所有动态值，避免闭包问题
+  const bpmRef = useRef(bpm);
+  const timeSignatureRef = useRef(timeSignature);
+  const onBeatChangeRef = useRef(onBeatChange);
+
+  // 更新 ref 值
+  bpmRef.current = bpm;
+  timeSignatureRef.current = timeSignature;
+  onBeatChangeRef.current = onBeatChange;
+
   const nextNoteTimeRef = useRef<number>(0);
-  const scheduleAheadTimeRef = useRef<number>(0.1); // 提前调度时间（秒）
-  const lookaheadRef = useRef<number>(25); // 检查间隔（毫秒）
+  const currentSubdivisionRef = useRef<number>(0);
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
 
-  // 计算每拍时长（秒）
-  const beatDuration = (60.0 / bpm) * (4.0 / timeSignature[1]);
-  const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
-  const beatsPerBar = timeSignature[0];
-  const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-
-  // 调度下一个节拍
-  const scheduleNote = useCallback(
-    (beatNumber: number, time: number) => {
-      // 播放声音
-      if (beatNumber === 0) {
-        // 第一拍（重拍）
-        playAccent(time);
-      } else {
-        // 其他拍
-        playBeat(time);
-      }
-
-      // 通知外部 beat 变化（用于节拍器显示）
-      onBeatChange?.(beatNumber);
-      // 注意：状态更新由调度器统一管理，避免重复更新
-    },
-    [onBeatChange]
-  );
-
-  // 跟踪当前subdivision
-  const currentSubdivisionRef = useRef<number>(0);
-
-  // 调度器函数（16分音符精度）
+  // 调度器函数 - 使用 ref 获取最新值
   const scheduler = useCallback(() => {
     const ctx = getAudioContext();
     if (!isRunningRef.current) return;
 
+    // 从 ref 获取最新值
+    const currentBpm = bpmRef.current;
+    const currentTimeSignature = timeSignatureRef.current;
+    const beatsPerBar = currentTimeSignature[0];
+    const noteValue = currentTimeSignature[1];
+
+    // 计算当前的时间间隔
+    const beatDuration = (60.0 / currentBpm) * (4.0 / noteValue);
+    const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+
     const currentTime = ctx.currentTime;
+    const scheduleAheadTime = 0.1; // 提前调度时间（秒）
 
     // 如果到了播放时间，调度节拍
-    while (nextNoteTimeRef.current < currentTime + scheduleAheadTimeRef.current) {
+    while (nextNoteTimeRef.current < currentTime + scheduleAheadTime) {
       const subdivisionIndex = currentSubdivisionRef.current;
       const beatNumber = Math.floor(subdivisionIndex / SUBDIVISIONS_PER_BEAT);
 
       // 确保播放时间不早于当前时间
       const playTime = Math.max(nextNoteTimeRef.current, currentTime);
-      
-      // 计算动画延迟时间（毫秒），使动画与声音同步
+
+      // 计算动画延迟时间（毫秒）
       const delayMs = (playTime - currentTime) * 1000;
 
-      // 只在每拍的第一 subdivision 播放节拍器声音
+      // 只在每拍的第一个 subdivision 播放节拍器声音
       if (subdivisionIndex % SUBDIVISIONS_PER_BEAT === 0) {
-        scheduleNote(beatNumber, playTime);
+        if (beatNumber === 0) {
+          playAccent(playTime);
+        } else {
+          playBeat(playTime);
+        }
+        // 通知外部 beat 变化
+        const callback = onBeatChangeRef.current;
+        if (callback) {
+          setTimeout(() => callback(beatNumber), delayMs);
+        }
       }
 
       // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
-      scheduleMetronomeAnimationUpdate(
-        subdivisionIndex,
-        beatNumber,
-        setCurrentSubdivision,
-        setCurrentBeat,
-        delayMs
-      );
+      const subIdx = subdivisionIndex;
+      const beatNum = beatNumber;
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          setCurrentSubdivision(subIdx);
+          setCurrentBeat(beatNum);
+        });
+      }, Math.max(0, delayMs));
 
-      // 移动到下一个subdivision
-      currentSubdivisionRef.current = (currentSubdivisionRef.current + 1) % subdivisionsPerBar;
+      // 移动到下一个 subdivision
+      currentSubdivisionRef.current =
+        (currentSubdivisionRef.current + 1) % subdivisionsPerBar;
       nextNoteTimeRef.current += subdivisionDuration;
     }
-  }, [subdivisionDuration, subdivisionsPerBar, beatsPerBar, scheduleNote]);
+  }, []);
 
   // 开始节拍器
   const start = useCallback(async () => {
     const ctx = getAudioContext();
     if (isRunningRef.current) return;
 
-    // 恢复 AudioContext（如果被暂停）- 等待完成
+    // 恢复 AudioContext
     if (ctx.state === "suspended") {
       await ctx.resume();
     }
 
-    // 等待一帧，确保 AudioContext 完全准备好
+    // 等待一帧
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    // 请求 WakeLock 防止手机锁屏
+    // 请求 WakeLock
     requestWakeLock();
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
-    
-    // 如果当前位置超出范围，则重置到开始位置
-    // 否则保持当前位置（从暂停恢复）
-    if (currentSubdivisionRef.current >= subdivisionsPerBar) {
-      currentSubdivisionRef.current = 0;
-      scheduleMetronomeAnimationUpdate(0, 0, setCurrentSubdivision, setCurrentBeat, 0);
-    }
 
-    // 设置初始时间，立即开始调度
+    // 保持当前位置继续播放（不重置）
+    // 设置下一个播放时间为当前时间
     nextNoteTimeRef.current = currentTime;
-    
-    // 立即运行一次调度器，确保第一个声音立即播放
+
+    // 立即运行一次调度器
     scheduler();
 
-    // 启动调度器
-    schedulerIntervalRef.current = window.setInterval(
-      scheduler,
-      lookaheadRef.current
-    );
-  }, [scheduler, subdivisionsPerBar]);
+    // 启动调度器（25ms 间隔检查）
+    schedulerIntervalRef.current = window.setInterval(scheduler, 25);
+  }, [scheduler]);
 
-  // 停止节拍器（暂停时不重置位置）
+  // 停止节拍器
   const stop = useCallback(() => {
     isRunningRef.current = false;
     if (schedulerIntervalRef.current !== null) {
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
-    // 释放 WakeLock
     releaseWakeLock();
-    // 不重置位置，保持当前位置以便恢复播放
   }, []);
 
   // 根据 isPlaying 状态控制节拍器
@@ -205,15 +173,16 @@ export function useMetronome({
 
   // 当 BPM 或拍号改变时，重置节拍器
   useEffect(() => {
-    if (isPlaying) {
-      stop();
-      start();
+    if (isPlaying && isRunningRef.current) {
+      // 不需要重启，因为 scheduler 会从 ref 读取最新的 BPM
+      // 但需要重置时间以确保节奏正确
+      const ctx = getAudioContext();
+      nextNoteTimeRef.current = ctx.currentTime;
     }
-  }, [bpm, timeSignature, isPlaying, start, stop]);
+  }, [bpm, timeSignature, isPlaying]);
 
   return {
-    currentBeat, // beat number (0-3) for visualization
-    currentSubdivision, // subdivision index (0-15) for grid/notation highlighting
+    currentBeat,
+    currentSubdivision,
   };
 }
-

@@ -22,14 +22,8 @@ async function requestWakeLock() {
   if ("wakeLock" in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request("screen");
-      console.log("WakeLock acquired");
-
-      // 监听 WakeLock 释放事件
-      wakeLock.addEventListener("release", () => {
-        console.log("WakeLock released");
-      });
-    } catch (err) {
-      console.log("WakeLock request failed:", err);
+    } catch {
+      // WakeLock request failed
     }
   }
 }
@@ -39,9 +33,8 @@ async function releaseWakeLock() {
     try {
       await wakeLock.release();
       wakeLock = null;
-      console.log("WakeLock released manually");
-    } catch (err) {
-      console.log("WakeLock release failed:", err);
+    } catch {
+      // WakeLock release failed
     }
   }
 }

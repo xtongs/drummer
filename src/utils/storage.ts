@@ -2,6 +2,7 @@ import type { Pattern, StorageData, CellState } from "../types";
 import { CELL_OFF, CELL_NORMAL } from "../types";
 
 const STORAGE_KEY = "drummer-app-data";
+const METRONOME_BPM_KEY = "drummer-metronome-bpm";
 
 /**
  * 迁移旧版 boolean grid 到新版 CellState grid
@@ -133,4 +134,33 @@ export function setCurrentPatternId(patternId: string | undefined): void {
  */
 export function generateId(): string {
   return `pattern-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * 保存节拍器 BPM
+ */
+export function saveMetronomeBPM(bpm: number): void {
+  try {
+    localStorage.setItem(METRONOME_BPM_KEY, String(bpm));
+  } catch (error) {
+    console.error("Failed to save metronome BPM:", error);
+  }
+}
+
+/**
+ * 加载节拍器 BPM
+ */
+export function loadMetronomeBPM(): number | null {
+  try {
+    const bpm = localStorage.getItem(METRONOME_BPM_KEY);
+    if (bpm) {
+      const parsed = parseInt(bpm, 10);
+      if (!isNaN(parsed) && parsed >= 20 && parsed <= 300) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load metronome BPM:", error);
+  }
+  return null;
 }

@@ -65,9 +65,8 @@ async function loadSample(url: string, name: string): Promise<void> {
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
     sampleBuffers.set(name, audioBuffer);
-    console.log(`Sample loaded: ${name}`);
-  } catch (error) {
-    console.warn(`Failed to load sample ${name}:`, error);
+  } catch {
+    // Failed to load sample
   }
 }
 
@@ -92,7 +91,6 @@ function loadAllSamples(): Promise<void> {
     loadSample(metronomeUrl, "metronome"),
   ]).then(() => {
     samplesLoaded = true;
-    console.log("All samples loaded");
   });
 
   return samplesLoadPromise;

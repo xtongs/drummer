@@ -11,7 +11,10 @@ import {
   setCurrentPatternId,
   getCurrentPatternId,
   generateId,
+  saveMetronomeBPM,
+  loadMetronomeBPM,
 } from "./utils/storage";
+import { DEFAULT_BPM } from "./utils/constants";
 import { preInitAudioContext } from "./utils/audioEngine";
 import type { Pattern } from "./types";
 import "./index.css";
@@ -21,6 +24,12 @@ function App() {
   const [isPatternPlaying, setIsPatternPlaying] = useState(false);
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
+  // 草稿模式：当前编辑的 pattern 不保存到本地
+  const [isDraftMode, setIsDraftMode] = useState(true);
+  // 节拍器独立 BPM（与 pattern 分开存储）
+  const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
+    return loadMetronomeBPM() ?? DEFAULT_BPM;
+  });
   const {
     pattern,
     updateBPM,
@@ -31,7 +40,22 @@ function App() {
     clearGrid,
     setLoopRange,
     loadPattern,
+    resetPattern,
   } = usePattern(createEmptyPattern());
+
+  // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
+  const handleBPMChange = (bpm: number) => {
+    setMetronomeBPM(bpm);
+    saveMetronomeBPM(bpm);
+    updateBPM(bpm); // 同时更新 pattern 的 BPM
+  };
+
+  // 选择草稿模式
+  const handleSelectDraft = () => {
+    setIsDraftMode(true);
+    setCurrentPatternId(undefined);
+    resetPattern();
+  };
 
   // 加载保存的节奏型列表并恢复上次选中的tab
   useEffect(() => {
@@ -45,7 +69,18 @@ function App() {
       const savedPattern = patterns.find((p) => p.id === savedPatternId);
       if (savedPattern) {
         // 加载上次选中的pattern
+        setIsDraftMode(false);
         loadPattern(savedPattern);
+        // 同步 BPM 到节拍器（优先使用已保存的节拍器 BPM）
+        const savedBPM = loadMetronomeBPM();
+        if (savedBPM !== null) {
+          // 使用保存的节拍器 BPM 更新 pattern
+          setMetronomeBPM(savedBPM);
+        } else {
+          // 没有保存的节拍器 BPM，使用 pattern 的 BPM
+          setMetronomeBPM(savedPattern.bpm);
+          saveMetronomeBPM(savedPattern.bpm);
+        }
       } else {
         // 如果找不到，清除无效的ID
         setCurrentPatternId(undefined);
@@ -136,8 +171,14 @@ function App() {
   // 使用 ref 来跟踪上次保存的 pattern，避免不必要的保存
   const lastSavedPatternRef = useRef<string>("");
 
-  // 实时保存：当pattern改变且当前已选中tab时，自动保存
+  // 实时保存：当pattern改变且当前已选中tab时，自动保存（草稿模式不保存）
   useEffect(() => {
+    // 草稿模式不自动保存
+    if (isDraftMode) {
+      lastSavedPatternRef.current = "";
+      return;
+    }
+
     // 检查当前pattern是否是已保存的tab
     const isSavedPattern = savedPatterns.some((p) => p.id === pattern.id);
     if (isSavedPattern) {
@@ -187,6 +228,7 @@ function App() {
     };
 
     savePattern(patternToSave);
+    setIsDraftMode(false); // 保存后退出草稿模式
     setCurrentPatternId(patternToSave.id);
     // 加载保存的pattern，这样会自动选中对应的tab
     loadPattern(patternToSave);
@@ -194,8 +236,12 @@ function App() {
   };
 
   const handleLoadFromSlot = (loadedPattern: Pattern) => {
+    setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
+    // 同步 BPM 到节拍器
+    setMetronomeBPM(loadedPattern.bpm);
+    saveMetronomeBPM(loadedPattern.bpm);
   };
 
   const handleStopAllPlaying = () => {
@@ -206,8 +252,9 @@ function App() {
   const handleDeletePattern = (patternId: string) => {
     deletePattern(patternId);
     if (pattern.id === patternId) {
-      // 如果删除的是当前节奏型，重置为新的空节奏型
-      loadPattern(createEmptyPattern());
+      // 如果删除的是当前节奏型，进入草稿模式
+      setIsDraftMode(true);
+      resetPattern();
       setCurrentPatternId(undefined);
     }
     setSavedPatterns(loadPatterns());
@@ -216,10 +263,10 @@ function App() {
   return (
     <div className="app">
       <MetronomeBar
-        bpm={pattern.bpm}
+        bpm={metronomeBPM}
         timeSignature={pattern.timeSignature}
         isPlaying={isPatternPlaying}
-        onBPMChange={updateBPM}
+        onBPMChange={handleBPMChange}
         isPatternPlaying={isMetronomePlaying}
         onPatternPlayToggle={handleMetronomePlayToggle}
       />
@@ -236,10 +283,12 @@ function App() {
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
           onStopAllPlaying={handleStopAllPlaying}
+          onSelectDraft={handleSelectDraft}
           savedPatterns={savedPatterns}
           currentBeat={currentSubdivision}
           isPlaying={isPatternPlaying}
           onPlayToggle={handlePatternPlayToggle}
+          isDraftMode={isDraftMode}
         />
       </main>
       <BottomPlayButton

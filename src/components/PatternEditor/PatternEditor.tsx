@@ -50,10 +50,12 @@ interface PatternEditorProps {
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
   onStopAllPlaying?: () => void;
+  onSelectDraft: () => void;
   savedPatterns: Pattern[];
   currentBeat?: number;
   isPlaying?: boolean;
   onPlayToggle?: () => void;
+  isDraftMode: boolean;
 }
 
 export function PatternEditor({
@@ -68,10 +70,12 @@ export function PatternEditor({
   onLoadFromSlot,
   onDeletePattern,
   onStopAllPlaying,
+  onSelectDraft,
   savedPatterns,
   currentBeat,
   isPlaying = false,
   onPlayToggle: _onPlayToggle,
+  isDraftMode,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
@@ -153,32 +157,14 @@ export function PatternEditor({
       </div>
       <div className="pattern-editor-actions">
         <div className="pattern-editor-actions-left">
-          <button
-            className="action-button save-button"
-            onClick={onSave}
-            aria-label="Create New Pattern"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
-          {savedPatterns.length > 0 && (
-            <PatternTabs
-              patterns={savedPatterns}
-              currentPatternId={pattern.id}
-              onSelectPattern={onLoadFromSlot}
-            />
-          )}
+          <PatternTabs
+            patterns={savedPatterns}
+            currentPatternId={pattern.id}
+            onSelectPattern={onLoadFromSlot}
+            onSelectDraft={onSelectDraft}
+            onAddPattern={onSave}
+            isDraftMode={isDraftMode}
+          />
         </div>
         <div className="pattern-editor-actions-right">
           {savedPatterns.some((p) => p.id === pattern.id) && (
