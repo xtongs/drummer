@@ -11,7 +11,6 @@
   color: var(--color-text);
   border-radius: 50%;
   box-shadow: none;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -28,6 +27,11 @@
 .play-button svg {
   width: 20px;
   height: 20px;
+}
+
+/* 优化播放按钮三角形的位置，使其视觉上更居中（向右微调1px补偿视觉偏差） */
+.play-button svg.play-icon {
+  transform: translateX(1px);
 }
 
 @media (max-width: 768px) {

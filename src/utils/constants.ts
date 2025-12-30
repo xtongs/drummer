@@ -17,12 +17,15 @@ export const DRUMS: DrumType[] = [
 // 默认值
 export const DEFAULT_BPM = 120;
 export const DEFAULT_TIME_SIGNATURE: TimeSignature = [4, 4];
-export const DEFAULT_BARS = 2;
+export const DEFAULT_BARS = 1;
 export const MIN_BPM = 40;
 export const MAX_BPM = 200;
 
 // 16分音符细分（每拍4个格子）
 export const SUBDIVISIONS_PER_BEAT = 4;
+
+// 网格单元格大小（像素），调整以确保第一小节在375px宽度下完整显示
+export const GRID_CELL_SIZE = 23;
 
 // 鼓谱符号映射
 export const DRUM_NOTATION: Record<
@@ -47,4 +50,3 @@ export const DRUM_NOTATION: Record<
 
 // 主题颜色（与 CSS 变量 --theme-color 保持一致）
 export const THEME_COLOR = "#282a36";
-

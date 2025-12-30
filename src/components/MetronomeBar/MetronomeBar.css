@@ -51,10 +51,10 @@
 }
 
 .bpm-control-button {
-  width: var(--grid-cell-actual-size);
-  height: var(--grid-cell-actual-size);
-  min-width: var(--grid-cell-actual-size);
-  min-height: var(--grid-cell-actual-size);
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+  min-height: var(--button-size);
   padding: 0;
   display: flex;
   align-items: center;
@@ -66,7 +66,6 @@
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 

@@ -9,6 +9,23 @@ import {
   playTom,
 } from "../utils/audioEngine";
 
+// 使用 requestAnimationFrame 来同步动画更新
+let animationFrameId: number | null = null;
+const pendingUpdates: Array<{ subdivision: number; callback: (subdivision: number) => void }> = [];
+
+function scheduleAnimationUpdate(subdivision: number, callback: (subdivision: number) => void) {
+  pendingUpdates.push({ subdivision, callback });
+  if (animationFrameId === null) {
+    animationFrameId = requestAnimationFrame(() => {
+      animationFrameId = null;
+      const updates = pendingUpdates.splice(0);
+      updates.forEach(({ subdivision, callback }) => {
+        callback(subdivision);
+      });
+    });
+  }
+}
+
 interface UsePatternPlayerOptions {
   pattern: Pattern;
   isPlaying: boolean;
@@ -111,15 +128,23 @@ export function usePatternPlayer({
         // 循环回到开始
         subdivisionIndex = startSubdivision;
         currentSubdivisionRef.current = startSubdivision;
-        nextNoteTimeRef.current = currentTime + 0.05; // 短暂延迟后继续
+        // 确保循环后的时间不会太早
+        if (nextNoteTimeRef.current < currentTime) {
+          nextNoteTimeRef.current = currentTime;
+        }
         continue;
       }
 
+      // 确保播放时间不早于当前时间
+      const playTime = Math.max(nextNoteTimeRef.current, currentTime);
+      
       // 播放当前subdivision
-      playSubdivision(subdivisionIndex, nextNoteTimeRef.current);
+      playSubdivision(subdivisionIndex, playTime);
 
-      // 更新当前subdivision
-      onSubdivisionChange?.(subdivisionIndex);
+      // 使用 requestAnimationFrame 同步更新动画状态
+      if (onSubdivisionChange) {
+        scheduleAnimationUpdate(subdivisionIndex, onSubdivisionChange);
+      }
       currentSubdivisionRef.current = subdivisionIndex + 1;
 
       // 移动到下一个subdivision
@@ -134,26 +159,38 @@ export function usePatternPlayer({
   ]);
 
   // 开始播放
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     const ctx = audioContextRef.current;
     if (!ctx || isRunningRef.current) return;
 
+    // 恢复 AudioContext（如果被暂停）- 等待完成
     if (ctx.state === "suspended") {
-      ctx.resume();
+      await ctx.resume();
     }
+
+    // 等待一帧，确保 AudioContext 完全准备好
+    await new Promise(resolve => requestAnimationFrame(resolve));
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
-    nextNoteTimeRef.current = currentTime + 0.1;
     
     // 如果当前位置不在循环范围内，则重置到开始位置
     // 否则保持当前位置（从暂停恢复）
     if (currentSubdivisionRef.current < startSubdivision || 
         currentSubdivisionRef.current >= endSubdivision) {
       currentSubdivisionRef.current = startSubdivision;
-      onSubdivisionChange?.(startSubdivision);
+      if (onSubdivisionChange) {
+        scheduleAnimationUpdate(startSubdivision, onSubdivisionChange);
+      }
     }
 
+    // 设置初始时间，立即开始调度
+    nextNoteTimeRef.current = currentTime;
+    
+    // 立即运行一次调度器，确保第一个声音立即播放
+    scheduler();
+    
+    // 启动调度器
     schedulerIntervalRef.current = window.setInterval(
       scheduler,
       lookaheadRef.current
@@ -167,6 +204,8 @@ export function usePatternPlayer({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
+    // 清理待处理的动画更新
+    pendingUpdates.length = 0;
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 

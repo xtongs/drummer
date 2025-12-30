@@ -1,21 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
-import { useMetronome } from "./hooks/useMetronome";
+import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
 import { usePatternPlayer } from "./hooks/usePatternPlayer";
 import {
   savePattern,
   loadPatterns,
   deletePattern,
   setCurrentPatternId,
+  getCurrentPatternId,
   generateId,
 } from "./utils/storage";
+import { preInitAudioContext } from "./utils/audioEngine";
 import type { Pattern } from "./types";
 import "./index.css";
 
 function App() {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMetronomePlaying, setIsMetronomePlaying] = useState(false);
+  const [isPatternPlaying, setIsPatternPlaying] = useState(false);
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
   const {
@@ -30,31 +33,125 @@ function App() {
     loadPattern,
   } = usePattern(createEmptyPattern());
 
-  // 加载保存的节奏型列表
+  // 加载保存的节奏型列表并恢复上次选中的tab
   useEffect(() => {
-    setSavedPatterns(loadPatterns());
+    const patterns = loadPatterns();
+    setSavedPatterns(patterns);
+    
+    // 获取上次选中的pattern ID
+    const savedPatternId = getCurrentPatternId();
+    if (savedPatternId) {
+      // 查找对应的pattern
+      const savedPattern = patterns.find((p) => p.id === savedPatternId);
+      if (savedPattern) {
+        // 加载上次选中的pattern
+        loadPattern(savedPattern);
+      } else {
+        // 如果找不到，清除无效的ID
+        setCurrentPatternId(undefined);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 节拍器可视化（四个点）
-  useMetronome({
-    bpm: pattern.bpm,
-    timeSignature: pattern.timeSignature,
-    isPlaying,
-  });
+  // 预先初始化 AudioContext（在用户首次交互时）
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      preInitAudioContext();
+      // 只需要初始化一次
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("touchstart", handleUserInteraction);
+      document.removeEventListener("keydown", handleUserInteraction);
+    };
+
+    document.addEventListener("click", handleUserInteraction, { once: true });
+    document.addEventListener("touchstart", handleUserInteraction, { once: true });
+    document.addEventListener("keydown", handleUserInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("touchstart", handleUserInteraction);
+      document.removeEventListener("keydown", handleUserInteraction);
+    };
+  }, []);
 
   // 节奏型播放
   usePatternPlayer({
     pattern,
-    isPlaying,
+    isPlaying: isPatternPlaying,
     onSubdivisionChange: setCurrentSubdivision,
   });
 
-  const handlePlayToggle = () => {
-    setIsPlaying((prev) => !prev);
+  const handleMetronomePlayToggle = () => {
+    setIsMetronomePlaying((prev) => {
+      const newValue = !prev;
+      // 如果节拍器开始播放，停止节奏型播放
+      if (newValue) {
+        setIsPatternPlaying((patternPrev) => {
+          if (patternPrev) {
+            return false;
+          }
+          return patternPrev;
+        });
+      }
+      return newValue;
+    });
   };
 
+  const handlePatternPlayToggle = () => {
+    setIsPatternPlaying((prev) => {
+      const newValue = !prev;
+      // 如果节奏型开始播放，停止节拍器播放
+      if (newValue) {
+        setIsMetronomePlaying((metronomePrev) => {
+          if (metronomePrev) {
+            return false;
+          }
+          return metronomePrev;
+        });
+      }
+      return newValue;
+    });
+  };
+
+  // 使用 ref 来跟踪上次保存的 pattern，避免不必要的保存
+  const lastSavedPatternRef = useRef<string>("");
+  
+  // 实时保存：当pattern改变且当前已选中tab时，自动保存
+  useEffect(() => {
+    // 检查当前pattern是否是已保存的tab
+    const isSavedPattern = savedPatterns.some((p) => p.id === pattern.id);
+    if (isSavedPattern) {
+      // 使用 JSON.stringify 来比较 pattern 是否真的改变了
+      const patternKey = JSON.stringify({
+        id: pattern.id,
+        bpm: pattern.bpm,
+        timeSignature: pattern.timeSignature,
+        bars: pattern.bars,
+        grid: pattern.grid,
+        loopRange: pattern.loopRange,
+      });
+      
+      // 只在 pattern 真正改变时才保存
+      if (patternKey !== lastSavedPatternRef.current) {
+        lastSavedPatternRef.current = patternKey;
+        // 实时保存当前选中的tab
+        const patternToSave: Pattern = {
+          ...pattern,
+          updatedAt: Date.now(),
+        };
+        savePattern(patternToSave);
+        // 更新savedPatterns列表
+        setSavedPatterns(loadPatterns());
+      }
+    } else {
+      // 如果不是已保存的 tab，重置 ref
+      lastSavedPatternRef.current = "";
+    }
+  }, [pattern, savedPatterns]);
+
   const handleSave = () => {
-    // 找到下一个可用的slot编号
+    // 始终创建新pattern，找到下一个可用的slot编号
     const existingNumbers = savedPatterns
       .map((p) => parseInt(p.name, 10))
       .filter((n) => !isNaN(n));
@@ -62,16 +159,18 @@ function App() {
     if (existingNumbers.length > 0) {
       nextSlot = Math.max(...existingNumbers) + 1;
     }
-
+    
     const patternToSave: Pattern = {
       ...pattern,
       id: generateId(),
       name: String(nextSlot),
       updatedAt: Date.now(),
     };
+    
     savePattern(patternToSave);
     setCurrentPatternId(patternToSave.id);
-    updateName(String(nextSlot));
+    // 加载保存的pattern，这样会自动选中对应的tab
+    loadPattern(patternToSave);
     setSavedPatterns(loadPatterns());
   };
 
@@ -95,9 +194,10 @@ function App() {
       <MetronomeBar
         bpm={pattern.bpm}
         timeSignature={pattern.timeSignature}
-        isPlaying={isPlaying}
+        isPlaying={isPatternPlaying}
         onBPMChange={updateBPM}
-        onPlayToggle={handlePlayToggle}
+        isPatternPlaying={isMetronomePlaying}
+        onPatternPlayToggle={handleMetronomePlayToggle}
       />
       <main className="app-main">
         <PatternEditor
@@ -112,8 +212,14 @@ function App() {
           onDeletePattern={handleDeletePattern}
           savedPatterns={savedPatterns}
           currentBeat={currentSubdivision}
+          isPlaying={isPatternPlaying}
+          onPlayToggle={handlePatternPlayToggle}
         />
       </main>
+      <BottomPlayButton
+        isPlaying={isPatternPlaying}
+        onClick={handlePatternPlayToggle}
+      />
     </div>
   );
 }

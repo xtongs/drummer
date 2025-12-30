@@ -19,10 +19,10 @@
 }
 
 .bar-control-button {
-  width: var(--grid-cell-actual-size);
-  height: var(--grid-cell-actual-size);
-  min-width: var(--grid-cell-actual-size);
-  min-height: var(--grid-cell-actual-size);
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+  min-height: var(--button-size);
   padding: 0;
   display: flex;
   align-items: center;
@@ -32,7 +32,6 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   border-radius: var(--border-radius-sm);
-  transition: all 0.2s ease;
   border: none;
   box-shadow: none;
   cursor: pointer;
@@ -40,7 +39,6 @@
 
 .bar-control-button:hover:not(:disabled) {
   background: var(--color-primary-hover);
-  transform: translateY(-1px);
   box-shadow: none;
 }
 

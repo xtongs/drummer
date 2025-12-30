@@ -1,6 +1,6 @@
 import { GridCell } from "./GridCell";
 import type { Pattern } from "../../types";
-import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import { SUBDIVISIONS_PER_BEAT, GRID_CELL_SIZE } from "../../utils/constants";
 import "./Grid.css";
 
 interface GridProps {
@@ -16,9 +16,8 @@ export function Grid({
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
-
   const [beatsPerBar] = pattern.timeSignature;
-  const cellSize = 27; // 与CSS变量一致
+  const cellSize = GRID_CELL_SIZE; // 使用公共变量，确保第一小节在375px宽度下完整显示
 
   return (
     <div className="grid-container">
@@ -53,25 +52,29 @@ export function Grid({
             })}
           </div>
           <div className="grid-rows">
-            {pattern.grid.map((row, drumIndex) => (
-              <div key={drumIndex} className="grid-row">
-                {row.map((isActive, subdivisionIndex) => {
-                  // currentBeat现在是subdivision index
-                  const isCurrentBeat =
-                    currentBeat !== undefined &&
-                    subdivisionIndex === currentBeat;
+            {pattern.grid.map((row, drumIndex) => {
+              const drumType = pattern.drums[drumIndex];
+              return (
+                <div key={drumIndex} className="grid-row">
+                  {row.map((isActive, subdivisionIndex) => {
+                    // currentBeat现在是subdivision index
+                    const isCurrentBeat =
+                      currentBeat !== undefined &&
+                      subdivisionIndex === currentBeat;
 
-                  return (
-                    <GridCell
-                      key={subdivisionIndex}
-                      isActive={isActive}
-                      onClick={() => onCellClick(drumIndex, subdivisionIndex)}
-                      isCurrentBeat={isCurrentBeat}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+                    return (
+                      <GridCell
+                        key={subdivisionIndex}
+                        isActive={isActive}
+                        onClick={() => onCellClick(drumIndex, subdivisionIndex)}
+                        isCurrentBeat={isCurrentBeat}
+                        drumType={drumType}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

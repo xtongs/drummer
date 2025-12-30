@@ -2,7 +2,10 @@
  * 音频引擎 - 使用 Web Audio API 生成节拍声音
  */
 
+import type { DrumType } from "../types";
+
 let audioContext: AudioContext | null = null;
+let isResuming = false;
 
 /**
  * 获取或创建 AudioContext
@@ -11,11 +14,35 @@ function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
-  // 如果上下文被暂停，恢复它
-  if (audioContext.state === "suspended") {
-    audioContext.resume();
-  }
   return audioContext;
+}
+
+/**
+ * 确保 AudioContext 已恢复（异步）
+ */
+export async function resumeAudioContext(): Promise<void> {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended" && !isResuming) {
+    isResuming = true;
+    try {
+      await ctx.resume();
+    } finally {
+      isResuming = false;
+    }
+  }
+}
+
+/**
+ * 预先初始化 AudioContext（在用户首次交互时调用）
+ */
+export function preInitAudioContext(): void {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") {
+    // 不等待，异步恢复
+    ctx.resume().catch(() => {
+      // 忽略错误，会在实际使用时再次尝试
+    });
+  }
 }
 
 /**
@@ -167,5 +194,51 @@ export function playTom(time: number, frequency: number = 200): void {
 
   oscillator.start(time);
   oscillator.stop(time + 0.1);
+}
+
+/**
+ * 根据鼓件类型播放对应的声音
+ */
+export async function playDrumSound(drumType: DrumType): Promise<void> {
+  await resumeAudioContext();
+  const ctx = getAudioContext();
+  const time = ctx.currentTime;
+
+  switch (drumType) {
+    case "Kick":
+      playKick(time);
+      break;
+    case "Snare":
+      playSnare(time);
+      break;
+    case "Hi-Hat Closed":
+      playHiHat(time);
+      break;
+    case "Hi-Hat Open":
+      // 开合踩镲使用稍长的声音
+      playHiHat(time);
+      break;
+    case "Crash 1":
+    case "Crash 2":
+      // 镲片使用不同的频率
+      playCymbal(time, drumType === "Crash 1" ? 1200 : 1000);
+      break;
+    case "Ride":
+      // 叮叮镲片使用更高的频率
+      playCymbal(time, 800);
+      break;
+    case "Tom 1":
+      playTom(time, 250);
+      break;
+    case "Tom 2":
+      playTom(time, 200);
+      break;
+    case "Tom 3":
+      playTom(time, 150);
+      break;
+    default:
+      // 默认播放军鼓声音
+      playSnare(time);
+  }
 }
 

@@ -15,9 +15,18 @@
   box-sizing: border-box;
 }
 
-/* 只在非 current-beat 状态时应用过渡 */
-.grid-cell:not(.current-beat) {
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+/* 默认暗绿色背景（通过伪元素实现） */
+.grid-cell::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--grid-cell-real-size);
+  height: var(--grid-cell-real-size);
+  background-color: var(--grid-cell-bg);
+  border-radius: var(--border-radius-sm);
+  z-index: 0;
 }
 
 .grid-cell:last-child {
@@ -28,7 +37,6 @@
 }
 
 .grid-cell.active {
-  background-color: var(--color-bg);
   box-shadow: none;
 }
 
@@ -42,18 +50,21 @@
   height: var(--grid-cell-real-size);
   background: var(--color-secondary);
   border-radius: var(--border-radius-sm);
+  z-index: 1;
 }
 
 .grid-cell.current-beat {
   background-color: var(--color-active-bg);
   box-shadow: none;
-  transition: none;
+}
+
+.grid-cell.current-beat::after {
+  display: none;
 }
 
 .grid-cell.active.current-beat {
   background-color: var(--color-active-bg);
   box-shadow: none;
-  transition: none;
 }
 
 .grid-cell.active.current-beat::before {

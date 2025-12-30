@@ -1,6 +1,6 @@
 import { BPMSlider } from "./BPMSlider";
-import { PlayButton } from "./PlayButton";
 import { BeatDots } from "./BeatDots";
+import { PlayButton } from "./PlayButton";
 import { useMetronome } from "../../hooks/useMetronome";
 import "./MetronomeBar.css";
 
@@ -9,7 +9,8 @@ interface MetronomeBarProps {
   timeSignature: [number, number];
   isPlaying: boolean;
   onBPMChange: (bpm: number) => void;
-  onPlayToggle: () => void;
+  isPatternPlaying?: boolean;
+  onPatternPlayToggle?: () => void;
 }
 
 export function MetronomeBar({
@@ -17,12 +18,14 @@ export function MetronomeBar({
   timeSignature,
   isPlaying,
   onBPMChange,
-  onPlayToggle,
+  isPatternPlaying = false,
+  onPatternPlayToggle,
 }: MetronomeBarProps) {
+  // 注意：调换后，isPatternPlaying 现在代表节拍器播放状态
   const { currentBeat } = useMetronome({
     bpm,
     timeSignature,
-    isPlaying,
+    isPlaying: isPatternPlaying,
   });
 
   const min = 40;
@@ -40,7 +43,7 @@ export function MetronomeBar({
 
   return (
     <div className="metronome-bar">
-      {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 播放按钮 */}
+      {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 节奏型播放按钮 */}
       <div className="metronome-row metronome-row-top">
         <BeatDots currentBeat={currentBeat} beatsPerBar={timeSignature[0]} />
         <div className="bpm-control-group">
@@ -87,7 +90,9 @@ export function MetronomeBar({
             </svg>
           </button>
         </div>
-        <PlayButton isPlaying={isPlaying} onClick={onPlayToggle} />
+        {onPatternPlayToggle && (
+          <PlayButton isPlaying={isPatternPlaying} onClick={onPatternPlayToggle} />
+        )}
       </div>
       {/* 第二行：BPM滑块（撑满） */}
       <div className="metronome-row metronome-row-bottom">

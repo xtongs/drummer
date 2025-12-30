@@ -1,7 +1,5 @@
 .grid-container {
   width: 100%;
-  flex: 1;
-  min-height: 0;
   border: none;
   border-radius: var(--border-radius-sm);
   background: transparent;
@@ -16,7 +14,6 @@
 .grid-content {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--grid-border);
 }
 
 .grid-beat-labels {

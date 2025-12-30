@@ -2,6 +2,34 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { playAccent, playBeat } from "../utils/audioEngine";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 
+// 使用 requestAnimationFrame 来同步动画更新
+let metronomeAnimationFrameId: number | null = null;
+const metronomePendingUpdates: Array<{
+  subdivision: number;
+  beat: number;
+  setSubdivision: (sub: number) => void;
+  setBeat: (beat: number) => void;
+}> = [];
+
+function scheduleMetronomeAnimationUpdate(
+  subdivision: number,
+  beat: number,
+  setSubdivision: (sub: number) => void,
+  setBeat: (beat: number) => void
+) {
+  metronomePendingUpdates.push({ subdivision, beat, setSubdivision, setBeat });
+  if (metronomeAnimationFrameId === null) {
+    metronomeAnimationFrameId = requestAnimationFrame(() => {
+      metronomeAnimationFrameId = null;
+      const updates = metronomePendingUpdates.splice(0);
+      updates.forEach(({ subdivision, beat, setSubdivision, setBeat }) => {
+        setSubdivision(subdivision);
+        setBeat(beat);
+      });
+    });
+  }
+}
+
 interface UseMetronomeOptions {
   bpm: number;
   timeSignature: [number, number]; // [beatsPerBar, noteValue]
@@ -53,9 +81,9 @@ export function useMetronome({
         playBeat(time);
       }
 
-      // 更新当前拍
-      setCurrentBeat(beatNumber);
+      // 通知外部 beat 变化（用于节拍器显示）
       onBeatChange?.(beatNumber);
+      // 注意：状态更新由调度器统一管理，避免重复更新
     },
     [onBeatChange]
   );
@@ -75,14 +103,21 @@ export function useMetronome({
       const subdivisionIndex = currentSubdivisionRef.current;
       const beatNumber = Math.floor(subdivisionIndex / SUBDIVISIONS_PER_BEAT);
 
+      // 确保播放时间不早于当前时间
+      const playTime = Math.max(nextNoteTimeRef.current, currentTime);
+
       // 只在每拍的第一 subdivision 播放节拍器声音
       if (subdivisionIndex % SUBDIVISIONS_PER_BEAT === 0) {
-        scheduleNote(beatNumber, nextNoteTimeRef.current);
+        scheduleNote(beatNumber, playTime);
       }
 
-      // 更新当前subdivision
-      setCurrentSubdivision(subdivisionIndex);
-      setCurrentBeat(beatNumber);
+      // 使用 requestAnimationFrame 同步更新动画状态
+      scheduleMetronomeAnimationUpdate(
+        subdivisionIndex,
+        beatNumber,
+        setCurrentSubdivision,
+        setCurrentBeat
+      );
 
       // 移动到下一个subdivision
       currentSubdivisionRef.current = (currentSubdivisionRef.current + 1) % subdivisionsPerBar;
@@ -91,26 +126,33 @@ export function useMetronome({
   }, [subdivisionDuration, subdivisionsPerBar, beatsPerBar, scheduleNote]);
 
   // 开始节拍器
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     const ctx = audioContextRef.current;
     if (!ctx || isRunningRef.current) return;
 
-    // 恢复 AudioContext（如果被暂停）
+    // 恢复 AudioContext（如果被暂停）- 等待完成
     if (ctx.state === "suspended") {
-      ctx.resume();
+      await ctx.resume();
     }
+
+    // 等待一帧，确保 AudioContext 完全准备好
+    await new Promise(resolve => requestAnimationFrame(resolve));
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
-    nextNoteTimeRef.current = currentTime + 0.1; // 延迟一点开始
     
     // 如果当前位置超出范围，则重置到开始位置
     // 否则保持当前位置（从暂停恢复）
     if (currentSubdivisionRef.current >= subdivisionsPerBar) {
       currentSubdivisionRef.current = 0;
-      setCurrentSubdivision(0);
-      setCurrentBeat(0);
+      scheduleMetronomeAnimationUpdate(0, 0, setCurrentSubdivision, setCurrentBeat);
     }
+
+    // 设置初始时间，立即开始调度
+    nextNoteTimeRef.current = currentTime;
+    
+    // 立即运行一次调度器，确保第一个声音立即播放
+    scheduler();
 
     // 启动调度器
     schedulerIntervalRef.current = window.setInterval(
@@ -126,6 +168,8 @@ export function useMetronome({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
+    // 清理待处理的动画更新
+    metronomePendingUpdates.length = 0;
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 

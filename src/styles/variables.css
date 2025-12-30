@@ -34,6 +34,9 @@
   /* 网格边框 */
   --grid-border: rgba(139, 233, 253, 0.2);
 
+  /* 网格单元格默认背景（暗绿色） */
+  --grid-cell-bg: #1a3a2a;
+
   /* 文本颜色（三级） */
   --color-text-tertiary: #6272a4;
 
@@ -46,15 +49,15 @@
   /* 间距 */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
-  --spacing-md: 16px;
+  --spacing-md: 12px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
   /* 字体 - 经典终端字体 */
   --font-family: "Consolas", "Monaco", "Courier New", "Menlo", "Fira Code",
     "Source Code Pro", monospace;
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
   --font-size-md: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 24px;
@@ -73,10 +76,12 @@
   /* 节拍器条高度 */
   --metronome-bar-height: 70px;
 
-  /* 网格单元格大小（16分音符，更小） */
-  --grid-cell-size: 27px;
-  --grid-cell-actual-size: 24px;
-  --grid-cell-real-size: 24px;
+  /* 网格单元格大小（16分音符，与 constants.ts 中的 GRID_CELL_SIZE 保持一致 */
+  --grid-cell-size: 23px;
+  --grid-cell-real-size: 20px;
+
+  /* 按钮大小 */
+  --button-size: 24px;
 
   /* 节拍分隔线 */
   --beat-divider-color: #bd93f9; /* Dracula 紫色 */

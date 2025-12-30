@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import type { Pattern } from "../../types";
 import { getDrumNotation, getSymbolY } from "../../utils/drumNotation";
-import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import { SUBDIVISIONS_PER_BEAT, GRID_CELL_SIZE } from "../../utils/constants";
 import "./DrumNotation.css";
 
 interface DrumNotationProps {
@@ -13,7 +13,7 @@ interface DrumNotationProps {
 const STAFF_TOP = 26; // 顶部和底部留白
 const LINE_SPACING = 34; // 线间距，增大以让符号不挤在一起
 const STAFF_HEIGHT = 4 * LINE_SPACING; // 五条线之间有4个间隔，让五条线平分高度
-const CELL_WIDTH = 27; // 与grid cell size一致（16分音符）
+const CELL_WIDTH = GRID_CELL_SIZE; // 使用公共变量，确保第一小节在375px宽度下完整显示
 const SYMBOL_SIZE = 7;
 
 export function DrumNotation({

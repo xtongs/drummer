@@ -40,6 +40,7 @@ body {
   overflow: hidden;
   box-sizing: border-box;
   padding: var(--spacing-md);
+  padding-bottom: calc(var(--spacing-md) + 64px + max(env(safe-area-inset-bottom), var(--spacing-md)));
   gap: var(--spacing-md);
 }
 
@@ -89,7 +90,6 @@ button {
   cursor: pointer;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius-sm);
-  transition: all 0.2s ease;
   touch-action: manipulation;
   min-height: 44px; /* 触摸友好 */
   min-width: 44px;

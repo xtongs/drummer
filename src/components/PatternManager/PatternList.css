@@ -68,7 +68,6 @@
   font-size: var(--font-size-xl);
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 

@@ -28,8 +28,9 @@ export function PlayButton({ isPlaying, onClick }: PlayButtonProps) {
           height="24"
           viewBox="0 0 24 24"
           fill="currentColor"
+          className="play-icon"
         >
-          <polygon points="5 3 19 12 5 21 5 3" />
+          <polygon points="6 3 18 12 6 21" />
         </svg>
       )}
     </button>
