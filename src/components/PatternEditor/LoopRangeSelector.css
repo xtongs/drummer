@@ -66,3 +66,28 @@
   font-weight: 600;
   margin: 0 var(--spacing-xs);
 }
+
+/* Pattern 选择器 */
+.loop-pattern-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+  min-width: 10px;
+}
+
+.loop-pattern-select:focus {
+  outline: none;
+}
+
+.loop-pattern-select option {
+  background: var(--color-bg);
+  color: var(--color-text);
+}

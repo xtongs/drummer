@@ -1,8 +1,9 @@
-import type { Pattern, StorageData, CellState } from "../types";
+import type { Pattern, StorageData, CellState, CrossPatternLoop } from "../types";
 import { CELL_OFF, CELL_NORMAL } from "../types";
 
 const STORAGE_KEY = "drummer-app-data";
 const METRONOME_BPM_KEY = "drummer-metronome-bpm";
+const CROSS_PATTERN_LOOP_KEY = "drummer-cross-pattern-loop";
 
 /**
  * 迁移旧版 boolean grid 到新版 CellState grid
@@ -163,4 +164,46 @@ export function loadMetronomeBPM(): number | null {
     console.error("Failed to load metronome BPM:", error);
   }
   return null;
+}
+
+/**
+ * 保存跨 Pattern 循环范围
+ */
+export function saveCrossPatternLoop(loop: CrossPatternLoop | undefined): void {
+  try {
+    if (loop === undefined) {
+      localStorage.removeItem(CROSS_PATTERN_LOOP_KEY);
+    } else {
+      localStorage.setItem(CROSS_PATTERN_LOOP_KEY, JSON.stringify(loop));
+    }
+  } catch (error) {
+    console.error("Failed to save cross pattern loop:", error);
+  }
+}
+
+/**
+ * 加载跨 Pattern 循环范围
+ */
+export function loadCrossPatternLoop(): CrossPatternLoop | undefined {
+  try {
+    const data = localStorage.getItem(CROSS_PATTERN_LOOP_KEY);
+    if (data) {
+      const parsed = JSON.parse(data) as CrossPatternLoop;
+      // 验证数据格式
+      if (
+        typeof parsed === "object" &&
+        typeof parsed.startPatternName === "string" &&
+        typeof parsed.startBar === "number" &&
+        typeof parsed.endPatternName === "string" &&
+        typeof parsed.endBar === "number" &&
+        parsed.startBar >= 0 &&
+        parsed.endBar >= 0
+      ) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load cross pattern loop:", error);
+  }
+  return undefined;
 }

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { BPMSlider } from "./BPMSlider";
 import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
@@ -6,6 +7,7 @@ import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
   bpm: number;
+  actualBpm?: number; // 实际 BPM（应用速率后）
   timeSignature: [number, number];
   isPlaying: boolean;
   onBPMChange: (bpm: number) => void;
@@ -15,18 +17,48 @@ interface MetronomeBarProps {
 
 export function MetronomeBar({
   bpm,
+  actualBpm,
   timeSignature,
   isPlaying: _isPlaying,
   onBPMChange,
   isPatternPlaying = false,
   onPatternPlayToggle,
 }: MetronomeBarProps) {
+  // 显示的 BPM：如果有速率应用，显示实际 BPM，否则显示基准 BPM
+  const displayBpm = actualBpm ?? bpm;
+  const hasRateApplied = actualBpm !== undefined && actualBpm !== bpm;
   // 注意：调换后，isPatternPlaying 现在代表节拍器播放状态
+  // 节拍器使用实际 BPM（应用速率后）
   const { currentBeat } = useMetronome({
-    bpm,
+    bpm: displayBpm,
     timeSignature,
     isPlaying: isPatternPlaying,
   });
+
+  // 循环计数器
+  const [loopCount, setLoopCount] = useState(0);
+  const prevBeatRef = useRef<number>(-1);
+
+  // 检测一轮完成（从最后一拍变为第一拍）
+  useEffect(() => {
+    const beatsPerBar = timeSignature[0];
+    // 当从最后一拍变为第一拍时，计数加1
+    if (prevBeatRef.current === beatsPerBar - 1 && currentBeat === 0) {
+      setLoopCount((prev) => prev + 1);
+    }
+    prevBeatRef.current = currentBeat;
+  }, [currentBeat, timeSignature]);
+
+  // 停止播放时重置计数
+  useEffect(() => {
+    if (!isPatternPlaying) {
+      prevBeatRef.current = -1;
+    }
+  }, [isPatternPlaying]);
+
+  const handleResetCount = () => {
+    setLoopCount(0);
+  };
 
   const min = 40;
   const max = 200;
@@ -45,7 +77,9 @@ export function MetronomeBar({
     <div className="metronome-bar">
       {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 节奏型播放按钮 */}
       <div className="metronome-row metronome-row-top">
-        <BeatDots currentBeat={currentBeat} beatsPerBar={timeSignature[0]} />
+        <div className="beat-indicator-group">
+          <BeatDots currentBeat={currentBeat} beatsPerBar={timeSignature[0]} />
+        </div>
         <div className="bpm-control-group">
           <button
             className="bpm-control-button"
@@ -67,7 +101,11 @@ export function MetronomeBar({
             </svg>
           </button>
           <div className="bpm-display">
-            <span className="bpm-value">{bpm}</span>
+            <span
+              className={`bpm-value ${hasRateApplied ? "rate-applied" : ""}`}
+            >
+              {displayBpm}
+            </span>
           </div>
           <button
             className="bpm-control-button"
@@ -90,12 +128,17 @@ export function MetronomeBar({
             </svg>
           </button>
         </div>
-        {onPatternPlayToggle && (
-          <PlayButton
-            isPlaying={isPatternPlaying}
-            onClick={onPatternPlayToggle}
-          />
-        )}
+
+        <div className="loop-count-group">
+          {onPatternPlayToggle && (
+            <PlayButton
+              isPlaying={isPatternPlaying}
+              onClick={onPatternPlayToggle}
+              loopCount={loopCount}
+              onResetCount={handleResetCount}
+            />
+          )}
+        </div>
       </div>
       {/* 第二行：BPM滑块（撑满） */}
       <div className="metronome-row metronome-row-bottom">

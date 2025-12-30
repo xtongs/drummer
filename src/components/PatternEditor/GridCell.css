@@ -36,6 +36,11 @@
   z-index: 0;
 }
 
+/* 交替节拍使用更深的绿色 */
+.grid-cell.alt-beat::after {
+  background-color: var(--grid-cell-bg-alt);
+}
+
 .grid-cell:last-child {
   border-right: none;
 }

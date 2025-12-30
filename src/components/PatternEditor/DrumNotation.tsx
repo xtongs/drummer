@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import type { Pattern } from "../../types";
 import { getDrumNotation, getSymbolY } from "../../utils/drumNotation";
-import { SUBDIVISIONS_PER_BEAT, GRID_CELL_SIZE } from "../../utils/constants";
+import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import { useGridCellSize } from "../../hooks/useGridCellSize";
 import "./DrumNotation.css";
 
 interface DrumNotationProps {
@@ -13,7 +14,6 @@ interface DrumNotationProps {
 const STAFF_TOP = 26; // 顶部和底部留白
 const LINE_SPACING = 34; // 线间距，增大以让符号不挤在一起
 const STAFF_HEIGHT = 4 * LINE_SPACING; // 五条线之间有4个间隔，让五条线平分高度
-const CELL_WIDTH = GRID_CELL_SIZE; // 使用公共变量，确保第一小节在375px宽度下完整显示
 const SYMBOL_SIZE = 7;
 
 export function DrumNotation({
@@ -23,6 +23,7 @@ export function DrumNotation({
 }: DrumNotationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const cellWidth = useGridCellSize(); // 动态计算单元格宽度
 
   // 获取 CSS 变量值
   const getCSSVariable = (varName: string) => {
@@ -38,12 +39,12 @@ export function DrumNotation({
 
   const [beatsPerBar] = pattern.timeSignature;
   const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
-  const totalWidth = totalSubdivisions * CELL_WIDTH;
+  const totalWidth = totalSubdivisions * cellWidth;
   const svgHeight = STAFF_HEIGHT + STAFF_TOP * 2;
 
   // 计算小节分隔线位置
   const barLines = Array.from({ length: pattern.bars + 1 }, (_, i) => ({
-    x: i * beatsPerBar * SUBDIVISIONS_PER_BEAT * CELL_WIDTH,
+    x: i * beatsPerBar * SUBDIVISIONS_PER_BEAT * cellWidth,
     isFirst: i === 0,
     isLast: i === pattern.bars,
   }));
@@ -52,7 +53,7 @@ export function DrumNotation({
   const beatLines = Array.from(
     { length: pattern.bars * beatsPerBar + 1 },
     (_, i) => ({
-      x: i * SUBDIVISIONS_PER_BEAT * CELL_WIDTH,
+      x: i * SUBDIVISIONS_PER_BEAT * cellWidth,
     })
   );
 
@@ -119,9 +120,9 @@ export function DrumNotation({
         {/* 当前播放位置高亮 */}
         {currentBeat !== undefined && currentBeat >= 0 && (
           <rect
-            x={currentBeat * CELL_WIDTH}
+            x={currentBeat * cellWidth}
             y={STAFF_TOP - 10}
-            width={CELL_WIDTH}
+            width={cellWidth}
             height={STAFF_HEIGHT + 20}
             fill={colorWarning}
             opacity={0.4}
@@ -143,7 +144,7 @@ export function DrumNotation({
             if (!isActive) return null;
 
             // 计算符号位置：每个subdivision的中心
-            const symbolX = subdivisionIndex * CELL_WIDTH + CELL_WIDTH / 2;
+            const symbolX = subdivisionIndex * cellWidth + cellWidth / 2;
             const symbol = notation.symbol;
             const key = `symbol-${drumIndex}-${subdivisionIndex}`;
 

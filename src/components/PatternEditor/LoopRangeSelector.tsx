@@ -1,61 +1,187 @@
+import type { Pattern, CrossPatternLoop } from "../../types";
 import "./LoopRangeSelector.css";
 
 interface LoopRangeSelectorProps {
-  bars: number;
-  loopRange: [number, number] | undefined;
-  onLoopRangeChange: (range: [number, number] | undefined) => void;
+  currentPattern: Pattern;
+  savedPatterns: Pattern[];
+  crossPatternLoop: CrossPatternLoop | undefined;
+  onCrossPatternLoopChange: (loop: CrossPatternLoop | undefined) => void;
+  isDraftMode: boolean;
 }
 
 export function LoopRangeSelector({
-  bars,
-  loopRange,
-  onLoopRangeChange,
+  currentPattern,
+  savedPatterns,
+  crossPatternLoop,
+  onCrossPatternLoopChange,
+  isDraftMode,
 }: LoopRangeSelectorProps) {
-  // 如果没有设置循环范围，使用默认值[0, bars-1]，但不保存到pattern
-  const currentRange = loopRange !== undefined ? loopRange : [0, bars - 1];
+  // 按名称排序的 patterns
+  const sortedPatterns = [...savedPatterns].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
-  // 当loopRange为undefined时，点击按钮会设置默认值
-  const updateRange = (newRange: [number, number]) => {
-    onLoopRangeChange(newRange);
+  // 获取 pattern 的小节数
+  const getPatternBars = (patternName: string): number => {
+    if (isDraftMode && patternName === "") {
+      return currentPattern.bars;
+    }
+    const pattern = savedPatterns.find((p) => p.name === patternName);
+    return pattern?.bars ?? currentPattern.bars;
   };
 
-  const handleStartDecrease = () => {
-    const newStart = Math.max(0, currentRange[0] - 1);
-    if (newStart <= currentRange[1]) {
-      updateRange([newStart, currentRange[1]]);
+  // 当前的循环范围
+  // 如果没有设置跨 pattern 循环，默认使用当前 pattern 的范围
+  const defaultLoop: CrossPatternLoop = {
+    startPatternName: isDraftMode ? "" : currentPattern.name,
+    startBar: 0,
+    endPatternName: isDraftMode ? "" : currentPattern.name,
+    endBar: currentPattern.bars - 1,
+  };
+
+  const loop = crossPatternLoop ?? defaultLoop;
+
+  // 获取可选的 patterns 列表（草稿模式用空字符串表示）
+  const patternOptions = isDraftMode
+    ? [{ name: "", label: "○" }, ...sortedPatterns.map((p) => ({ name: p.name, label: p.name }))]
+    : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
+
+  // 比较两个位置的先后顺序
+  const comparePositions = (
+    patternName1: string,
+    bar1: number,
+    patternName2: string,
+    bar2: number
+  ): number => {
+    if (patternName1 === patternName2) {
+      return bar1 - bar2;
+    }
+    // 空字符串（草稿）排在最前面
+    if (patternName1 === "") return -1;
+    if (patternName2 === "") return 1;
+    return patternName1.localeCompare(patternName2);
+  };
+
+  const handleStartPatternChange = (newPatternName: string) => {
+    const newBars = getPatternBars(newPatternName);
+    let newStartBar = Math.min(loop.startBar, newBars - 1);
+    
+    // 确保开始位置不超过结束位置
+    if (comparePositions(newPatternName, newStartBar, loop.endPatternName, loop.endBar) > 0) {
+      // 如果新的开始位置超过了结束位置，调整结束位置
+      onCrossPatternLoopChange({
+        startPatternName: newPatternName,
+        startBar: newStartBar,
+        endPatternName: newPatternName,
+        endBar: newStartBar,
+      });
+    } else {
+      onCrossPatternLoopChange({
+        ...loop,
+        startPatternName: newPatternName,
+        startBar: newStartBar,
+      });
     }
   };
 
-  const handleStartIncrease = () => {
-    const newStart = Math.min(bars - 1, currentRange[0] + 1);
-    if (newStart <= currentRange[1]) {
-      updateRange([newStart, currentRange[1]]);
+  const handleEndPatternChange = (newPatternName: string) => {
+    const newBars = getPatternBars(newPatternName);
+    let newEndBar = Math.min(loop.endBar, newBars - 1);
+    
+    // 确保结束位置不早于开始位置
+    if (comparePositions(loop.startPatternName, loop.startBar, newPatternName, newEndBar) > 0) {
+      // 如果新的结束位置早于开始位置，调整开始位置
+      onCrossPatternLoopChange({
+        startPatternName: newPatternName,
+        startBar: newEndBar,
+        endPatternName: newPatternName,
+        endBar: newEndBar,
+      });
+    } else {
+      onCrossPatternLoopChange({
+        ...loop,
+        endPatternName: newPatternName,
+        endBar: newEndBar,
+      });
     }
   };
 
-  const handleEndDecrease = () => {
-    const newEnd = Math.max(0, currentRange[1] - 1);
-    if (currentRange[0] <= newEnd) {
-      updateRange([currentRange[0], newEnd]);
+  const handleStartBarDecrease = () => {
+    if (loop.startBar > 0) {
+      onCrossPatternLoopChange({
+        ...loop,
+        startBar: loop.startBar - 1,
+      });
     }
   };
 
-  const handleEndIncrease = () => {
-    const newEnd = Math.min(bars - 1, currentRange[1] + 1);
-    if (currentRange[0] <= newEnd) {
-      updateRange([currentRange[0], newEnd]);
+  const handleStartBarIncrease = () => {
+    const maxBar = getPatternBars(loop.startPatternName) - 1;
+    const newStartBar = Math.min(maxBar, loop.startBar + 1);
+    
+    // 确保不超过结束位置
+    if (comparePositions(loop.startPatternName, newStartBar, loop.endPatternName, loop.endBar) <= 0) {
+      onCrossPatternLoopChange({
+        ...loop,
+        startBar: newStartBar,
+      });
     }
   };
+
+  const handleEndBarDecrease = () => {
+    const newEndBar = loop.endBar - 1;
+    
+    // 确保不早于开始位置
+    if (newEndBar >= 0 && comparePositions(loop.startPatternName, loop.startBar, loop.endPatternName, newEndBar) <= 0) {
+      onCrossPatternLoopChange({
+        ...loop,
+        endBar: newEndBar,
+      });
+    }
+  };
+
+  const handleEndBarIncrease = () => {
+    const maxBar = getPatternBars(loop.endPatternName) - 1;
+    if (loop.endBar < maxBar) {
+      onCrossPatternLoopChange({
+        ...loop,
+        endBar: loop.endBar + 1,
+      });
+    }
+  };
+
+  // 判断按钮是否禁用
+  const canDecreaseStartBar = loop.startBar > 0;
+  const canIncreaseStartBar = 
+    loop.startBar < getPatternBars(loop.startPatternName) - 1 &&
+    comparePositions(loop.startPatternName, loop.startBar + 1, loop.endPatternName, loop.endBar) <= 0;
+  const canDecreaseEndBar = 
+    loop.endBar > 0 &&
+    comparePositions(loop.startPatternName, loop.startBar, loop.endPatternName, loop.endBar - 1) <= 0;
+  const canIncreaseEndBar = loop.endBar < getPatternBars(loop.endPatternName) - 1;
 
   return (
     <div className="loop-range-selector">
-      <span className="loop-range-text"></span>
       <div className="loop-range-controls">
+        {/* 开始位置 */}
         <div className="loop-range-item">
+          {/* Pattern 选择 */}
+          <select
+            className="loop-pattern-select"
+            value={loop.startPatternName}
+            onChange={(e) => handleStartPatternChange(e.target.value)}
+          >
+            {patternOptions.map((opt) => (
+              <option key={opt.name} value={opt.name}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {/* 小节选择 */}
           <button
             className="loop-range-button"
-            onClick={handleStartDecrease}
-            disabled={currentRange[0] <= 0}
+            onClick={handleStartBarDecrease}
+            disabled={!canDecreaseStartBar}
             aria-label="Decrease start bar"
           >
             <svg
@@ -71,11 +197,11 @@ export function LoopRangeSelector({
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <span className="loop-range-value">{currentRange[0] + 1}</span>
+          <span className="loop-range-value">{loop.startBar + 1}</span>
           <button
             className="loop-range-button"
-            onClick={handleStartIncrease}
-            disabled={currentRange[0] >= currentRange[1]}
+            onClick={handleStartBarIncrease}
+            disabled={!canIncreaseStartBar}
             aria-label="Increase start bar"
           >
             <svg
@@ -93,12 +219,28 @@ export function LoopRangeSelector({
             </svg>
           </button>
         </div>
+
         <span className="loop-range-separator">-</span>
+
+        {/* 结束位置 */}
         <div className="loop-range-item">
+          {/* Pattern 选择 */}
+          <select
+            className="loop-pattern-select"
+            value={loop.endPatternName}
+            onChange={(e) => handleEndPatternChange(e.target.value)}
+          >
+            {patternOptions.map((opt) => (
+              <option key={opt.name} value={opt.name}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {/* 小节选择 */}
           <button
             className="loop-range-button"
-            onClick={handleEndDecrease}
-            disabled={currentRange[1] <= currentRange[0]}
+            onClick={handleEndBarDecrease}
+            disabled={!canDecreaseEndBar}
             aria-label="Decrease end bar"
           >
             <svg
@@ -114,11 +256,11 @@ export function LoopRangeSelector({
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <span className="loop-range-value">{currentRange[1] + 1}</span>
+          <span className="loop-range-value">{loop.endBar + 1}</span>
           <button
             className="loop-range-button"
-            onClick={handleEndIncrease}
-            disabled={currentRange[1] >= bars - 1}
+            onClick={handleEndBarIncrease}
+            disabled={!canIncreaseEndBar}
             aria-label="Increase end bar"
           >
             <svg

@@ -1,6 +1,7 @@
 import { GridCell } from "./GridCell";
 import type { Pattern } from "../../types";
-import { SUBDIVISIONS_PER_BEAT, GRID_CELL_SIZE } from "../../utils/constants";
+import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import { useGridCellSize } from "../../hooks/useGridCellSize";
 import "./Grid.css";
 
 interface GridProps {
@@ -19,7 +20,7 @@ export function Grid({
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
   const [beatsPerBar] = pattern.timeSignature;
-  const cellSize = GRID_CELL_SIZE;
+  const cellSize = useGridCellSize();
 
   return (
     <div className="grid-container">
@@ -73,6 +74,7 @@ export function Grid({
                         }
                         isCurrentBeat={isCurrentBeat}
                         drumType={drumType}
+                        subdivisionIndex={subdivisionIndex}
                       />
                     );
                   })}

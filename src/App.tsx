@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
-import { usePatternPlayer } from "./hooks/usePatternPlayer";
+import { useMultiPatternPlayer } from "./hooks/useMultiPatternPlayer";
 import {
   savePattern,
   loadPatterns,
@@ -13,10 +13,12 @@ import {
   generateId,
   saveMetronomeBPM,
   loadMetronomeBPM,
+  saveCrossPatternLoop,
+  loadCrossPatternLoop,
 } from "./utils/storage";
 import { DEFAULT_BPM } from "./utils/constants";
 import { preInitAudioContext } from "./utils/audioEngine";
-import type { Pattern } from "./types";
+import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
 
 function App() {
@@ -30,6 +32,15 @@ function App() {
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
     return loadMetronomeBPM() ?? DEFAULT_BPM;
   });
+  // BPM 速率倍数
+  const [bpmRate, setBpmRate] = useState<number>(1);
+  // 跨 Pattern 循环范围（从本地存储加载初始值）
+  const [crossPatternLoop, setCrossPatternLoop] = useState<CrossPatternLoop | undefined>(() => 
+    loadCrossPatternLoop()
+  );
+  
+  // 计算实际播放 BPM
+  const actualBPM = Math.round(metronomeBPM * bpmRate);
   const {
     pattern,
     updateBPM,
@@ -38,7 +49,6 @@ function App() {
     addBar,
     removeBar,
     clearGrid,
-    setLoopRange,
     loadPattern,
     resetPattern,
   } = usePattern(createEmptyPattern());
@@ -47,7 +57,16 @@ function App() {
   const handleBPMChange = (bpm: number) => {
     setMetronomeBPM(bpm);
     saveMetronomeBPM(bpm);
-    updateBPM(bpm); // 同时更新 pattern 的 BPM
+    // 使用实际 BPM 更新 pattern
+    const newActualBPM = Math.round(bpm * bpmRate);
+    updateBPM(newActualBPM);
+  };
+
+  // 当速率改变时，更新 pattern 的 BPM
+  const handleBpmRateChange = (rate: number) => {
+    setBpmRate(rate);
+    const newActualBPM = Math.round(metronomeBPM * rate);
+    updateBPM(newActualBPM);
   };
 
   // 选择草稿模式
@@ -89,6 +108,11 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 当 crossPatternLoop 改变时保存到本地存储
+  useEffect(() => {
+    saveCrossPatternLoop(crossPatternLoop);
+  }, [crossPatternLoop]);
+
   // 预先初始化 AudioContext（在用户首次交互时）
   useEffect(() => {
     const handleUserInteraction = () => {
@@ -129,11 +153,32 @@ function App() {
     };
   }, []);
 
-  // 节奏型播放
-  usePatternPlayer({
-    pattern,
+  // 播放时切换 pattern 的回调
+  const handlePlayingPatternChange = (patternName: string) => {
+    if (patternName === "") {
+      // 切换到草稿
+      setIsDraftMode(true);
+      setCurrentPatternId(undefined);
+    } else {
+      // 切换到保存的 pattern
+      const targetPattern = savedPatterns.find((p) => p.name === patternName);
+      if (targetPattern && targetPattern.id !== pattern.id) {
+        setIsDraftMode(false);
+        loadPattern(targetPattern);
+        setCurrentPatternId(targetPattern.id);
+      }
+    }
+  };
+
+  // 节奏型播放（支持跨 pattern 循环）
+  useMultiPatternPlayer({
+    currentPattern: pattern,
+    savedPatterns,
+    crossPatternLoop,
     isPlaying: isPatternPlaying,
+    isDraftMode,
     onSubdivisionChange: setCurrentSubdivision,
+    onPatternChange: handlePlayingPatternChange,
   });
 
   const handleMetronomePlayToggle = () => {
@@ -168,62 +213,48 @@ function App() {
     });
   };
 
-  // 使用 ref 来跟踪上次保存的 pattern，避免不必要的保存
-  const lastSavedPatternRef = useRef<string>("");
-
-  // 实时保存：当pattern改变且当前已选中tab时，自动保存（草稿模式不保存）
-  useEffect(() => {
-    // 草稿模式不自动保存
-    if (isDraftMode) {
-      lastSavedPatternRef.current = "";
-      return;
-    }
-
-    // 检查当前pattern是否是已保存的tab
-    const isSavedPattern = savedPatterns.some((p) => p.id === pattern.id);
-    if (isSavedPattern) {
-      // 使用 JSON.stringify 来比较 pattern 是否真的改变了
-      const patternKey = JSON.stringify({
-        id: pattern.id,
-        bpm: pattern.bpm,
-        timeSignature: pattern.timeSignature,
-        bars: pattern.bars,
-        grid: pattern.grid,
-        loopRange: pattern.loopRange,
-      });
-
-      // 只在 pattern 真正改变时才保存
-      if (patternKey !== lastSavedPatternRef.current) {
-        lastSavedPatternRef.current = patternKey;
-        // 实时保存当前选中的tab
-        const patternToSave: Pattern = {
-          ...pattern,
-          updatedAt: Date.now(),
-        };
-        savePattern(patternToSave);
-        // 更新savedPatterns列表
-        setSavedPatterns(loadPatterns());
-      }
-    } else {
-      // 如果不是已保存的 tab，重置 ref
-      lastSavedPatternRef.current = "";
-    }
-  }, [pattern, savedPatterns]);
+  // 保存当前正在编辑的 pattern（非草稿模式下）
+  const handleSaveCurrentPattern = () => {
+    if (isDraftMode) return;
+    
+    const patternToSave: Pattern = {
+      ...pattern,
+      updatedAt: Date.now(),
+    };
+    savePattern(patternToSave);
+    setSavedPatterns(loadPatterns());
+  };
 
   const handleSave = () => {
-    // 始终创建新pattern，找到下一个可用的slot编号
-    const existingNumbers = savedPatterns
-      .map((p) => parseInt(p.name, 10))
-      .filter((n) => !isNaN(n));
-    let nextSlot = 1;
-    if (existingNumbers.length > 0) {
-      nextSlot = Math.max(...existingNumbers) + 1;
+    // 始终创建新pattern，找到下一个可用的字母（A-Z）
+    const existingLetters = savedPatterns
+      .map((p) => p.name)
+      .filter((name) => /^[A-Z]$/.test(name));
+    
+    // 找到下一个可用的字母
+    let nextLetter = "A";
+    if (existingLetters.length > 0) {
+      // 找出已使用的字母，获取下一个
+      const usedCodes = existingLetters.map((l) => l.charCodeAt(0));
+      const maxCode = Math.max(...usedCodes);
+      // 如果还没超过 Z，使用下一个字母
+      if (maxCode < 90) {
+        nextLetter = String.fromCharCode(maxCode + 1);
+      } else {
+        // 如果已经到 Z，找第一个未使用的字母
+        for (let code = 65; code <= 90; code++) {
+          if (!usedCodes.includes(code)) {
+            nextLetter = String.fromCharCode(code);
+            break;
+          }
+        }
+      }
     }
 
     const patternToSave: Pattern = {
       ...pattern,
       id: generateId(),
-      name: String(nextSlot),
+      name: nextLetter,
       updatedAt: Date.now(),
     };
 
@@ -264,6 +295,7 @@ function App() {
     <div className="app">
       <MetronomeBar
         bpm={metronomeBPM}
+        actualBpm={actualBPM}
         timeSignature={pattern.timeSignature}
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
@@ -278,8 +310,10 @@ function App() {
           onAddBar={addBar}
           onRemoveBar={removeBar}
           onClearGrid={clearGrid}
-          onLoopRangeChange={setLoopRange}
+          crossPatternLoop={crossPatternLoop}
+          onCrossPatternLoopChange={setCrossPatternLoop}
           onSave={handleSave}
+          onSaveCurrentPattern={handleSaveCurrentPattern}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
           onStopAllPlaying={handleStopAllPlaying}
@@ -294,6 +328,8 @@ function App() {
       <BottomPlayButton
         isPlaying={isPatternPlaying}
         onClick={handlePatternPlayToggle}
+        bpmRate={bpmRate}
+        onBpmRateChange={handleBpmRateChange}
       />
     </div>
   );

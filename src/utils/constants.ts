@@ -24,7 +24,9 @@ export const MAX_BPM = 200;
 // 16分音符细分（每拍4个格子）
 export const SUBDIVISIONS_PER_BEAT = 4;
 
-// 网格单元格大小（像素），调整以确保第一小节在375px宽度下完整显示
+// 网格单元格基准大小（像素）
+// 实际使用动态计算的值，参见 useGridCellSize hook
+// 以 393px 宽度下 cellSize = 23px 为基准，最大容器宽度 500px
 export const GRID_CELL_SIZE = 23;
 
 // 鼓谱符号映射
@@ -43,7 +45,7 @@ export const DRUM_NOTATION: Record<
   "Hi-Hat Closed": { position: "above", symbol: "x", line: 0 },
   Snare: { position: "center", symbol: "●", line: 0 },
   "Tom 1": { position: "below", symbol: "○", line: 0.5 }, // 一嗵（高音）
-  "Tom 2": { position: "below", symbol: "○", line: 1 },   // 二嗵（中音）
+  "Tom 2": { position: "below", symbol: "○", line: 1 }, // 二嗵（中音）
   "Tom 3": { position: "below", symbol: "○", line: 1.5 }, // 三嗵（低音）
   Kick: { position: "below", symbol: "●", line: 2 },
 };

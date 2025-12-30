@@ -24,6 +24,18 @@
   margin-bottom: var(--spacing-md);
 }
 
+.beat-indicator-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.loop-count-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
 .metronome-row-bottom {
   width: 100%;
 }
@@ -85,6 +97,12 @@
   line-height: 1;
   color: var(--color-primary);
   text-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* 速率应用时的样式（非1倍速） */
+.bpm-value.rate-applied {
+  color: var(--color-warning-hover);
+  text-shadow: 0 0 20px rgba(255, 184, 108, 0.4);
 }
 
 .bpm-unit {

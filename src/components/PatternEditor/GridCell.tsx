@@ -10,6 +10,7 @@ interface GridCellProps {
   onToggleGhost: () => void;
   isCurrentBeat?: boolean;
   drumType?: DrumType;
+  subdivisionIndex?: number; // 用于计算交替背景色
 }
 
 const LONG_PRESS_DURATION = 300; // 长按阈值（毫秒）
@@ -20,6 +21,7 @@ export function GridCell({
   onToggleGhost,
   isCurrentBeat,
   drumType,
+  subdivisionIndex = 0,
 }: GridCellProps) {
   // 防止重复触发
   const lastTriggerTimeRef = useRef<number>(0);
@@ -32,6 +34,8 @@ export function GridCell({
 
   const isActive = cellState !== CELL_OFF;
   const isGhost = cellState === CELL_GHOST;
+  // 每4列为一组，奇数组使用交替背景色
+  const isAlternateBeat = Math.floor(subdivisionIndex / 4) % 2 === 1;
 
   const handleInteraction = useCallback(() => {
     const now = Date.now();
@@ -97,7 +101,7 @@ export function GridCell({
     <button
       className={`grid-cell ${isActive ? "active" : ""} ${
         isGhost ? "ghost" : ""
-      } ${isCurrentBeat ? "current-beat" : ""}`}
+      } ${isCurrentBeat ? "current-beat" : ""} ${isAlternateBeat ? "alt-beat" : ""}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}

@@ -56,7 +56,8 @@ export function BPMSlider({
     (e: React.PointerEvent) => {
       setIsDragging(true);
       handlePointerMove(e.clientX);
-      e.preventDefault();
+      // 捕获指针以确保拖动时事件不会丢失
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
     [handlePointerMove]
   );

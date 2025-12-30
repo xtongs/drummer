@@ -4,8 +4,8 @@ import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
 import { PatternTabs } from "../PatternManager/PatternTabs";
-import type { Pattern } from "../../types";
-import { GRID_CELL_SIZE } from "../../utils/constants";
+import type { Pattern, CrossPatternLoop } from "../../types";
+import { useGridCellSize } from "../../hooks/useGridCellSize";
 import "./PatternEditor.css";
 
 // 自定义快速动画滚动函数
@@ -45,8 +45,10 @@ interface PatternEditorProps {
   onAddBar: () => void;
   onRemoveBar: () => void;
   onClearGrid: () => void;
-  onLoopRangeChange: (range: [number, number] | undefined) => void;
+  crossPatternLoop: CrossPatternLoop | undefined;
+  onCrossPatternLoopChange: (loop: CrossPatternLoop | undefined) => void;
   onSave: () => void;
+  onSaveCurrentPattern: () => void;
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
   onStopAllPlaying?: () => void;
@@ -65,8 +67,10 @@ export function PatternEditor({
   onAddBar,
   onRemoveBar,
   onClearGrid,
-  onLoopRangeChange,
+  crossPatternLoop,
+  onCrossPatternLoopChange,
   onSave,
+  onSaveCurrentPattern,
   onLoadFromSlot,
   onDeletePattern,
   onStopAllPlaying,
@@ -80,7 +84,7 @@ export function PatternEditor({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
   const lastScrollTargetRef = useRef<number | null>(null); // 记录上次滚动目标
-  const cellSize = GRID_CELL_SIZE; // 使用公共变量，确保第一小节在375px宽度下完整显示
+  const cellSize = useGridCellSize(); // 动态计算单元格大小
 
   // 执行滚动的函数
   const doScroll = useCallback((container: HTMLElement, targetLeft: number) => {
@@ -150,9 +154,11 @@ export function PatternEditor({
           canRemove={pattern.bars > 1}
         />
         <LoopRangeSelector
-          bars={pattern.bars}
-          loopRange={pattern.loopRange}
-          onLoopRangeChange={onLoopRangeChange}
+          currentPattern={pattern}
+          savedPatterns={savedPatterns}
+          crossPatternLoop={crossPatternLoop}
+          onCrossPatternLoopChange={onCrossPatternLoopChange}
+          isDraftMode={isDraftMode}
         />
       </div>
       <div className="pattern-editor-actions">
@@ -167,6 +173,29 @@ export function PatternEditor({
           />
         </div>
         <div className="pattern-editor-actions-right">
+          {/* 保存按钮 - 仅在非草稿模式下显示 */}
+          {!isDraftMode && savedPatterns.some((p) => p.id === pattern.id) && (
+            <button
+              className="action-button save-current-button"
+              onClick={onSaveCurrentPattern}
+              aria-label="Save Pattern"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+            </button>
+          )}
           {savedPatterns.some((p) => p.id === pattern.id) && (
             <button
               className="action-button delete-button"

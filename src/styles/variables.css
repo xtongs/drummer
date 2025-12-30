@@ -34,8 +34,9 @@
   /* 网格边框 */
   --grid-border: rgba(139, 233, 253, 0.2);
 
-  /* 网格单元格默认背景（暗绿色） */
+  /* 网格单元格默认背景（暗绿色，两种深浅交替） */
   --grid-cell-bg: #1a3a2a;
+  --grid-cell-bg-alt: #1a3a2a94; /* 更深的绿色，用于交替显示 */
 
   /* 文本颜色（三级） */
   --color-text-tertiary: #6272a4;
@@ -76,9 +77,14 @@
   /* 节拍器条高度 */
   --metronome-bar-height: 70px;
 
-  /* 网格单元格大小（16分音符，与 constants.ts 中的 GRID_CELL_SIZE 保持一致 */
-  --grid-cell-size: 23px;
-  --grid-cell-real-size: 20px;
+  /* 网格单元格大小（动态计算）
+   * 基准：393px 宽度下 cellSize = 23px
+   * 比例：23 / 393 ≈ 5.852%
+   * 最大宽度 500px 时：500 * 23 / 393 ≈ 29.26px
+   * real-size 与 cell-size 比例：20 / 23 ≈ 0.87
+   */
+  --grid-cell-size: min(5.852vw, 29.26px);
+  --grid-cell-real-size: min(5.09vw, 25.45px);
 
   /* 按钮大小 */
   --button-size: 24px;

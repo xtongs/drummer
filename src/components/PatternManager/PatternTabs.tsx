@@ -23,13 +23,8 @@ export function PatternTabs({
     onSelectPattern(pattern);
   };
 
-  // 按名称排序（数字顺序）
+  // 按名称排序（字母顺序）
   const sortedPatterns = [...patterns].sort((a, b) => {
-    const numA = parseInt(a.name, 10);
-    const numB = parseInt(b.name, 10);
-    if (!isNaN(numA) && !isNaN(numB)) {
-      return numA - numB;
-    }
     return a.name.localeCompare(b.name);
   });
 

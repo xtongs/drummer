@@ -14,8 +14,16 @@ export type DrumType =
 // 拍号类型
 export type TimeSignature = [number, number]; // [beatsPerBar, noteValue]
 
-// 循环范围
+// 循环范围（单个 pattern 内）
 export type LoopRange = [number, number]; // [startBar, endBar]
+
+// 跨 Pattern 循环范围
+export interface CrossPatternLoop {
+  startPatternName: string; // pattern 名称 (A, B, C...)
+  startBar: number;         // 0-based 小节索引
+  endPatternName: string;
+  endBar: number;
+}
 
 // 单元格状态：0=未激活, 1=正常, 2=鬼音
 export type CellState = 0 | 1 | 2;
