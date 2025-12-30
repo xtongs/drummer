@@ -8,9 +8,9 @@ let audioContext: AudioContext | null = null;
 let isResuming = false;
 
 /**
- * 获取或创建 AudioContext
+ * 获取或创建 AudioContext（共享实例）
  */
-function getAudioContext(): AudioContext {
+export function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }

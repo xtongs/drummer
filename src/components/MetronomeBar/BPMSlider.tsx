@@ -87,7 +87,7 @@ export function BPMSlider({
   }, [isDragging, handlePointerMoveEvent, handlePointerUp]);
 
   const percentage = getPercentage(bpm);
-  // 限制滑块位置在 0% 到 100% 之间，考虑滑块的宽度
+  // 限制滑块位置在 0% 到 100% 之间
   const thumbPosition = Math.max(0, Math.min(100, percentage));
 
   return (
@@ -104,9 +104,9 @@ export function BPMSlider({
         <div
           className="bpm-slider-thumb"
           style={{ 
-            left: `${thumbPosition}%`,
-            '--thumb-position': `${thumbPosition}%`
-          } as React.CSSProperties}
+            // 滑块左边缘从 0 移动到 (100% - 20px)，确保永远不超出边界
+            left: `calc((100% - 20px) * ${thumbPosition / 100})`,
+          }}
         />
       </div>
     </div>

@@ -3,6 +3,8 @@
   align-items: center;
   width: 100%;
   box-sizing: border-box;
+  --thumb-size: 20px;
+  --thumb-radius: 10px;
 }
 
 .bpm-slider-track {
@@ -31,20 +33,22 @@
 .bpm-slider-thumb {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
+  /* 滑块左边缘从 0 移动到 (100% - thumb-size)，这样永远不会超出边界 */
+  /* left 由 JS 计算：calc((100% - thumb-size) * percentage / 100) */
+  transform: translateY(-50%);
+  width: var(--thumb-size);
+  height: var(--thumb-size);
   background-color: var(--color-primary);
   border: none;
   border-radius: 50%;
   cursor: grab;
   box-shadow: none;
-  transition: all 0.1s ease;
+  transition: left 0.1s ease, transform 0.1s ease;
 }
 
 .bpm-slider-thumb:active {
   cursor: grabbing;
-  transform: translate(-50%, -50%) scale(1.2);
+  transform: translateY(-50%) scale(1.2);
 }
 
 .bpm-slider-track:hover .bpm-slider-thumb {

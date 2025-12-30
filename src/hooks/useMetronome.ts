@@ -1,33 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { playAccent, playBeat } from "../utils/audioEngine";
+import { playAccent, playBeat, getAudioContext } from "../utils/audioEngine";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 
-// 使用 requestAnimationFrame 来同步动画更新
-let metronomeAnimationFrameId: number | null = null;
-const metronomePendingUpdates: Array<{
-  subdivision: number;
-  beat: number;
-  setSubdivision: (sub: number) => void;
-  setBeat: (beat: number) => void;
-}> = [];
-
+// 使用 setTimeout + requestAnimationFrame 来同步动画更新
+// 确保动画与音频播放时间对齐
 function scheduleMetronomeAnimationUpdate(
   subdivision: number,
   beat: number,
   setSubdivision: (sub: number) => void,
-  setBeat: (beat: number) => void
+  setBeat: (beat: number) => void,
+  delayMs: number
 ) {
-  metronomePendingUpdates.push({ subdivision, beat, setSubdivision, setBeat });
-  if (metronomeAnimationFrameId === null) {
-    metronomeAnimationFrameId = requestAnimationFrame(() => {
-      metronomeAnimationFrameId = null;
-      const updates = metronomePendingUpdates.splice(0);
-      updates.forEach(({ subdivision, beat, setSubdivision, setBeat }) => {
-        setSubdivision(subdivision);
-        setBeat(beat);
-      });
+  // 使用 setTimeout 延迟到声音播放时间，然后使用 requestAnimationFrame 确保在渲染帧更新
+  const timeoutDelay = Math.max(0, delayMs);
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      setSubdivision(subdivision);
+      setBeat(beat);
     });
-  }
+  }, timeoutDelay);
 }
 
 interface UseMetronomeOptions {
@@ -45,20 +36,11 @@ export function useMetronome({
 }: UseMetronomeOptions) {
   const [currentBeat, setCurrentBeat] = useState(0); // beat number (0-3 for 4/4)
   const [currentSubdivision, setCurrentSubdivision] = useState(0); // subdivision index (0-15 for 4 beats * 4)
-  const audioContextRef = useRef<AudioContext | null>(null);
   const nextNoteTimeRef = useRef<number>(0);
   const scheduleAheadTimeRef = useRef<number>(0.1); // 提前调度时间（秒）
   const lookaheadRef = useRef<number>(25); // 检查间隔（毫秒）
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
-
-  // 初始化 AudioContext
-  useEffect(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    }
-  }, []);
 
   // 计算每拍时长（秒）
   const beatDuration = (60.0 / bpm) * (4.0 / timeSignature[1]);
@@ -69,9 +51,6 @@ export function useMetronome({
   // 调度下一个节拍
   const scheduleNote = useCallback(
     (beatNumber: number, time: number) => {
-      const ctx = audioContextRef.current;
-      if (!ctx) return;
-
       // 播放声音
       if (beatNumber === 0) {
         // 第一拍（重拍）
@@ -93,8 +72,8 @@ export function useMetronome({
 
   // 调度器函数（16分音符精度）
   const scheduler = useCallback(() => {
-    const ctx = audioContextRef.current;
-    if (!ctx || !isRunningRef.current) return;
+    const ctx = getAudioContext();
+    if (!isRunningRef.current) return;
 
     const currentTime = ctx.currentTime;
 
@@ -105,18 +84,22 @@ export function useMetronome({
 
       // 确保播放时间不早于当前时间
       const playTime = Math.max(nextNoteTimeRef.current, currentTime);
+      
+      // 计算动画延迟时间（毫秒），使动画与声音同步
+      const delayMs = (playTime - currentTime) * 1000;
 
       // 只在每拍的第一 subdivision 播放节拍器声音
       if (subdivisionIndex % SUBDIVISIONS_PER_BEAT === 0) {
         scheduleNote(beatNumber, playTime);
       }
 
-      // 使用 requestAnimationFrame 同步更新动画状态
+      // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
       scheduleMetronomeAnimationUpdate(
         subdivisionIndex,
         beatNumber,
         setCurrentSubdivision,
-        setCurrentBeat
+        setCurrentBeat,
+        delayMs
       );
 
       // 移动到下一个subdivision
@@ -127,8 +110,8 @@ export function useMetronome({
 
   // 开始节拍器
   const start = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (!ctx || isRunningRef.current) return;
+    const ctx = getAudioContext();
+    if (isRunningRef.current) return;
 
     // 恢复 AudioContext（如果被暂停）- 等待完成
     if (ctx.state === "suspended") {
@@ -145,7 +128,7 @@ export function useMetronome({
     // 否则保持当前位置（从暂停恢复）
     if (currentSubdivisionRef.current >= subdivisionsPerBar) {
       currentSubdivisionRef.current = 0;
-      scheduleMetronomeAnimationUpdate(0, 0, setCurrentSubdivision, setCurrentBeat);
+      scheduleMetronomeAnimationUpdate(0, 0, setCurrentSubdivision, setCurrentBeat, 0);
     }
 
     // 设置初始时间，立即开始调度
@@ -168,8 +151,6 @@ export function useMetronome({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
-    // 清理待处理的动画更新
-    metronomePendingUpdates.length = 0;
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 

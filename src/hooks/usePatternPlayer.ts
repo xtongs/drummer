@@ -7,23 +7,23 @@ import {
   playHiHat,
   playCymbal,
   playTom,
+  getAudioContext,
 } from "../utils/audioEngine";
 
-// 使用 requestAnimationFrame 来同步动画更新
-let animationFrameId: number | null = null;
-const pendingUpdates: Array<{ subdivision: number; callback: (subdivision: number) => void }> = [];
-
-function scheduleAnimationUpdate(subdivision: number, callback: (subdivision: number) => void) {
-  pendingUpdates.push({ subdivision, callback });
-  if (animationFrameId === null) {
-    animationFrameId = requestAnimationFrame(() => {
-      animationFrameId = null;
-      const updates = pendingUpdates.splice(0);
-      updates.forEach(({ subdivision, callback }) => {
-        callback(subdivision);
-      });
+// 使用 setTimeout + requestAnimationFrame 来同步动画更新
+// 确保动画与音频播放时间对齐
+function scheduleAnimationUpdate(
+  subdivision: number,
+  callback: (subdivision: number) => void,
+  delayMs: number
+) {
+  // 使用 setTimeout 延迟到声音播放时间，然后使用 requestAnimationFrame 确保在渲染帧更新
+  const timeoutDelay = Math.max(0, delayMs);
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      callback(subdivision);
     });
-  }
+  }, timeoutDelay);
 }
 
 interface UsePatternPlayerOptions {
@@ -37,21 +37,12 @@ export function usePatternPlayer({
   isPlaying,
   onSubdivisionChange,
 }: UsePatternPlayerOptions) {
-  const audioContextRef = useRef<AudioContext | null>(null);
   const nextNoteTimeRef = useRef<number>(0);
   const scheduleAheadTimeRef = useRef<number>(0.1);
   const lookaheadRef = useRef<number>(25);
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
   const currentSubdivisionRef = useRef<number>(0);
-
-  // 初始化 AudioContext
-  useEffect(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-    }
-  }, []);
 
   // 计算时间参数
   const [beatsPerBar] = pattern.timeSignature;
@@ -112,8 +103,8 @@ export function usePatternPlayer({
 
   // 调度器函数
   const scheduler = useCallback(() => {
-    const ctx = audioContextRef.current;
-    if (!ctx || !isRunningRef.current) return;
+    const ctx = getAudioContext();
+    if (!isRunningRef.current) return;
 
     const currentTime = ctx.currentTime;
 
@@ -138,12 +129,15 @@ export function usePatternPlayer({
       // 确保播放时间不早于当前时间
       const playTime = Math.max(nextNoteTimeRef.current, currentTime);
       
+      // 计算动画延迟时间（毫秒），使动画与声音同步
+      const delayMs = (playTime - currentTime) * 1000;
+      
       // 播放当前subdivision
       playSubdivision(subdivisionIndex, playTime);
 
-      // 使用 requestAnimationFrame 同步更新动画状态
+      // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
       if (onSubdivisionChange) {
-        scheduleAnimationUpdate(subdivisionIndex, onSubdivisionChange);
+        scheduleAnimationUpdate(subdivisionIndex, onSubdivisionChange, delayMs);
       }
       currentSubdivisionRef.current = subdivisionIndex + 1;
 
@@ -160,8 +154,8 @@ export function usePatternPlayer({
 
   // 开始播放
   const start = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (!ctx || isRunningRef.current) return;
+    const ctx = getAudioContext();
+    if (isRunningRef.current) return;
 
     // 恢复 AudioContext（如果被暂停）- 等待完成
     if (ctx.state === "suspended") {
@@ -180,7 +174,7 @@ export function usePatternPlayer({
         currentSubdivisionRef.current >= endSubdivision) {
       currentSubdivisionRef.current = startSubdivision;
       if (onSubdivisionChange) {
-        scheduleAnimationUpdate(startSubdivision, onSubdivisionChange);
+        scheduleAnimationUpdate(startSubdivision, onSubdivisionChange, 0);
       }
     }
 
@@ -204,8 +198,6 @@ export function usePatternPlayer({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
-    // 清理待处理的动画更新
-    pendingUpdates.length = 0;
     // 不重置位置，保持当前位置以便恢复播放
   }, []);
 
