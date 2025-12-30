@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆 - Dracula 深色背景 -->
+  <circle cx="256" cy="256" r="240" fill="#282a36"/>
+  
+  <!-- 外圈 - Dracula 紫色 -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#bd93f9" stroke-width="24"/>
+  
+  <!-- 内圈 - Dracula 绿色 -->
+  <circle cx="256" cy="256" r="100" fill="none" stroke="#50fa7b" stroke-width="24"/>
+</svg>
