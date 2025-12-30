@@ -1,6 +1,6 @@
 import type { DrumType, TimeSignature } from "../types";
 
-// 鼓件列表（按标准鼓谱顺序）
+// 鼓件列表（按标准鼓谱顺序，从上到下）
 export const DRUMS: DrumType[] = [
   "Crash 1",
   "Crash 2",
@@ -8,9 +8,9 @@ export const DRUMS: DrumType[] = [
   "Hi-Hat Open",
   "Hi-Hat Closed",
   "Snare",
-  "Tom 3",
-  "Tom 2",
-  "Tom 1",
+  "Tom 1", // 一嗵（高音）
+  "Tom 2", // 二嗵（中音）
+  "Tom 3", // 三嗵（低音）
   "Kick",
 ];
 
@@ -42,9 +42,9 @@ export const DRUM_NOTATION: Record<
   "Hi-Hat Open": { position: "above", symbol: "o", line: -0.5 },
   "Hi-Hat Closed": { position: "above", symbol: "x", line: 0 },
   Snare: { position: "center", symbol: "●", line: 0 },
-  "Tom 3": { position: "below", symbol: "○", line: 0.5 },
-  "Tom 2": { position: "below", symbol: "○", line: 1 },
-  "Tom 1": { position: "below", symbol: "○", line: 1.5 },
+  "Tom 1": { position: "below", symbol: "○", line: 0.5 }, // 一嗵（高音）
+  "Tom 2": { position: "below", symbol: "○", line: 1 },   // 二嗵（中音）
+  "Tom 3": { position: "below", symbol: "○", line: 1.5 }, // 三嗵（低音）
   Kick: { position: "below", symbol: "●", line: 2 },
 };
 

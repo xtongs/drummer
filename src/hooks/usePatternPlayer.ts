@@ -77,6 +77,14 @@ export function usePatternPlayer({
   const isRunningRef = useRef<boolean>(false);
   const currentSubdivisionRef = useRef<number>(0);
 
+  // 使用 ref 存储所有动态数据，避免重新创建回调函数导致播放重启
+  const startSubdivisionRef = useRef<number>(0);
+  const endSubdivisionRef = useRef<number>(0);
+  const subdivisionDurationRef = useRef<number>(0);
+  const subdivisionsPerBarRef = useRef<number>(0);
+  const patternRef = useRef<Pattern>(pattern);
+  const onSubdivisionChangeRef = useRef(onSubdivisionChange);
+
   // 计算时间参数
   const [beatsPerBar] = pattern.timeSignature;
   const beatDuration = (60.0 / pattern.bpm) * (4.0 / pattern.timeSignature[1]);
@@ -90,12 +98,21 @@ export function usePatternPlayer({
   const startSubdivision = startBar * subdivisionsPerBar;
   const endSubdivision = (endBar + 1) * subdivisionsPerBar;
 
-  // 播放单个subdivision的鼓件
+  // 更新 ref 值（同步更新，不触发回调重新创建）
+  startSubdivisionRef.current = startSubdivision;
+  endSubdivisionRef.current = endSubdivision;
+  subdivisionDurationRef.current = subdivisionDuration;
+  subdivisionsPerBarRef.current = subdivisionsPerBar;
+  patternRef.current = pattern;
+  onSubdivisionChangeRef.current = onSubdivisionChange;
+
+  // 播放单个subdivision的鼓件 - 使用 ref 避免依赖 pattern
   const playSubdivision = useCallback(
     (subdivisionIndex: number, time: number) => {
-      pattern.grid.forEach((row, drumIndex) => {
+      const currentPattern = patternRef.current;
+      currentPattern.grid.forEach((row, drumIndex) => {
         if (row[subdivisionIndex]) {
-          const drum = pattern.drums[drumIndex];
+          const drum = currentPattern.drums[drumIndex];
           const playTime = time;
 
           switch (drum) {
@@ -133,15 +150,18 @@ export function usePatternPlayer({
         }
       });
     },
-    [pattern]
+    [] // 无依赖，通过 ref 访问最新 pattern
   );
 
-  // 调度器函数
+  // 调度器函数 - 使用 ref 避免依赖变化导致重新创建
   const scheduler = useCallback(() => {
     const ctx = getAudioContext();
     if (!isRunningRef.current) return;
 
     const currentTime = ctx.currentTime;
+    const startSub = startSubdivisionRef.current;
+    const endSub = endSubdivisionRef.current;
+    const subDuration = subdivisionDurationRef.current;
 
     while (
       nextNoteTimeRef.current <
@@ -150,13 +170,13 @@ export function usePatternPlayer({
       let subdivisionIndex = currentSubdivisionRef.current;
 
       // 检查是否在循环范围内
-      if (subdivisionIndex < startSubdivision) {
-        subdivisionIndex = startSubdivision;
-        currentSubdivisionRef.current = startSubdivision;
-      } else if (subdivisionIndex >= endSubdivision) {
+      if (subdivisionIndex < startSub) {
+        subdivisionIndex = startSub;
+        currentSubdivisionRef.current = startSub;
+      } else if (subdivisionIndex >= endSub) {
         // 循环回到开始
-        subdivisionIndex = startSubdivision;
-        currentSubdivisionRef.current = startSubdivision;
+        subdivisionIndex = startSub;
+        currentSubdivisionRef.current = startSub;
         // 确保循环后的时间不会太早
         if (nextNoteTimeRef.current < currentTime) {
           nextNoteTimeRef.current = currentTime;
@@ -174,23 +194,18 @@ export function usePatternPlayer({
       playSubdivision(subdivisionIndex, playTime);
 
       // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
-      if (onSubdivisionChange) {
-        scheduleAnimationUpdate(subdivisionIndex, onSubdivisionChange, delayMs);
+      const callback = onSubdivisionChangeRef.current;
+      if (callback) {
+        scheduleAnimationUpdate(subdivisionIndex, callback, delayMs);
       }
       currentSubdivisionRef.current = subdivisionIndex + 1;
 
       // 移动到下一个subdivision
-      nextNoteTimeRef.current += subdivisionDuration;
+      nextNoteTimeRef.current += subDuration;
     }
-  }, [
-    subdivisionDuration,
-    startSubdivision,
-    endSubdivision,
-    playSubdivision,
-    onSubdivisionChange,
-  ]);
+  }, [playSubdivision]); // 只依赖 playSubdivision，它没有依赖所以稳定
 
-  // 开始播放
+  // 开始播放 - 使用 ref 避免依赖变化导致重新创建
   const start = useCallback(async () => {
     const ctx = getAudioContext();
     if (isRunningRef.current) return;
@@ -208,16 +223,19 @@ export function usePatternPlayer({
 
     isRunningRef.current = true;
     const currentTime = ctx.currentTime;
+    const startSub = startSubdivisionRef.current;
+    const endSub = endSubdivisionRef.current;
 
     // 如果当前位置不在循环范围内，则重置到开始位置
     // 否则保持当前位置（从暂停恢复）
     if (
-      currentSubdivisionRef.current < startSubdivision ||
-      currentSubdivisionRef.current >= endSubdivision
+      currentSubdivisionRef.current < startSub ||
+      currentSubdivisionRef.current >= endSub
     ) {
-      currentSubdivisionRef.current = startSubdivision;
-      if (onSubdivisionChange) {
-        scheduleAnimationUpdate(startSubdivision, onSubdivisionChange, 0);
+      currentSubdivisionRef.current = startSub;
+      const callback = onSubdivisionChangeRef.current;
+      if (callback) {
+        scheduleAnimationUpdate(startSub, callback, 0);
       }
     }
 
@@ -232,7 +250,7 @@ export function usePatternPlayer({
       scheduler,
       lookaheadRef.current
     );
-  }, [scheduler, startSubdivision, endSubdivision, onSubdivisionChange]);
+  }, [scheduler]); // scheduler 是稳定的，所以 start 也是稳定的
 
   // 停止播放（暂停时不重置位置）
   const stop = useCallback(() => {
@@ -259,11 +277,13 @@ export function usePatternPlayer({
     };
   }, [isPlaying, start, stop]);
 
-  // 当pattern改变时重置
+  // 当 bpm 或 bars 改变时重置播放器
+  // 注意：loopRange 变化不需要重启，因为它通过 ref 动态更新
   useEffect(() => {
     if (isPlaying) {
       stop();
       start();
     }
-  }, [pattern.bpm, pattern.bars, pattern.loopRange, isPlaying, start, stop]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pattern.bpm, pattern.bars]);
 }

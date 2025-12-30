@@ -6,9 +6,9 @@ export type DrumType =
   | "Hi-Hat Open" // 踩镲（开合）
   | "Hi-Hat Closed" // 踩镲（闭合）
   | "Snare" // 军鼓
-  | "Tom 3" // 三嗵鼓
-  | "Tom 2" // 二嗵鼓
-  | "Tom 1" // 一嗵鼓
+  | "Tom 1" // 一嗵鼓（高音）
+  | "Tom 2" // 二嗵鼓（中音）
+  | "Tom 3" // 三嗵鼓（低音）
   | "Kick"; // 底鼓
 
 // 拍号类型
@@ -40,4 +40,3 @@ export interface StorageData {
     defaultTimeSignature: TimeSignature;
   };
 }
-

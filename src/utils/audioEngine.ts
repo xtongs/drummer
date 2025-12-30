@@ -1,12 +1,30 @@
 /**
  * 音频引擎 - 使用 Web Audio API 生成鼓组声音
- * 模拟库乐队"南加风情"(SoCal) 鼓组音色
+ * 支持真实采样和合成音色混合
  */
 
 import type { DrumType } from "../types";
 
+// 导入采样文件
+import kickUrl from "../sounds/kick.mp3";
+import snareUrl from "../sounds/snare.mp3";
+import hiHatClosedUrl from "../sounds/hi-hat-closed.mp3";
+import hiHatOpenUrl from "../sounds/hi-hat-open.mp3";
+import crash1Url from "../sounds/crash.mp3";
+import crash2Url from "../sounds/crash2.mp3";
+import rideUrl from "../sounds/ride.mp3";
+import tom1Url from "../sounds/tom1.mp3";
+import tom2Url from "../sounds/tom2.mp3";
+import tom3Url from "../sounds/tom3.mp3";
+import metronomeUrl from "../sounds/metronome.mp3";
+
 let audioContext: AudioContext | null = null;
 let isResuming = false;
+
+// 采样缓存
+const sampleBuffers: Map<string, AudioBuffer> = new Map();
+let samplesLoaded = false;
+let samplesLoading = false;
 
 /**
  * 获取或创建 AudioContext（共享实例）
@@ -35,13 +53,57 @@ export async function resumeAudioContext(): Promise<void> {
 }
 
 /**
- * 预先初始化 AudioContext（在用户首次交互时调用）
+ * 加载采样文件
+ */
+async function loadSample(url: string, name: string): Promise<void> {
+  const ctx = getAudioContext();
+  try {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    sampleBuffers.set(name, audioBuffer);
+    console.log(`Sample loaded: ${name}`);
+  } catch (error) {
+    console.warn(`Failed to load sample ${name}:`, error);
+  }
+}
+
+/**
+ * 加载所有采样
+ */
+async function loadAllSamples(): Promise<void> {
+  if (samplesLoaded || samplesLoading) return;
+  samplesLoading = true;
+
+  await Promise.all([
+    loadSample(kickUrl, "kick"),
+    loadSample(snareUrl, "snare"),
+    loadSample(hiHatClosedUrl, "hiHatClosed"),
+    loadSample(hiHatOpenUrl, "hiHatOpen"),
+    loadSample(crash1Url, "crash1"),
+    loadSample(crash2Url, "crash2"),
+    loadSample(rideUrl, "ride"),
+    loadSample(tom1Url, "tom1"),
+    loadSample(tom2Url, "tom2"),
+    loadSample(tom3Url, "tom3"),
+    loadSample(metronomeUrl, "metronome"),
+  ]);
+
+  samplesLoaded = true;
+  samplesLoading = false;
+  console.log("All samples loaded");
+}
+
+/**
+ * 预先初始化 AudioContext 和加载采样（在用户首次交互时调用）
  */
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
   }
+  // 开始加载采样
+  loadAllSamples();
 }
 
 /**
@@ -58,9 +120,34 @@ function createNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer {
 }
 
 /**
- * 生成节拍器 click 声音
+ * 播放节拍器采样（带音高调整）
  */
-function playClick(
+function playMetronomeSample(
+  time: number,
+  volume: number = 1,
+  playbackRate: number = 1
+): boolean {
+  const buffer = sampleBuffers.get("metronome");
+  if (!buffer) return false;
+
+  const ctx = getAudioContext();
+  const source = ctx.createBufferSource();
+  const gainNode = ctx.createGain();
+
+  source.buffer = buffer;
+  source.playbackRate.value = playbackRate;
+  source.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  gainNode.gain.value = volume;
+
+  source.start(time);
+  return true;
+}
+
+/**
+ * 合成节拍器 click 声音（后备）
+ */
+function playClickSynth(
   time: number,
   frequency: number = 800,
   duration: number = 0.01
@@ -83,29 +170,46 @@ function playClick(
 }
 
 /**
- * 生成重拍声音（第一拍）
+ * 生成重拍声音（第一拍）- 音高较高
  */
 export function playAccent(time: number): void {
-  playClick(time, 1000, 0.02);
+  // playbackRate > 1 音高更高
+  if (playMetronomeSample(time, 0.8, 1.2)) {
+    return;
+  }
+  playClickSynth(time, 1000, 0.02);
 }
 
 /**
- * 生成轻拍声音（其他拍）
+ * 生成轻拍声音（其他拍）- 音高较低
  */
 export function playBeat(time: number): void {
-  playClick(time, 600, 0.01);
+  if (playMetronomeSample(time, 0.6, 1.0)) {
+    return;
+  }
+  playClickSynth(time, 600, 0.01);
 }
 
 /**
- * SoCal 风格底鼓 - 深沉有力，有 punch 感
+ * 底鼓 - 优先使用真实采样
  */
 export function playKick(time: number): void {
+  if (playSample("kick", time, 0.9)) {
+    return;
+  }
+  // 后备：合成音色
+  playKickSynth(time);
+}
+
+/**
+ * 合成底鼓（后备）
+ */
+function playKickSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.85;
 
-  // 主音调 - 低频正弦波带频率滑动
   const osc = ctx.createOscillator();
   const oscGain = ctx.createGain();
   osc.connect(oscGain);
@@ -119,44 +223,47 @@ export function playKick(time: number): void {
   oscGain.gain.setValueAtTime(0.8, time + 0.01);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
 
-  // Click/Attack - 给底鼓增加冲击感
-  const clickOsc = ctx.createOscillator();
-  const clickGain = ctx.createGain();
-  clickOsc.connect(clickGain);
-  clickGain.connect(masterGain);
-
-  clickOsc.frequency.setValueAtTime(400, time);
-  clickOsc.frequency.exponentialRampToValueAtTime(80, time + 0.02);
-  clickOsc.type = "triangle";
-
-  clickGain.gain.setValueAtTime(0.6, time);
-  clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-
-  // 次低频增强
-  const subOsc = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  subOsc.connect(subGain);
-  subGain.connect(masterGain);
-
-  subOsc.frequency.setValueAtTime(60, time);
-  subOsc.frequency.exponentialRampToValueAtTime(30, time + 0.15);
-  subOsc.type = "sine";
-
-  subGain.gain.setValueAtTime(0.5, time);
-  subGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-
   osc.start(time);
   osc.stop(time + 0.25);
-  clickOsc.start(time);
-  clickOsc.stop(time + 0.03);
-  subOsc.start(time);
-  subOsc.stop(time + 0.2);
 }
 
 /**
- * SoCal 风格军鼓 - 明亮，有弹簧沙沙声
+ * 播放采样
+ */
+function playSample(name: string, time: number, volume: number = 1): boolean {
+  const buffer = sampleBuffers.get(name);
+  if (!buffer) return false;
+
+  const ctx = getAudioContext();
+  const source = ctx.createBufferSource();
+  const gainNode = ctx.createGain();
+
+  source.buffer = buffer;
+  source.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  gainNode.gain.value = volume;
+
+  source.start(time);
+  return true;
+}
+
+/**
+ * 军鼓 - 优先使用真实采样，如果未加载则使用合成音色
  */
 export function playSnare(time: number): void {
+  // 尝试使用采样
+  if (playSample("snare", time, 0.8)) {
+    return;
+  }
+
+  // 后备：合成音色
+  playSnareSynth(time);
+}
+
+/**
+ * 合成军鼓音色（后备）
+ */
+function playSnareSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
@@ -216,72 +323,69 @@ export function playSnare(time: number): void {
 }
 
 /**
- * SoCal 风格闭合踩镲 - 清脆短促
+ * 闭合踩镲 - 优先使用真实采样
  */
 export function playHiHatClosed(time: number): void {
+  if (playSample("hiHatClosed", time, 0.7)) {
+    return;
+  }
+  // 后备：合成音色
+  playHiHatClosedSynth(time);
+}
+
+/**
+ * 合成闭合踩镲（后备）
+ */
+function playHiHatClosedSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.45;
 
-  // 高频噪声
   const noiseBuffer = createNoiseBuffer(ctx, 0.1);
   const noise = ctx.createBufferSource();
   noise.buffer = noiseBuffer;
 
-  // 高通滤波器
   const highpass = ctx.createBiquadFilter();
   highpass.type = "highpass";
   highpass.frequency.value = 7000;
 
-  // 带通滤波器 - 金属质感
-  const bandpass = ctx.createBiquadFilter();
-  bandpass.type = "bandpass";
-  bandpass.frequency.value = 10000;
-  bandpass.Q.value = 1;
-
   const noiseGain = ctx.createGain();
   noise.connect(highpass);
-  highpass.connect(bandpass);
-  bandpass.connect(noiseGain);
+  highpass.connect(noiseGain);
   noiseGain.connect(masterGain);
 
   noiseGain.gain.setValueAtTime(1, time);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
 
-  // 高频振荡器 - 金属泛音
-  const osc = ctx.createOscillator();
-  const oscGain = ctx.createGain();
-  osc.connect(oscGain);
-  oscGain.connect(masterGain);
-
-  osc.frequency.value = 8500;
-  osc.type = "square";
-
-  oscGain.gain.setValueAtTime(0.15, time);
-  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-
   noise.start(time);
   noise.stop(time + 0.05);
-  osc.start(time);
-  osc.stop(time + 0.03);
 }
 
 /**
- * SoCal 风格开放踩镲 - 清脆有延音
+ * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
+  if (playSample("hiHatOpen", time, 0.6)) {
+    return;
+  }
+  // 后备：合成音色
+  playHiHatOpenSynth(time);
+}
+
+/**
+ * 合成开放踩镲（后备）
+ */
+function playHiHatOpenSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.4;
 
-  // 高频噪声
   const noiseBuffer = createNoiseBuffer(ctx, 0.4);
   const noise = ctx.createBufferSource();
   noise.buffer = noiseBuffer;
 
-  // 高通滤波器
   const highpass = ctx.createBiquadFilter();
   highpass.type = "highpass";
   highpass.frequency.value = 6000;
@@ -292,26 +396,7 @@ export function playHiHatOpen(time: number): void {
   noiseGain.connect(masterGain);
 
   noiseGain.gain.setValueAtTime(1, time);
-  noiseGain.gain.exponentialRampToValueAtTime(0.3, time + 0.1);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
-
-  // 多个金属泛音
-  const frequencies = [8000, 9500, 11000];
-  frequencies.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.connect(oscGain);
-    oscGain.connect(masterGain);
-
-    osc.frequency.value = freq;
-    osc.type = "square";
-
-    oscGain.gain.setValueAtTime(0.08, time);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.15 + i * 0.05);
-
-    osc.start(time);
-    osc.stop(time + 0.2 + i * 0.05);
-  });
 
   noise.start(time);
   noise.stop(time + 0.35);
@@ -325,72 +410,67 @@ export function playHiHat(time: number): void {
 }
 
 /**
- * SoCal 风格 Crash 镲 - 明亮，延音长
+ * Crash 镲 - 优先使用真实采样
  */
 export function playCrash(time: number, brightness: number = 1): void {
+  // brightness > 1 使用 crash1，否则使用 crash2
+  const sampleName = brightness > 1 ? "crash1" : "crash2";
+  if (playSample(sampleName, time, 0.6)) {
+    return;
+  }
+  // 后备：合成音色
+  playCrashSynth(time, brightness);
+}
+
+/**
+ * 合成 Crash 镲（后备）
+ */
+function playCrashSynth(time: number, brightness: number = 1): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.5;
 
-  // 噪声基础
   const noiseBuffer = createNoiseBuffer(ctx, 1.5);
   const noise = ctx.createBufferSource();
   noise.buffer = noiseBuffer;
 
-  // 高通滤波器
   const highpass = ctx.createBiquadFilter();
   highpass.type = "highpass";
   highpass.frequency.value = 3000 * brightness;
 
-  // 低通滤波器 - 控制亮度
-  const lowpass = ctx.createBiquadFilter();
-  lowpass.type = "lowpass";
-  lowpass.frequency.setValueAtTime(12000 * brightness, time);
-  lowpass.frequency.exponentialRampToValueAtTime(4000, time + 1.2);
-
   const noiseGain = ctx.createGain();
   noise.connect(highpass);
-  highpass.connect(lowpass);
-  lowpass.connect(noiseGain);
+  highpass.connect(noiseGain);
   noiseGain.connect(masterGain);
 
   noiseGain.gain.setValueAtTime(1, time);
-  noiseGain.gain.exponentialRampToValueAtTime(0.5, time + 0.1);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 1.2);
-
-  // 金属泛音
-  const frequencies = [5000, 6500, 8000, 10000];
-  frequencies.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.connect(oscGain);
-    oscGain.connect(masterGain);
-
-    osc.frequency.value = freq * brightness;
-    osc.type = "sine";
-
-    oscGain.gain.setValueAtTime(0.1, time);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.8 - i * 0.1);
-
-    osc.start(time);
-    osc.stop(time + 0.8);
-  });
 
   noise.start(time);
   noise.stop(time + 1.2);
 }
 
 /**
- * SoCal 风格 Ride 镲 - 明亮清脆，有钟声感
+ * Ride 镲 - 优先使用真实采样
  */
 export function playRide(time: number): void {
+  if (playSample("ride", time, 0.7)) {
+    return;
+  }
+  // 后备：合成音色
+  playRideSynth(time);
+}
+
+/**
+ * 合成 Ride 镲（后备）
+ */
+function playRideSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.4;
 
-  // 钟声感 - 主音调
   const bell = ctx.createOscillator();
   const bellGain = ctx.createGain();
   bell.connect(bellGain);
@@ -400,44 +480,10 @@ export function playRide(time: number): void {
   bell.type = "sine";
 
   bellGain.gain.setValueAtTime(0.4, time);
-  bellGain.gain.exponentialRampToValueAtTime(0.1, time + 0.1);
   bellGain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-
-  // 谐波
-  const harm = ctx.createOscillator();
-  const harmGain = ctx.createGain();
-  harm.connect(harmGain);
-  harmGain.connect(masterGain);
-
-  harm.frequency.value = 5500;
-  harm.type = "sine";
-
-  harmGain.gain.setValueAtTime(0.2, time);
-  harmGain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
-
-  // 噪声成分
-  const noiseBuffer = createNoiseBuffer(ctx, 0.6);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-
-  const highpass = ctx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 8000;
-
-  const noiseGain = ctx.createGain();
-  noise.connect(highpass);
-  highpass.connect(noiseGain);
-  noiseGain.connect(masterGain);
-
-  noiseGain.gain.setValueAtTime(0.3, time);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
 
   bell.start(time);
   bell.stop(time + 0.5);
-  harm.start(time);
-  harm.stop(time + 0.3);
-  noise.start(time);
-  noise.stop(time + 0.5);
 }
 
 /**
@@ -452,61 +498,50 @@ export function playCymbal(time: number, frequency: number = 1000): void {
 }
 
 /**
- * SoCal 风格嗵鼓 - 有厚度，音高明显
+ * 嗵鼓 - 优先使用真实采样
+ * frequency: 250=tom1(高), 200=tom2(中), 150=tom3(低)
  */
 export function playTom(time: number, frequency: number = 200): void {
+  // 根据频率选择采样
+  let sampleName: string;
+  if (frequency >= 230) {
+    sampleName = "tom1";
+  } else if (frequency >= 180) {
+    sampleName = "tom2";
+  } else {
+    sampleName = "tom3";
+  }
+
+  if (playSample(sampleName, time, 0.8)) {
+    return;
+  }
+  // 后备：合成音色
+  playTomSynth(time, frequency);
+}
+
+/**
+ * 合成嗵鼓（后备）
+ */
+function playTomSynth(time: number, frequency: number = 200): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.65;
 
-  // 主音调
   const osc = ctx.createOscillator();
   const oscGain = ctx.createGain();
   osc.connect(oscGain);
   oscGain.connect(masterGain);
 
   osc.frequency.setValueAtTime(frequency * 1.5, time);
-  osc.frequency.exponentialRampToValueAtTime(frequency * 0.8, time + 0.05);
   osc.frequency.exponentialRampToValueAtTime(frequency * 0.6, time + 0.2);
   osc.type = "sine";
 
   oscGain.gain.setValueAtTime(1, time);
-  oscGain.gain.exponentialRampToValueAtTime(0.4, time + 0.05);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
-
-  // 谐波 - 增加厚度
-  const harm = ctx.createOscillator();
-  const harmGain = ctx.createGain();
-  harm.connect(harmGain);
-  harmGain.connect(masterGain);
-
-  harm.frequency.setValueAtTime(frequency * 2, time);
-  harm.frequency.exponentialRampToValueAtTime(frequency, time + 0.08);
-  harm.type = "triangle";
-
-  harmGain.gain.setValueAtTime(0.3, time);
-  harmGain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
-
-  // Attack click
-  const click = ctx.createOscillator();
-  const clickGain = ctx.createGain();
-  click.connect(clickGain);
-  clickGain.connect(masterGain);
-
-  click.frequency.setValueAtTime(frequency * 4, time);
-  click.frequency.exponentialRampToValueAtTime(frequency * 2, time + 0.01);
-  click.type = "triangle";
-
-  clickGain.gain.setValueAtTime(0.4, time);
-  clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
 
   osc.start(time);
   osc.stop(time + 0.3);
-  harm.start(time);
-  harm.stop(time + 0.15);
-  click.start(time);
-  click.stop(time + 0.02);
 }
 
 /**
