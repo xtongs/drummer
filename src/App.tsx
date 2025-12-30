@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
@@ -17,7 +17,7 @@ import {
   loadCrossPatternLoop,
 } from "./utils/storage";
 import { DEFAULT_BPM } from "./utils/constants";
-import { preInitAudioContext } from "./utils/audioEngine";
+import { preInitAudioContext, resumeAudioContext } from "./utils/audioEngine";
 import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
 
@@ -35,10 +35,10 @@ function App() {
   // BPM 速率倍数
   const [bpmRate, setBpmRate] = useState<number>(1);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
-  const [crossPatternLoop, setCrossPatternLoop] = useState<CrossPatternLoop | undefined>(() => 
-    loadCrossPatternLoop()
-  );
-  
+  const [crossPatternLoop, setCrossPatternLoop] = useState<
+    CrossPatternLoop | undefined
+  >(() => loadCrossPatternLoop());
+
   // 计算实际播放 BPM
   const actualBPM = Math.round(metronomeBPM * bpmRate);
   const {
@@ -136,13 +136,46 @@ function App() {
     };
   }, []);
 
-  // 页面可见性变化时暂停播放（切换应用、标签页、弹窗等）
+  // 使用 ref 记住隐藏前的播放状态
+  const wasMetronomePlayingRef = useRef(false);
+  const wasPatternPlayingRef = useRef(false);
+  // 使用 ref 存储当前播放状态，避免闭包问题
+  const isMetronomePlayingRef = useRef(isMetronomePlaying);
+  const isPatternPlayingRef = useRef(isPatternPlaying);
+
+  // 同步更新 ref 中的播放状态
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    isMetronomePlayingRef.current = isMetronomePlaying;
+  }, [isMetronomePlaying]);
+
+  useEffect(() => {
+    isPatternPlayingRef.current = isPatternPlaying;
+  }, [isPatternPlaying]);
+
+  // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // 页面被隐藏时暂停所有播放
+        // 页面被隐藏时，记住当前播放状态并暂停所有播放
+        wasMetronomePlayingRef.current = isMetronomePlayingRef.current;
+        wasPatternPlayingRef.current = isPatternPlayingRef.current;
         setIsMetronomePlaying(false);
         setIsPatternPlaying(false);
+      } else {
+        // 页面重新可见时，恢复 AudioContext 并恢复之前的播放状态
+        try {
+          await resumeAudioContext();
+          // 恢复之前的播放状态
+          if (wasMetronomePlayingRef.current) {
+            setIsMetronomePlaying(true);
+          }
+          if (wasPatternPlayingRef.current) {
+            setIsPatternPlaying(true);
+          }
+        } catch (error) {
+          // 如果恢复失败，忽略错误
+          console.error("Failed to resume audio context:", error);
+        }
       }
     };
 
@@ -150,6 +183,26 @@ function App() {
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // 防误触退出：播放时阻止页面关闭
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // 如果正在播放，显示确认对话框
+      if (isMetronomePlayingRef.current || isPatternPlayingRef.current) {
+        // 现代浏览器会忽略自定义消息，只显示默认消息
+        e.preventDefault();
+        // 为了兼容性，需要设置 returnValue
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
@@ -216,7 +269,7 @@ function App() {
   // 保存当前正在编辑的 pattern（非草稿模式下）
   const handleSaveCurrentPattern = () => {
     if (isDraftMode) return;
-    
+
     const patternToSave: Pattern = {
       ...pattern,
       updatedAt: Date.now(),
@@ -230,7 +283,7 @@ function App() {
     const existingLetters = savedPatterns
       .map((p) => p.name)
       .filter((name) => /^[A-Z]$/.test(name));
-    
+
     // 找到下一个可用的字母
     let nextLetter = "A";
     if (existingLetters.length > 0) {
