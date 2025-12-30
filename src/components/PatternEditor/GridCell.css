@@ -77,3 +77,12 @@
 .grid-cell.active.current-beat::before {
   background: var(--color-secondary);
 }
+
+/* 鬼音样式 - 半透明显示 */
+.grid-cell.ghost::before {
+  opacity: 0.4;
+}
+
+.grid-cell.ghost.current-beat::before {
+  opacity: 0.4;
+}

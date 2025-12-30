@@ -25,11 +25,11 @@ function App() {
     pattern,
     updateBPM,
     toggleCell,
+    toggleGhost,
     addBar,
     removeBar,
     clearGrid,
     setLoopRange,
-    updateName,
     loadPattern,
   } = usePattern(createEmptyPattern());
 
@@ -227,6 +227,7 @@ function App() {
         <PatternEditor
           pattern={pattern}
           onCellClick={toggleCell}
+          onToggleGhost={toggleGhost}
           onAddBar={addBar}
           onRemoveBar={removeBar}
           onClearGrid={clearGrid}

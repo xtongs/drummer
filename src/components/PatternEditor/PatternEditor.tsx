@@ -41,6 +41,7 @@ function smoothScrollTo(
 interface PatternEditorProps {
   pattern: Pattern;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
+  onToggleGhost: (drumIndex: number, beatIndex: number) => void;
   onAddBar: () => void;
   onRemoveBar: () => void;
   onClearGrid: () => void;
@@ -58,6 +59,7 @@ interface PatternEditorProps {
 export function PatternEditor({
   pattern,
   onCellClick,
+  onToggleGhost,
   onAddBar,
   onRemoveBar,
   onClearGrid,
@@ -69,7 +71,7 @@ export function PatternEditor({
   savedPatterns,
   currentBeat,
   isPlaying = false,
-  onPlayToggle,
+  onPlayToggle: _onPlayToggle,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
@@ -238,6 +240,7 @@ export function PatternEditor({
         <Grid
           pattern={pattern}
           onCellClick={onCellClick}
+          onToggleGhost={onToggleGhost}
           currentBeat={currentBeat}
           scrollContainerRef={scrollContainerRef}
         />

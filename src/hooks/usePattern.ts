@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import type { Pattern } from "../types";
+import type { Pattern, CellState } from "../types";
+import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
 import { DEFAULT_BPM, DEFAULT_TIME_SIGNATURE, DEFAULT_BARS, DRUMS, SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import { generateId } from "../utils/storage";
 
@@ -17,7 +18,7 @@ export function createEmptyPattern(name: string = "New Pattern"): Pattern {
     bars: DEFAULT_BARS,
     grid: Array(DRUMS.length)
       .fill(null)
-      .map(() => Array(subdivisionsPerBar).fill(false)),
+      .map(() => Array<CellState>(subdivisionsPerBar).fill(CELL_OFF)),
     drums: DRUMS,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -51,7 +52,7 @@ export function usePattern(initialPattern: Pattern) {
       const newGrid = prev.grid.map((row) => {
         if (newTotalSubdivisions > totalSubdivisions) {
           // 增加列
-          return [...row, ...Array(newTotalSubdivisions - totalSubdivisions).fill(false)];
+          return [...row, ...Array<CellState>(newTotalSubdivisions - totalSubdivisions).fill(CELL_OFF)];
         } else if (newTotalSubdivisions < totalSubdivisions) {
           // 减少列
           return row.slice(0, newTotalSubdivisions);
@@ -68,13 +69,38 @@ export function usePattern(initialPattern: Pattern) {
     });
   }, []);
 
-  // 切换网格单元格状态
+  // 切换网格单元格状态：未激活 -> 正常 -> 未激活
   const toggleCell = useCallback((drumIndex: number, beatIndex: number) => {
     setPattern((prev) => {
       const newGrid = prev.grid.map((row, i) => {
         if (i === drumIndex) {
           const newRow = [...row];
-          newRow[beatIndex] = !newRow[beatIndex];
+          // 未激活 -> 正常, 正常/鬼音 -> 未激活
+          newRow[beatIndex] = newRow[beatIndex] === CELL_OFF ? CELL_NORMAL : CELL_OFF;
+          return newRow;
+        }
+        return row;
+      });
+
+      return {
+        ...prev,
+        grid: newGrid,
+        updatedAt: Date.now(),
+      };
+    });
+  }, []);
+
+  // 切换鬼音状态：正常 <-> 鬼音（仅对已激活的单元格有效）
+  const toggleGhost = useCallback((drumIndex: number, beatIndex: number) => {
+    setPattern((prev) => {
+      const currentState = prev.grid[drumIndex]?.[beatIndex];
+      // 只有激活的单元格才能切换鬼音
+      if (currentState === CELL_OFF) return prev;
+
+      const newGrid = prev.grid.map((row, i) => {
+        if (i === drumIndex) {
+          const newRow = [...row];
+          newRow[beatIndex] = currentState === CELL_NORMAL ? CELL_GHOST : CELL_NORMAL;
           return newRow;
         }
         return row;
@@ -95,7 +121,7 @@ export function usePattern(initialPattern: Pattern) {
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
       const newGrid = prev.grid.map((row) => [
         ...row,
-        ...Array(subdivisionsPerBar).fill(false),
+        ...Array<CellState>(subdivisionsPerBar).fill(CELL_OFF),
       ]);
 
       return {
@@ -133,7 +159,7 @@ export function usePattern(initialPattern: Pattern) {
   // 清除所有网格
   const clearGrid = useCallback(() => {
     setPattern((prev) => {
-      const newGrid = prev.grid.map((row) => row.map(() => false));
+      const newGrid = prev.grid.map((row) => row.map(() => CELL_OFF));
 
       return {
         ...prev,
@@ -176,6 +202,7 @@ export function usePattern(initialPattern: Pattern) {
     updateBPM,
     updateTimeSignature,
     toggleCell,
+    toggleGhost,
     addBar,
     removeBar,
     clearGrid,

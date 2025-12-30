@@ -6,6 +6,7 @@ import "./Grid.css";
 interface GridProps {
   pattern: Pattern;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
+  onToggleGhost: (drumIndex: number, beatIndex: number) => void;
   currentBeat?: number;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
@@ -13,11 +14,12 @@ interface GridProps {
 export function Grid({
   pattern,
   onCellClick,
+  onToggleGhost,
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
   const [beatsPerBar] = pattern.timeSignature;
-  const cellSize = GRID_CELL_SIZE; // 使用公共变量，确保第一小节在375px宽度下完整显示
+  const cellSize = GRID_CELL_SIZE;
 
   return (
     <div className="grid-container">
@@ -56,8 +58,7 @@ export function Grid({
               const drumType = pattern.drums[drumIndex];
               return (
                 <div key={drumIndex} className="grid-row">
-                  {row.map((isActive, subdivisionIndex) => {
-                    // currentBeat现在是subdivision index
+                  {row.map((cellState, subdivisionIndex) => {
                     const isCurrentBeat =
                       currentBeat !== undefined &&
                       subdivisionIndex === currentBeat;
@@ -65,8 +66,11 @@ export function Grid({
                     return (
                       <GridCell
                         key={subdivisionIndex}
-                        isActive={isActive}
+                        cellState={cellState}
                         onClick={() => onCellClick(drumIndex, subdivisionIndex)}
+                        onToggleGhost={() =>
+                          onToggleGhost(drumIndex, subdivisionIndex)
+                        }
                         isCurrentBeat={isCurrentBeat}
                         drumType={drumType}
                       />

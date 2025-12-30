@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# 任何命令失败时立即退出
+set -e
+
+echo "🔍 Running type check..."
+npm run typecheck || { echo "❌ Type check failed! Commit aborted."; exit 1; }
+
+echo "🔨 Running build..."
+npm run build || { echo "❌ Build failed! Commit aborted."; exit 1; }
+
+echo "✅ All checks passed!"

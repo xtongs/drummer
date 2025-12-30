@@ -17,6 +17,12 @@ export type TimeSignature = [number, number]; // [beatsPerBar, noteValue]
 // 循环范围
 export type LoopRange = [number, number]; // [startBar, endBar]
 
+// 单元格状态：0=未激活, 1=正常, 2=鬼音
+export type CellState = 0 | 1 | 2;
+export const CELL_OFF = 0 as const;
+export const CELL_NORMAL = 1 as const;
+export const CELL_GHOST = 2 as const;
+
 // 节奏型接口
 export interface Pattern {
   id: string;
@@ -24,7 +30,7 @@ export interface Pattern {
   bpm: number;
   timeSignature: TimeSignature; // 默认 [4, 4]
   bars: number; // 小节数，默认2
-  grid: boolean[][]; // [drumIndex][beatIndex]
+  grid: CellState[][]; // [drumIndex][beatIndex] - 0=未激活, 1=正常, 2=鬼音
   drums: DrumType[]; // 鼓件列表（固定顺序）
   loopRange?: LoopRange; // 循环播放范围，可选
   createdAt: number; // 创建时间戳

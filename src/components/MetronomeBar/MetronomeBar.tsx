@@ -16,7 +16,7 @@ interface MetronomeBarProps {
 export function MetronomeBar({
   bpm,
   timeSignature,
-  isPlaying,
+  isPlaying: _isPlaying,
   onBPMChange,
   isPatternPlaying = false,
   onPatternPlayToggle,
@@ -91,7 +91,10 @@ export function MetronomeBar({
           </button>
         </div>
         {onPatternPlayToggle && (
-          <PlayButton isPlaying={isPatternPlaying} onClick={onPatternPlayToggle} />
+          <PlayButton
+            isPlaying={isPatternPlaying}
+            onClick={onPatternPlayToggle}
+          />
         )}
       </div>
       {/* 第二行：BPM滑块（撑满） */}

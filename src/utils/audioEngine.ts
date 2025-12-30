@@ -24,7 +24,10 @@ let isResuming = false;
 // 采样缓存
 const sampleBuffers: Map<string, AudioBuffer> = new Map();
 let samplesLoaded = false;
-let samplesLoading = false;
+let samplesLoadPromise: Promise<void> | null = null;
+
+// 当前音量乘数（用于鬼音等）
+let currentVolumeMultiplier = 1;
 
 /**
  * 获取或创建 AudioContext（共享实例）
@@ -71,11 +74,11 @@ async function loadSample(url: string, name: string): Promise<void> {
 /**
  * 加载所有采样
  */
-async function loadAllSamples(): Promise<void> {
-  if (samplesLoaded || samplesLoading) return;
-  samplesLoading = true;
+function loadAllSamples(): Promise<void> {
+  if (samplesLoaded) return Promise.resolve();
+  if (samplesLoadPromise) return samplesLoadPromise;
 
-  await Promise.all([
+  samplesLoadPromise = Promise.all([
     loadSample(kickUrl, "kick"),
     loadSample(snareUrl, "snare"),
     loadSample(hiHatClosedUrl, "hiHatClosed"),
@@ -87,11 +90,12 @@ async function loadAllSamples(): Promise<void> {
     loadSample(tom2Url, "tom2"),
     loadSample(tom3Url, "tom3"),
     loadSample(metronomeUrl, "metronome"),
-  ]);
+  ]).then(() => {
+    samplesLoaded = true;
+    console.log("All samples loaded");
+  });
 
-  samplesLoaded = true;
-  samplesLoading = false;
-  console.log("All samples loaded");
+  return samplesLoadPromise;
 }
 
 /**
@@ -104,6 +108,13 @@ export function preInitAudioContext(): void {
   }
   // 开始加载采样
   loadAllSamples();
+}
+
+/**
+ * 等待采样加载完成
+ */
+export async function ensureSamplesLoaded(): Promise<void> {
+  await loadAllSamples();
 }
 
 /**
@@ -229,8 +240,14 @@ function playKickSynth(time: number): void {
 
 /**
  * 播放采样
+ * @param applyVolumeMultiplier 是否应用全局音量乘数（用于鬼音等）
  */
-function playSample(name: string, time: number, volume: number = 1): boolean {
+function playSample(
+  name: string,
+  time: number,
+  volume: number = 1,
+  applyVolumeMultiplier: boolean = true
+): boolean {
   const buffer = sampleBuffers.get(name);
   if (!buffer) return false;
 
@@ -241,7 +258,11 @@ function playSample(name: string, time: number, volume: number = 1): boolean {
   source.buffer = buffer;
   source.connect(gainNode);
   gainNode.connect(ctx.destination);
-  gainNode.gain.value = volume;
+  // 应用音量乘数
+  const finalVolume = applyVolumeMultiplier
+    ? volume * currentVolumeMultiplier
+    : volume;
+  gainNode.gain.value = finalVolume;
 
   source.start(time);
   return true;
@@ -326,7 +347,7 @@ function playSnareSynth(time: number): void {
  * 闭合踩镲 - 优先使用真实采样
  */
 export function playHiHatClosed(time: number): void {
-  if (playSample("hiHatClosed", time, 0.7)) {
+  if (playSample("hiHatClosed", time, 0.5)) {
     return;
   }
   // 后备：合成音色
@@ -543,12 +564,21 @@ function playTomSynth(time: number, frequency: number = 200): void {
   osc.start(time);
   osc.stop(time + 0.3);
 }
-
 /**
  * 根据鼓件类型播放对应的声音
+ * @param volume 音量乘数，默认为 1（正常），鬼音使用 0.5
  */
-export async function playDrumSound(drumType: DrumType): Promise<void> {
+export async function playDrumSound(
+  drumType: DrumType,
+  volume: number = 1
+): Promise<void> {
   await resumeAudioContext();
+  // 确保采样已加载
+  await ensureSamplesLoaded();
+
+  // 设置音量乘数
+  currentVolumeMultiplier = volume;
+
   const ctx = getAudioContext();
   const time = ctx.currentTime;
 
@@ -586,4 +616,28 @@ export async function playDrumSound(drumType: DrumType): Promise<void> {
     default:
       playSnare(time);
   }
+
+  // 重置音量乘数
+  currentVolumeMultiplier = 1;
+}
+
+/**
+ * 获取当前音量乘数
+ */
+export function getVolumeMultiplier(): number {
+  return currentVolumeMultiplier;
+}
+
+/**
+ * 设置当前音量乘数（用于鬼音等）
+ */
+export function setVolumeMultiplier(multiplier: number): void {
+  currentVolumeMultiplier = multiplier;
+}
+
+/**
+ * 重置音量乘数为默认值
+ */
+export function resetVolumeMultiplier(): void {
+  currentVolumeMultiplier = 1;
 }

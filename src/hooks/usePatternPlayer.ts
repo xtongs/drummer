@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
-import type { Pattern } from "../types";
+import type { Pattern, CellState } from "../types";
+import { CELL_OFF, CELL_GHOST } from "../types";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import {
   playKick,
@@ -10,6 +11,8 @@ import {
   playRide,
   playTom,
   getAudioContext,
+  setVolumeMultiplier,
+  resetVolumeMultiplier,
 } from "../utils/audioEngine";
 
 // WakeLock 管理：防止播放时手机锁屏
@@ -111,9 +114,14 @@ export function usePatternPlayer({
     (subdivisionIndex: number, time: number) => {
       const currentPattern = patternRef.current;
       currentPattern.grid.forEach((row, drumIndex) => {
-        if (row[subdivisionIndex]) {
+        const cellState: CellState = row[subdivisionIndex];
+        if (cellState !== CELL_OFF) {
           const drum = currentPattern.drums[drumIndex];
           const playTime = time;
+
+          // 设置音量乘数：鬼音为 0.3，正常为 1
+          const volumeMultiplier = cellState === CELL_GHOST ? 0.3 : 1;
+          setVolumeMultiplier(volumeMultiplier);
 
           switch (drum) {
             case "Kick":
@@ -147,6 +155,9 @@ export function usePatternPlayer({
               playTom(playTime, 150);
               break;
           }
+
+          // 重置音量乘数
+          resetVolumeMultiplier();
         }
       });
     },
