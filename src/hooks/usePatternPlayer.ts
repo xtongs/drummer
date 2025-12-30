@@ -4,8 +4,10 @@ import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import {
   playKick,
   playSnare,
-  playHiHat,
-  playCymbal,
+  playHiHatClosed,
+  playHiHatOpen,
+  playCrash,
+  playRide,
   playTom,
   getAudioContext,
 } from "../utils/audioEngine";
@@ -104,17 +106,19 @@ export function usePatternPlayer({
               playSnare(playTime);
               break;
             case "Hi-Hat Closed":
+              playHiHatClosed(playTime);
+              break;
             case "Hi-Hat Open":
-              playHiHat(playTime);
+              playHiHatOpen(playTime);
               break;
             case "Crash 1":
-              playCymbal(playTime, 1200);
+              playCrash(playTime, 1.2);
               break;
             case "Crash 2":
-              playCymbal(playTime, 1000);
+              playCrash(playTime, 1.0);
               break;
             case "Ride":
-              playCymbal(playTime, 800);
+              playRide(playTime);
               break;
             case "Tom 1":
               playTom(playTime, 250);

@@ -13,6 +13,13 @@
   -moz-appearance: none;
   appearance: none;
   box-sizing: border-box;
+  /* 触摸优化：禁用双击缩放延迟 */
+  touch-action: manipulation;
+  /* 禁用文本选择 */
+  user-select: none;
+  -webkit-user-select: none;
+  /* 禁用触摸高亮 */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* 默认暗绿色背景（通过伪元素实现） */
