@@ -20,13 +20,13 @@ export default defineConfig({
         orientation: "portrait",
         icons: [
           {
-            src: "/icon.svg",
+            src: "icon.svg",
             sizes: "192x192",
             type: "image/svg+xml",
             purpose: "any maskable",
           },
           {
-            src: "/icon.svg",
+            src: "icon.svg",
             sizes: "512x512",
             type: "image/svg+xml",
             purpose: "any maskable",
@@ -34,7 +34,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        // 包含 mp3 音频文件以支持离线使用
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3,webmanifest}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
