@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import "./LoopRangeSelector.css";
 
@@ -26,6 +27,10 @@ export function LoopRangeSelector({
     if (isDraftMode && patternName === "") {
       return currentPattern.bars;
     }
+    // 如果 patternName 匹配当前编辑的 pattern，使用当前编辑的 bars（可能未保存）
+    if (!isDraftMode && patternName === currentPattern.name) {
+      return currentPattern.bars;
+    }
     const pattern = savedPatterns.find((p) => p.name === patternName);
     return pattern?.bars ?? currentPattern.bars;
   };
@@ -38,13 +43,6 @@ export function LoopRangeSelector({
     endPatternName: isDraftMode ? "" : currentPattern.name,
     endBar: currentPattern.bars - 1,
   };
-
-  const loop = crossPatternLoop ?? defaultLoop;
-
-  // 获取可选的 patterns 列表（草稿模式用空字符串表示）
-  const patternOptions = isDraftMode
-    ? [{ name: "", label: "○" }, ...sortedPatterns.map((p) => ({ name: p.name, label: p.name }))]
-    : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
 
   // 比较两个位置的先后顺序
   const comparePositions = (
@@ -61,6 +59,52 @@ export function LoopRangeSelector({
     if (patternName2 === "") return 1;
     return patternName1.localeCompare(patternName2);
   };
+
+  const loop = crossPatternLoop ?? defaultLoop;
+
+  // 当 bars 数量变化时，自动调整 loop 范围
+  useEffect(() => {
+    if (!crossPatternLoop) return;
+
+    const startBars = getPatternBars(crossPatternLoop.startPatternName);
+    const endBars = getPatternBars(crossPatternLoop.endPatternName);
+    
+    let needsUpdate = false;
+    let updatedLoop = { ...crossPatternLoop };
+
+    // 如果开始小节超出范围，调整到最大值
+    if (crossPatternLoop.startBar >= startBars) {
+      updatedLoop.startBar = Math.max(0, startBars - 1);
+      needsUpdate = true;
+    }
+
+    // 如果结束小节超出范围，调整到最大值
+    if (crossPatternLoop.endBar >= endBars) {
+      updatedLoop.endBar = Math.max(0, endBars - 1);
+      needsUpdate = true;
+    }
+
+    // 确保开始位置不超过结束位置
+    if (needsUpdate && comparePositions(
+      updatedLoop.startPatternName,
+      updatedLoop.startBar,
+      updatedLoop.endPatternName,
+      updatedLoop.endBar
+    ) > 0) {
+      // 如果开始位置超过结束位置，将结束位置调整为开始位置
+      updatedLoop.endBar = updatedLoop.startBar;
+    }
+
+    if (needsUpdate) {
+      onCrossPatternLoopChange(updatedLoop);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPattern.bars, isDraftMode, currentPattern.name]);
+
+  // 获取可选的 patterns 列表（草稿模式用空字符串表示）
+  const patternOptions = isDraftMode
+    ? [{ name: "", label: "○" }, ...sortedPatterns.map((p) => ({ name: p.name, label: p.name }))]
+    : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
 
   const handleStartPatternChange = (newPatternName: string) => {
     const newBars = getPatternBars(newPatternName);

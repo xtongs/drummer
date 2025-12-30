@@ -121,9 +121,16 @@ export function useMultiPatternPlayer({
     );
 
     // 如果是草稿模式，添加草稿 pattern 到列表最前面
+    // 如果不是草稿模式，但当前编辑的 pattern 在循环范围内，使用当前编辑的 pattern 替换 savedPatterns 中的版本
     const allPatterns: { name: string; pattern: Pattern }[] = isDraftMode
       ? [{ name: "", pattern: currentPattern }, ...sortedPatterns.map((p) => ({ name: p.name, pattern: p }))]
-      : sortedPatterns.map((p) => ({ name: p.name, pattern: p }));
+      : sortedPatterns.map((p) => {
+          // 如果当前编辑的 pattern 名称匹配，使用当前编辑的版本（未保存的更改）
+          if (p.name === currentPattern.name && p.id === currentPattern.id) {
+            return { name: p.name, pattern: currentPattern };
+          }
+          return { name: p.name, pattern: p };
+        });
 
     // 找到开始和结束的索引
     const startIndex = allPatterns.findIndex((p) => p.name === startPatternName);
