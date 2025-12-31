@@ -46,7 +46,9 @@ body {
   margin: 0 auto;
   overflow: hidden;
   box-sizing: border-box;
-  padding: var(--spacing-md);
+  padding-top: calc(var(--spacing-md) + max(env(safe-area-inset-top), var(--spacing-xs)));
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
   padding-bottom: calc(
     var(--spacing-md) + 64px +
       max(env(safe-area-inset-bottom), var(--spacing-md))

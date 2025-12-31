@@ -28,6 +28,7 @@
     "eslint-plugin-react-refresh": "^0.4.6",
     "husky": "^9.1.7",
     "typescript": "^5.2.2",
+    "unicode-canonical-property-names-ecmascript": "^2.0.1",
     "vite": "^4.5.14",
     "vite-plugin-pwa": "^1.2.0"
   }
