@@ -28,6 +28,11 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  padding-left: 0;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease;
 }
 
 .loop-count-group {
@@ -48,6 +53,10 @@
   align-items: center;
   gap: var(--spacing-sm);
   pointer-events: none;
+}
+
+.bpm-control-group > * {
+  pointer-events: auto;
 }
 
 .bpm-control-group > * {

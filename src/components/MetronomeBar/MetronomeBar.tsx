@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BPMSlider } from "./BPMSlider";
 import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
@@ -12,6 +12,7 @@ interface MetronomeBarProps {
   onBPMChange: (bpm: number) => void;
   isPatternPlaying?: boolean;
   onPatternPlayToggle?: () => void;
+  onTimeSignatureChange?: (timeSignature: [number, number]) => void;
 }
 
 export function MetronomeBar({
@@ -21,8 +22,50 @@ export function MetronomeBar({
   onBPMChange,
   isPatternPlaying = false,
   onPatternPlayToggle,
+  onTimeSignatureChange,
 }: MetronomeBarProps) {
   const [index, setIndex] = useState(0);
+
+  // 常用拍号列表
+  const commonTimeSignatures: [number, number][] = [
+    [4, 4], // 4/4拍
+    [3, 4], // 3/4拍
+    [2, 4], // 2/4拍
+    [6, 8], // 6/8拍
+    [5, 4], // 5/4拍
+    [7, 8], // 7/8拍
+  ];
+
+  // 查找当前拍号在列表中的索引
+  const getCurrentTimeSignatureIndex = useCallback(() => {
+    const index = commonTimeSignatures.findIndex(
+      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1]
+    );
+    return index >= 0 ? index : 0;
+  }, [timeSignature]);
+
+  const [timeSignatureIndex, setTimeSignatureIndex] = useState(() => {
+    const index = commonTimeSignatures.findIndex(
+      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1]
+    );
+    return index >= 0 ? index : 0;
+  });
+
+  // 当外部 timeSignature 改变时，同步索引
+  useEffect(() => {
+    const newIndex = getCurrentTimeSignatureIndex();
+    setTimeSignatureIndex(newIndex);
+  }, [getCurrentTimeSignatureIndex]);
+
+  // 切换拍号
+  const handleTimeSignatureClick = () => {
+    if (onTimeSignatureChange) {
+      const nextIndex = (timeSignatureIndex + 1) % commonTimeSignatures.length;
+      const nextTimeSignature = commonTimeSignatures[nextIndex];
+      setTimeSignatureIndex(nextIndex);
+      onTimeSignatureChange(nextTimeSignature);
+    }
+  };
   // 注意：调换后，isPatternPlaying 现在代表节拍器播放状态
   const { currentBeat } = useMetronome({
     bpm,
@@ -59,21 +102,22 @@ export function MetronomeBar({
   const max = 200;
 
   const handleDecrease = () => {
-    const newBPM = Math.max(min, bpm - 1);
+    const newBPM = Math.round(Math.max(min, bpm - 1));
     onBPMChange(newBPM);
   };
 
   const handleIncrease = () => {
-    const newBPM = Math.min(max, bpm + 1);
+    const newBPM = Math.round(Math.min(max, bpm + 1));
     onBPMChange(newBPM);
   };
 
   // 快速根据速率设置BPM
+  // 使用精确的分数值，确保乘积为1，循环后能精确回到原始值
   const rateLabels = ["", "x0.875", "x0.75", "x0.5"];
-  const rates = [0.875, 0.8571428571, 0.6666666667, 2];
+  const rates = [7 / 8, 6 / 7, 2 / 3, 2]; // 精确分数：7/8 × 6/7 × 2/3 × 2 = 1
 
   const handleBPMClick = () => {
-    const newBPM = Math.round(bpm * rates[index % rates.length]);
+    const newBPM = bpm * rates[index % rates.length];
     setIndex(index + 1);
     onBPMChange(newBPM);
   };
@@ -82,7 +126,10 @@ export function MetronomeBar({
     <div className="metronome-bar">
       {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 节奏型播放按钮 */}
       <div className="metronome-row metronome-row-top">
-        <div className="beat-indicator-group">
+        <div
+          className="beat-indicator-group"
+          onClick={handleTimeSignatureClick}
+        >
           <BeatDots currentBeat={currentBeat} beatsPerBar={timeSignature[0]} />
         </div>
         <div className="bpm-control-group">
@@ -106,7 +153,7 @@ export function MetronomeBar({
             </svg>
           </button>
           <div className="bpm-display" onClick={handleBPMClick}>
-            <span className="bpm-value">{bpm}</span>
+            <span className="bpm-value">{Math.round(bpm)}</span>
             {rateLabels[index % rateLabels.length] && (
               <span className="bpm-rate-label">
                 {rateLabels[index % rateLabels.length]}

@@ -16,7 +16,12 @@ import {
   saveCrossPatternLoop,
   loadCrossPatternLoop,
 } from "./utils/storage";
-import { DEFAULT_BPM, DEFAULT_BARS } from "./utils/constants";
+import {
+  DEFAULT_BPM,
+  DEFAULT_BARS,
+  DEFAULT_TIME_SIGNATURE,
+} from "./utils/constants";
+import type { TimeSignature } from "./types";
 import {
   preInitAudioContext,
   resumeAudioContext,
@@ -37,6 +42,9 @@ function App() {
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
     return loadMetronomeBPM() ?? DEFAULT_BPM;
   });
+  // 节拍器独立拍号（与 pattern 分开存储）
+  const [metronomeTimeSignature, setMetronomeTimeSignature] =
+    useState<TimeSignature>(DEFAULT_TIME_SIGNATURE);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -58,6 +66,11 @@ function App() {
     setMetronomeBPM(bpm);
     saveMetronomeBPM(bpm);
     updateBPM(bpm);
+  };
+
+  // 节拍器拍号改变（只影响节拍器，不影响节奏型）
+  const handleMetronomeTimeSignatureChange = (timeSignature: TimeSignature) => {
+    setMetronomeTimeSignature(timeSignature);
   };
 
   // 选择草稿模式
@@ -381,11 +394,12 @@ function App() {
     <div className="app">
       <MetronomeBar
         bpm={metronomeBPM}
-        timeSignature={pattern.timeSignature}
+        timeSignature={metronomeTimeSignature}
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
         isPatternPlaying={isMetronomePlaying}
         onPatternPlayToggle={handleMetronomePlayToggle}
+        onTimeSignatureChange={handleMetronomeTimeSignatureChange}
       />
       <main className="app-main">
         <PatternEditor
