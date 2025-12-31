@@ -7,7 +7,6 @@ import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
   bpm: number;
-  actualBpm?: number; // 实际 BPM（应用速率后）
   timeSignature: [number, number];
   isPlaying: boolean;
   onBPMChange: (bpm: number) => void;
@@ -17,20 +16,15 @@ interface MetronomeBarProps {
 
 export function MetronomeBar({
   bpm,
-  actualBpm,
   timeSignature,
   isPlaying: _isPlaying,
   onBPMChange,
   isPatternPlaying = false,
   onPatternPlayToggle,
 }: MetronomeBarProps) {
-  // 显示的 BPM：如果有速率应用，显示实际 BPM，否则显示基准 BPM
-  const displayBpm = actualBpm ?? bpm;
-  const hasRateApplied = actualBpm !== undefined && actualBpm !== bpm;
   // 注意：调换后，isPatternPlaying 现在代表节拍器播放状态
-  // 节拍器使用实际 BPM（应用速率后）
   const { currentBeat } = useMetronome({
-    bpm: displayBpm,
+    bpm,
     timeSignature,
     isPlaying: isPatternPlaying,
   });
@@ -101,10 +95,8 @@ export function MetronomeBar({
             </svg>
           </button>
           <div className="bpm-display">
-            <span
-              className={`bpm-value ${hasRateApplied ? "rate-applied" : ""}`}
-            >
-              {displayBpm}
+            <span className="bpm-value">
+              {bpm}
             </span>
           </div>
           <button

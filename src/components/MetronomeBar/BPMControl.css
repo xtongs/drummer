@@ -37,7 +37,6 @@
   border-radius: var(--border-radius-sm);
 }
 
-
 .bpm-button:disabled {
   opacity: 0.3;
 }
@@ -51,18 +50,9 @@
   background-color: transparent;
   color: var(--color-text);
   padding: 0;
-  margin: 0;
   -moz-appearance: textfield;
-  -webkit-appearance: none;
-  appearance: none;
+  line-height: var(--button-size);
   height: var(--button-size);
-  /* iOS Safari 文字对齐优化 */
-  line-height: 1;
-  /* 使用 padding 来实现垂直居中，避免 line-height 在不同平台的差异 */
-  padding-top: calc((var(--button-size) - 1em) / 2);
-  padding-bottom: calc((var(--button-size) - 1em) / 2);
-  box-sizing: border-box;
-  vertical-align: middle;
 }
 
 .bpm-input::-webkit-outer-spin-button,

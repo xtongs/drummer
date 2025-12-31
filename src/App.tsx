@@ -37,15 +37,10 @@ function App() {
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
     return loadMetronomeBPM() ?? DEFAULT_BPM;
   });
-  // BPM 速率倍数
-  const [bpmRate, setBpmRate] = useState<number>(1);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
   >(() => loadCrossPatternLoop());
-
-  // 计算实际播放 BPM
-  const actualBPM = Math.round(metronomeBPM * bpmRate);
   const {
     pattern,
     updateBPM,
@@ -62,16 +57,7 @@ function App() {
   const handleBPMChange = (bpm: number) => {
     setMetronomeBPM(bpm);
     saveMetronomeBPM(bpm);
-    // 使用实际 BPM 更新 pattern
-    const newActualBPM = Math.round(bpm * bpmRate);
-    updateBPM(newActualBPM);
-  };
-
-  // 当速率改变时，更新 pattern 的 BPM
-  const handleBpmRateChange = (rate: number) => {
-    setBpmRate(rate);
-    const newActualBPM = Math.round(metronomeBPM * rate);
-    updateBPM(newActualBPM);
+    updateBPM(bpm);
   };
 
   // 选择草稿模式
@@ -80,9 +66,6 @@ function App() {
     if (isPatternPlaying) {
       setIsPatternPlaying(false);
     }
-
-    // 重置播放速率到默认值
-    setBpmRate(1);
 
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
@@ -348,16 +331,12 @@ function App() {
       setIsPatternPlaying(false);
     }
 
-    // 重置播放速率到默认值
-    setBpmRate(1);
-
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
-    // 同步 BPM 到节拍器（rate为1，所以实际BPM就是原始BPM）
+    // 同步 BPM 到节拍器
     setMetronomeBPM(loadedPattern.bpm);
     saveMetronomeBPM(loadedPattern.bpm);
-    // 更新 pattern 的 BPM（rate为1，所以使用原始BPM）
     updateBPM(loadedPattern.bpm);
 
     // 设置 range 为该节奏型的完整范围
@@ -400,7 +379,6 @@ function App() {
     <div className="app">
       <MetronomeBar
         bpm={metronomeBPM}
-        actualBpm={actualBPM}
         timeSignature={pattern.timeSignature}
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
@@ -433,8 +411,6 @@ function App() {
       <BottomPlayButton
         isPlaying={isPatternPlaying}
         onClick={handlePatternPlayToggle}
-        bpmRate={bpmRate}
-        onBpmRateChange={handleBpmRateChange}
       />
     </div>
   );

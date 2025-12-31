@@ -81,30 +81,22 @@
   flex-shrink: 0;
 }
 
-
 .bpm-control-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
 .bpm-value {
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: 2.5rem;
+  font-weight: 600;
   line-height: 1;
   color: var(--color-primary);
   text-shadow: 0 0 20px var(--accent-glow);
   /* 使用系统字体替代等宽字体，iOS Safari 数字对齐更好 */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  /* 启用等宽数字，保持数字宽度一致 */
-  font-variant-numeric: tabular-nums;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Helvetica Neue", Arial, sans-serif;
   display: inline-block;
   vertical-align: middle;
-}
-
-/* 速率应用时的样式（非1倍速） */
-.bpm-value.rate-applied {
-  color: var(--color-warning-hover);
-  text-shadow: 0 0 20px rgba(255, 184, 108, 0.4);
 }
 
 .bpm-unit {
@@ -115,10 +107,6 @@
 }
 
 @media (max-width: 768px) {
-  .bpm-value {
-    font-size: 2rem;
-  }
-
   .metronome-row-top {
     gap: var(--spacing-xs);
   }

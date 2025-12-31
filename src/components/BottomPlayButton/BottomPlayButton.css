@@ -40,13 +40,6 @@
   transform: scale(0.95);
 }
 
-/* 速率应用时的样式（非1倍速） */
-.bottom-play-button.rate-applied {
-  background: var(--color-warning-hover);
-  box-shadow: 0 4px 12px rgba(255, 184, 108, 0.4);
-}
-
-
 .bottom-play-button svg {
   width: 28px;
   height: 28px;
@@ -55,19 +48,6 @@
 /* 优化播放按钮三角形的位置，使其视觉上更居中（向右微调1px补偿视觉偏差） */
 .bottom-play-button svg.play-icon {
   transform: translateX(1px);
-}
-
-.bottom-play-button-rate {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--color-text);
-}
-
-@media (max-width: 768px) {
-  .bottom-play-button-rate {
-    font-size: 16px;
-  }
 }
 
 @media (max-width: 768px) {
