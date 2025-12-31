@@ -97,6 +97,25 @@
     "Helvetica Neue", Arial, sans-serif;
   display: inline-block;
   vertical-align: middle;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  user-select: none;
+}
+
+.bpm-value:active {
+  transform: scale(0.98);
+}
+
+/* 应用速率时的样式 */
+.bpm-value.rate-applied {
+  color: var(--color-warning-hover);
+  text-shadow: 0 0 20px rgba(255, 184, 108, 0.4);
+}
+
+.bpm-rate-indicator {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-warning-hover);
+  margin-top: 2px;
 }
 
 .bpm-unit {
