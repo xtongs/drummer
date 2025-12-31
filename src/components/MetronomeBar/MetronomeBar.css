@@ -90,9 +90,12 @@
 .bpm-value {
   font-size: 3rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   color: var(--color-primary);
   text-shadow: 0 0 20px var(--accent-glow);
+  /* iOS Safari 优化：确保数字垂直居中对齐 */
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* 速率应用时的样式（非1倍速） */
@@ -111,6 +114,7 @@
 @media (max-width: 768px) {
   .bpm-value {
     font-size: 2rem;
+    line-height: 1.15;
   }
 
   .metronome-row-top {
