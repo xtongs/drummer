@@ -83,26 +83,3 @@
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
 }
-
-/* 滚动条样式 */
-.pattern-list::-webkit-scrollbar,
-.pattern-list-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.pattern-list::-webkit-scrollbar-track,
-.pattern-list-content::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-sm);
-}
-
-.pattern-list::-webkit-scrollbar-thumb,
-.pattern-list-content::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--border-radius-sm);
-}
-
-.pattern-list::-webkit-scrollbar-thumb:hover,
-.pattern-list-content::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
-}

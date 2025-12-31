@@ -53,24 +53,6 @@
   flex-shrink: 0;
 }
 
-/* 滚动条样式 */
-.pattern-editor-scrollable::-webkit-scrollbar {
-  height: 8px;
-}
-
-.pattern-editor-scrollable::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
-}
-
-.pattern-editor-scrollable::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--border-radius-sm);
-}
-
-.pattern-editor-scrollable::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
-}
-
 .action-button {
   padding: 0;
   font-size: var(--font-size-sm);
@@ -93,7 +75,6 @@
   box-shadow: none;
 }
 
-
 .save-current-button {
   background: var(--color-secondary);
   color: white;
@@ -101,13 +82,11 @@
   box-shadow: none;
 }
 
-
 .load-button {
   background: transparent;
   color: var(--color-text);
   border: none;
 }
-
 
 .delete-button {
   background-color: var(--color-danger);
@@ -115,13 +94,11 @@
   border: none;
 }
 
-
 .clear-button {
   background-color: var(--color-warning-hover);
   color: var(--color-text);
   border: none;
 }
-
 
 @media (max-width: 768px) {
 }

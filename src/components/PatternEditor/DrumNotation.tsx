@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import type { Pattern } from "../../types";
+import { CELL_GHOST, CELL_GRACE } from "../../types";
 import { getDrumNotation, getSymbolY } from "../../utils/drumNotation";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
@@ -12,6 +13,10 @@ interface DrumNotationProps {
 }
 
 const SYMBOL_SIZE = 7;
+// X 标记的半径，使其刚好不超出圆的边界（对角线长度 = 直径）
+const X_RADIUS = SYMBOL_SIZE * 0.707; // 约等于 SYMBOL_SIZE / sqrt(2)
+const BRACKET_OFFSET = 0.8; // 括号与音符的距离
+const BRACKET_RADIUS = 10; // 括号圆弧的半径
 const LINE_SPACING = 18; // 线间距，适配符号大小（符号直径14，稍微大一点）
 const STAFF_TOP = LINE_SPACING; // 顶部留白，一个完整间距
 const STAFF_HEIGHT = 5 * LINE_SPACING; // 六条线之间有5个间隔，让六条线平分高度
@@ -153,13 +158,73 @@ export function DrumNotation({
             LINE_SPACING
           );
 
-          return row.map((isActive, subdivisionIndex) => {
-            if (!isActive) return null;
+          return row.map((cellState, subdivisionIndex) => {
+            if (!cellState) return null;
 
             // 计算符号位置：每个subdivision的中心
             const symbolX = subdivisionIndex * cellWidth + cellWidth / 2;
             const symbol = notation.symbol;
             const key = `symbol-${drumIndex}-${subdivisionIndex}`;
+            const isGhost = cellState === CELL_GHOST;
+            const isGrace = cellState === CELL_GRACE;
+
+            // 渲染括号的辅助函数
+            const renderBrackets = () => {
+              const bracketElements: JSX.Element[] = [];
+              const leftX = symbolX - SYMBOL_SIZE - BRACKET_OFFSET;
+              const rightX = symbolX + SYMBOL_SIZE + BRACKET_OFFSET;
+
+              // 使用半径为 BRACKET_RADIUS 的圆，按 X 形分成四份，取左右两端圆弧
+              // 圆弧长度减半：从 symbolY ± BRACKET_RADIUS 改为 symbolY ± BRACKET_RADIUS/2
+              // 左括号：一段圆弧，从 (leftX, symbolY - BRACKET_RADIUS/2) 到 (leftX, symbolY + BRACKET_RADIUS/2)，向左弯曲
+              // 右括号：一段圆弧，从 (rightX, symbolY - BRACKET_RADIUS/2) 到 (rightX, symbolY + BRACKET_RADIUS/2)，向右弯曲
+              const leftBracketTop = symbolY - BRACKET_RADIUS / 2;
+              const leftBracketBottom = symbolY + BRACKET_RADIUS / 2;
+              const rightBracketTop = symbolY - BRACKET_RADIUS / 2;
+              const rightBracketBottom = symbolY + BRACKET_RADIUS / 2;
+
+              if (isGhost) {
+                // 鬼音：左右两个括号
+                // 左括号：一段圆弧，从顶部到底部，向左弯曲
+                bracketElements.push(
+                  <path
+                    key="left-bracket"
+                    d={`M ${leftX} ${leftBracketTop}
+                        A ${BRACKET_RADIUS} ${BRACKET_RADIUS} 0 0 0 ${leftX} ${leftBracketBottom}`}
+                    fill="none"
+                    stroke={colorText}
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  />
+                );
+                // 右括号：一段圆弧，从顶部到底部，向右弯曲
+                bracketElements.push(
+                  <path
+                    key="right-bracket"
+                    d={`M ${rightX} ${rightBracketTop}
+                        A ${BRACKET_RADIUS} ${BRACKET_RADIUS} 0 0 1 ${rightX} ${rightBracketBottom}`}
+                    fill="none"
+                    stroke={colorText}
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  />
+                );
+              } else if (isGrace) {
+                // 倚音：只加左侧一半括号，一段圆弧
+                bracketElements.push(
+                  <path
+                    key="left-bracket"
+                    d={`M ${leftX} ${leftBracketTop}
+                        A ${BRACKET_RADIUS} ${BRACKET_RADIUS} 0 0 0 ${leftX} ${leftBracketBottom}`}
+                    fill="none"
+                    stroke={colorText}
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  />
+                );
+              }
+              return bracketElements;
+            };
 
             // Crash1 和 Crash2 显示为 X 和 O 重叠
             if (drum === "Crash 1" || drum === "Crash 2") {
@@ -174,57 +239,61 @@ export function DrumNotation({
                     stroke={colorText}
                     strokeWidth={2}
                   />
-                  {/* X 交叉线 */}
+                  {/* X 交叉线（缩小尺寸） */}
                   <line
-                    x1={symbolX - SYMBOL_SIZE}
-                    y1={symbolY - SYMBOL_SIZE}
-                    x2={symbolX + SYMBOL_SIZE}
-                    y2={symbolY + SYMBOL_SIZE}
+                    x1={symbolX - X_RADIUS}
+                    y1={symbolY - X_RADIUS}
+                    x2={symbolX + X_RADIUS}
+                    y2={symbolY + X_RADIUS}
                     stroke={colorText}
                     strokeWidth={2}
                     strokeLinecap="round"
                   />
                   <line
-                    x1={symbolX + SYMBOL_SIZE}
-                    y1={symbolY - SYMBOL_SIZE}
-                    x2={symbolX - SYMBOL_SIZE}
-                    y2={symbolY + SYMBOL_SIZE}
+                    x1={symbolX + X_RADIUS}
+                    y1={symbolY - X_RADIUS}
+                    x2={symbolX - X_RADIUS}
+                    y2={symbolY + X_RADIUS}
                     stroke={colorText}
                     strokeWidth={2}
                     strokeLinecap="round"
                   />
+                  {/* 括号 */}
+                  {renderBrackets()}
                 </g>
               );
             }
 
+            // 渲染基础符号
+            let baseSymbol: JSX.Element | null = null;
             switch (symbol) {
               case "x":
-                return (
-                  <g key={key}>
+                baseSymbol = (
+                  <g>
                     <line
-                      x1={symbolX - SYMBOL_SIZE}
-                      y1={symbolY - SYMBOL_SIZE}
-                      x2={symbolX + SYMBOL_SIZE}
-                      y2={symbolY + SYMBOL_SIZE}
+                      x1={symbolX - X_RADIUS}
+                      y1={symbolY - X_RADIUS}
+                      x2={symbolX + X_RADIUS}
+                      y2={symbolY + X_RADIUS}
                       stroke={colorText}
                       strokeWidth={2}
                       strokeLinecap="round"
                     />
                     <line
-                      x1={symbolX + SYMBOL_SIZE}
-                      y1={symbolY - SYMBOL_SIZE}
-                      x2={symbolX - SYMBOL_SIZE}
-                      y2={symbolY + SYMBOL_SIZE}
+                      x1={symbolX + X_RADIUS}
+                      y1={symbolY - X_RADIUS}
+                      x2={symbolX - X_RADIUS}
+                      y2={symbolY + X_RADIUS}
                       stroke={colorText}
                       strokeWidth={2}
                       strokeLinecap="round"
                     />
                   </g>
                 );
+                break;
               case "o":
-                return (
+                baseSymbol = (
                   <circle
-                    key={key}
                     cx={symbolX}
                     cy={symbolY}
                     r={SYMBOL_SIZE}
@@ -233,20 +302,20 @@ export function DrumNotation({
                     strokeWidth={2}
                   />
                 );
+                break;
               case "●":
-                return (
+                baseSymbol = (
                   <circle
-                    key={key}
                     cx={symbolX}
                     cy={symbolY}
                     r={SYMBOL_SIZE}
                     fill={colorText}
                   />
                 );
+                break;
               case "○":
-                return (
+                baseSymbol = (
                   <circle
-                    key={key}
                     cx={symbolX}
                     cy={symbolY}
                     r={SYMBOL_SIZE}
@@ -255,9 +324,17 @@ export function DrumNotation({
                     strokeWidth={2}
                   />
                 );
+                break;
               default:
                 return null;
             }
+
+            return (
+              <g key={key}>
+                {baseSymbol}
+                {renderBrackets()}
+              </g>
+            );
           });
         })}
       </svg>

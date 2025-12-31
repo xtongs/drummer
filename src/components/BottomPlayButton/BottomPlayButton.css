@@ -13,7 +13,6 @@
   padding-right: var(--spacing-md);
   z-index: 100;
   pointer-events: none;
-  max-width: 500px;
   margin: 0 auto;
 }
 
@@ -34,7 +33,6 @@
   border: none;
   cursor: pointer;
 }
-
 
 .bottom-play-button:active {
   transform: scale(0.95);
@@ -63,4 +61,3 @@
     height: 24px;
   }
 }
-
