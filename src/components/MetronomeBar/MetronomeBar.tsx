@@ -7,24 +7,18 @@ import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
   bpm: number;
-  baseBPM: number | null;
-  rateIndex: number;
   timeSignature: [number, number];
   isPlaying: boolean;
   onBPMChange: (bpm: number) => void;
-  onBPMClick: () => void;
   isPatternPlaying?: boolean;
   onPatternPlayToggle?: () => void;
 }
 
 export function MetronomeBar({
   bpm,
-  baseBPM,
-  rateIndex,
   timeSignature,
   isPlaying: _isPlaying,
   onBPMChange,
-  onBPMClick,
   isPatternPlaying = false,
   onPatternPlayToggle,
 }: MetronomeBarProps) {
@@ -34,9 +28,6 @@ export function MetronomeBar({
     timeSignature,
     isPlaying: isPatternPlaying,
   });
-
-  // 判断是否应用了速率
-  const hasRateApplied = baseBPM !== null && rateIndex !== 3;
 
   // 循环计数器
   const [loopCount, setLoopCount] = useState(0);
@@ -104,11 +95,7 @@ export function MetronomeBar({
             </svg>
           </button>
           <div className="bpm-display">
-            <span 
-              className={`bpm-value ${hasRateApplied ? "rate-applied" : ""}`}
-              onClick={onBPMClick}
-              style={{ cursor: "pointer" }}
-            >
+            <span className="bpm-value">
               {bpm}
             </span>
           </div>
