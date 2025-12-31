@@ -37,11 +37,6 @@
   border-radius: var(--border-radius-sm);
 }
 
-.bpm-button:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: var(--color-text);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
 
 .bpm-button:disabled {
   opacity: 0.3;

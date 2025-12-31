@@ -37,10 +37,6 @@
   cursor: pointer;
 }
 
-.bar-control-button:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  box-shadow: none;
-}
 
 .bar-control-button:disabled {
   opacity: 0.5;

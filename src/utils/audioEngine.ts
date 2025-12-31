@@ -21,8 +21,10 @@ import metronomeUrl from "../sounds/metronome.mp3";
 let audioContext: AudioContext | null = null;
 let isResuming = false;
 
-// 采样缓存
+// 采样缓存（Web Audio API 用于合成音色）
 const sampleBuffers: Map<string, AudioBuffer> = new Map();
+// HTML5 Audio 元素缓存（用于采样播放，不受静音开关影响）
+const audioElements: Map<string, HTMLAudioElement> = new Map();
 let samplesLoaded = false;
 let samplesLoadPromise: Promise<void> | null = null;
 
@@ -56,17 +58,41 @@ export async function resumeAudioContext(): Promise<void> {
 }
 
 /**
- * 加载采样文件
+ * 加载采样文件（同时加载为 AudioBuffer 和 HTMLAudioElement）
  */
 async function loadSample(url: string, name: string): Promise<void> {
   const ctx = getAudioContext();
   try {
+    // 加载为 AudioBuffer（用于合成音色后备）
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
     sampleBuffers.set(name, audioBuffer);
+
+    // 创建 HTML5 Audio 元素（用于采样播放，不受静音开关影响）
+    const audio = new Audio(url);
+    audio.preload = "auto";
+    audio.volume = 1; // 音量由系统控制
+
+    // 等待音频加载完成
+    await new Promise<void>((resolve, reject) => {
+      const handleCanPlay = () => {
+        audio.removeEventListener("canplaythrough", handleCanPlay);
+        audio.removeEventListener("error", handleError);
+        resolve();
+      };
+      const handleError = () => {
+        audio.removeEventListener("canplaythrough", handleCanPlay);
+        audio.removeEventListener("error", handleError);
+        reject(new Error(`Failed to load audio: ${name}`));
+      };
+      audio.addEventListener("canplaythrough", handleCanPlay);
+      audio.addEventListener("error", handleError);
+    });
+
+    audioElements.set(name, audio);
   } catch {
-    // Failed to load sample
+    // Failed to load sample - 继续使用合成音色作为后备
   }
 }
 
@@ -129,27 +155,49 @@ function createNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer {
 }
 
 /**
- * 播放节拍器采样（带音高调整）
+ * 播放节拍器采样（使用 HTML5 Audio 元素，不受静音开关影响）
  */
 function playMetronomeSample(
   time: number,
   volume: number = 1,
   playbackRate: number = 1
 ): boolean {
-  const buffer = sampleBuffers.get("metronome");
-  if (!buffer) return false;
+  const audio = audioElements.get("metronome");
+  if (!audio) return false;
 
+  // 创建新的 Audio 元素副本
+  const audioClone = audio.cloneNode() as HTMLAudioElement;
+
+  // 设置音量和播放速率
+  audioClone.volume = Math.max(0, Math.min(1, volume));
+  audioClone.playbackRate = playbackRate;
+
+  // 计算延迟时间
   const ctx = getAudioContext();
-  const source = ctx.createBufferSource();
-  const gainNode = ctx.createGain();
+  const currentTime = ctx.currentTime;
+  const delay = Math.max(0, time - currentTime);
 
-  source.buffer = buffer;
-  source.playbackRate.value = playbackRate;
-  source.connect(gainNode);
-  gainNode.connect(ctx.destination);
-  gainNode.gain.value = volume;
+  if (delay > 0) {
+    setTimeout(() => {
+      audioClone.play().catch(() => {
+        // 播放失败时静默处理
+      });
+    }, delay * 1000);
+  } else {
+    audioClone.play().catch(() => {
+      // 播放失败时静默处理
+    });
+  }
 
-  source.start(time);
+  // 播放结束后清理
+  audioClone.addEventListener(
+    "ended",
+    () => {
+      audioClone.remove();
+    },
+    { once: true }
+  );
+
   return true;
 }
 
@@ -237,7 +285,7 @@ function playKickSynth(time: number): void {
 }
 
 /**
- * 播放采样
+ * 播放采样（使用 HTML5 Audio 元素，不受静音开关影响，音量跟随系统）
  * @param applyVolumeMultiplier 是否应用全局音量乘数（用于鬼音等）
  */
 function playSample(
@@ -246,23 +294,46 @@ function playSample(
   volume: number = 1,
   applyVolumeMultiplier: boolean = true
 ): boolean {
-  const buffer = sampleBuffers.get(name);
-  if (!buffer) return false;
+  const audio = audioElements.get(name);
+  if (!audio) return false;
 
-  const ctx = getAudioContext();
-  const source = ctx.createBufferSource();
-  const gainNode = ctx.createGain();
+  // 创建新的 Audio 元素副本（因为同一个元素不能同时播放多次）
+  const audioClone = audio.cloneNode() as HTMLAudioElement;
 
-  source.buffer = buffer;
-  source.connect(gainNode);
-  gainNode.connect(ctx.destination);
-  // 应用音量乘数
+  // 应用音量乘数（通过 volume 属性，范围 0-1）
   const finalVolume = applyVolumeMultiplier
-    ? volume * currentVolumeMultiplier
-    : volume;
-  gainNode.gain.value = finalVolume;
+    ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier))
+    : Math.max(0, Math.min(1, volume));
+  audioClone.volume = finalVolume;
 
-  source.start(time);
+  // 计算延迟时间（相对于当前时间）
+  const ctx = getAudioContext();
+  const currentTime = ctx.currentTime;
+  const delay = Math.max(0, time - currentTime);
+
+  if (delay > 0) {
+    // 使用 setTimeout 实现延迟播放
+    setTimeout(() => {
+      audioClone.play().catch(() => {
+        // 播放失败时静默处理
+      });
+    }, delay * 1000);
+  } else {
+    // 立即播放
+    audioClone.play().catch(() => {
+      // 播放失败时静默处理
+    });
+  }
+
+  // 播放结束后清理（避免内存泄漏）
+  audioClone.addEventListener(
+    "ended",
+    () => {
+      audioClone.remove();
+    },
+    { once: true }
+  );
+
   return true;
 }
 

@@ -38,10 +38,10 @@ export const DRUM_NOTATION: Record<
   {
     position: "above" | "center" | "below";
     symbol: "x" | "o" | "●" | "○";
-    line: number; // 相对中间线的位置（-2到2）
+    line: number; // 相对中间线的位置（可以是小数，表示线间位置）
   }
 > = {
-  "Crash 1": { position: "above", symbol: "x", line: -2 }, // 第一条线上 X
+  "Crash 1": { position: "above", symbol: "x", line: -2.5 }, // 第一条线上方半个间距 X
   "Crash 2": { position: "above", symbol: "o", line: -2 }, // 第一条线上 O
   "Hi-Hat Open": { position: "above", symbol: "o", line: -1.5 }, // 第一线和第二线之间 O
   "Hi-Hat Closed": { position: "above", symbol: "x", line: -1.5 }, // 第一线和第二线间 X
@@ -50,7 +50,7 @@ export const DRUM_NOTATION: Record<
   "Tom 2": { position: "center", symbol: "●", line: 0 }, // 第三线上 实心O
   Snare: { position: "center", symbol: "●", line: 0.5 }, // 第三线和第四线间 实心O
   "Tom 3": { position: "below", symbol: "●", line: 1.5 }, // 第四和第五线间 实心O
-  Kick: { position: "below", symbol: "●", line: 2 }, // 第五线下 实心O
+  Kick: { position: "below", symbol: "●", line: 2.5 }, // 第五线下 实心O（往下挪一半间距）
 };
 
 // 主题颜色（与 CSS 变量 --theme-color 保持一致）

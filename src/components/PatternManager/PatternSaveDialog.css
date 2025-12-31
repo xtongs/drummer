@@ -69,10 +69,6 @@
   border: 1px solid var(--color-border);
 }
 
-.dialog-button.cancel:hover {
-  background-color: var(--card-bg);
-  border-color: var(--color-text-secondary);
-}
 
 .dialog-button.save {
   background: var(--color-primary);
@@ -80,10 +76,6 @@
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
-.dialog-button.save:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
 
 .dialog-button.save:disabled {
   opacity: 0.5;

@@ -46,9 +46,6 @@
   box-shadow: none;
 }
 
-.loop-range-button:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
 
 .loop-range-button:disabled {
   opacity: 0.3;

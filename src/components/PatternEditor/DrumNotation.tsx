@@ -11,10 +11,10 @@ interface DrumNotationProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
-const STAFF_TOP = 26; // 顶部和底部留白
-const LINE_SPACING = 34; // 线间距，增大以让符号不挤在一起
-const STAFF_HEIGHT = 4 * LINE_SPACING; // 五条线之间有4个间隔，让五条线平分高度
 const SYMBOL_SIZE = 7;
+const LINE_SPACING = 18; // 线间距，适配符号大小（符号直径14，稍微大一点）
+const STAFF_TOP = LINE_SPACING; // 顶部留白，一个完整间距
+const STAFF_HEIGHT = 5 * LINE_SPACING; // 六条线之间有5个间隔，让六条线平分高度
 
 export function DrumNotation({
   pattern,
@@ -40,7 +40,7 @@ export function DrumNotation({
   const [beatsPerBar] = pattern.timeSignature;
   const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
   const totalWidth = totalSubdivisions * cellWidth;
-  const svgHeight = STAFF_HEIGHT + STAFF_TOP * 2;
+  const svgHeight = STAFF_HEIGHT + STAFF_TOP; // 上方一个完整间距，下方无留白
 
   // 计算小节分隔线位置
   const barLines = Array.from({ length: pattern.bars + 1 }, (_, i) => ({
@@ -67,8 +67,19 @@ export function DrumNotation({
         height={svgHeight}
         preserveAspectRatio="none"
       >
-        {/* 五线谱背景 */}
-        {Array.from({ length: 5 }, (_, i) => {
+        {/* 上边界横线 */}
+        <line
+          x1={0}
+          y1={0}
+          x2={totalWidth}
+          y2={0}
+          stroke={colorText}
+          strokeWidth={1}
+          opacity={0.8}
+        />
+
+        {/* 六线谱背景 */}
+        {Array.from({ length: 6 }, (_, i) => {
           const y = STAFF_TOP + i * LINE_SPACING;
           const isFirstLine = i === 0;
           return (
@@ -91,9 +102,9 @@ export function DrumNotation({
           <line
             key={`bar-line-${index}`}
             x1={bar.x}
-            y1={STAFF_TOP - 10}
+            y1={0}
             x2={bar.x}
-            y2={STAFF_TOP + STAFF_HEIGHT + 10}
+            y2={STAFF_TOP + STAFF_HEIGHT}
             stroke={bar.isFirst || bar.isLast ? colorText : colorTextTertiary}
             strokeWidth={bar.isFirst || bar.isLast ? 3 : 2}
             strokeDasharray={bar.isFirst || bar.isLast ? "0" : "4,4"}
@@ -109,9 +120,9 @@ export function DrumNotation({
             <line
               key={`beat-line-${index}`}
               x1={beat.x}
-              y1={STAFF_TOP - 5}
+              y1={0}
               x2={beat.x}
-              y2={STAFF_TOP + STAFF_HEIGHT + 5}
+              y2={STAFF_TOP + STAFF_HEIGHT}
               stroke={colorBeatLine}
               strokeWidth={1}
               opacity={0.4}
@@ -123,9 +134,9 @@ export function DrumNotation({
         {currentBeat !== undefined && currentBeat >= 0 && (
           <rect
             x={currentBeat * cellWidth}
-            y={STAFF_TOP - 10}
+            y={0}
             width={cellWidth}
-            height={STAFF_HEIGHT + 20}
+            height={STAFF_TOP + STAFF_HEIGHT}
             fill={colorWarning}
             opacity={0.4}
           />
@@ -149,6 +160,42 @@ export function DrumNotation({
             const symbolX = subdivisionIndex * cellWidth + cellWidth / 2;
             const symbol = notation.symbol;
             const key = `symbol-${drumIndex}-${subdivisionIndex}`;
+
+            // Crash1 和 Crash2 显示为 X 和 O 重叠
+            if (drum === "Crash 1" || drum === "Crash 2") {
+              return (
+                <g key={key}>
+                  {/* O 圆圈 */}
+                  <circle
+                    cx={symbolX}
+                    cy={symbolY}
+                    r={SYMBOL_SIZE}
+                    fill="none"
+                    stroke={colorText}
+                    strokeWidth={2}
+                  />
+                  {/* X 交叉线 */}
+                  <line
+                    x1={symbolX - SYMBOL_SIZE}
+                    y1={symbolY - SYMBOL_SIZE}
+                    x2={symbolX + SYMBOL_SIZE}
+                    y2={symbolY + SYMBOL_SIZE}
+                    stroke={colorText}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1={symbolX + SYMBOL_SIZE}
+                    y1={symbolY - SYMBOL_SIZE}
+                    x2={symbolX - SYMBOL_SIZE}
+                    y2={symbolY + SYMBOL_SIZE}
+                    stroke={colorText}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            }
 
             switch (symbol) {
               case "x":

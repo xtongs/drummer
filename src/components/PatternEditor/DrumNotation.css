@@ -1,7 +1,6 @@
 .drum-notation-container {
   width: max-content;
   min-width: 100%;
-  overflow: hidden;
   border: none;
   border-radius: var(--border-radius-sm);
   background: transparent;
@@ -9,6 +8,7 @@
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
+  margin-top: 18px;
 }
 
 .drum-notation-svg {

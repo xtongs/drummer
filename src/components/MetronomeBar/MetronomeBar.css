@@ -81,10 +81,6 @@
   flex-shrink: 0;
 }
 
-.bpm-control-button:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: white;
-}
 
 .bpm-control-button:disabled {
   opacity: 0.3;
