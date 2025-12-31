@@ -111,13 +111,6 @@
   text-shadow: 0 0 20px rgba(255, 184, 108, 0.4);
 }
 
-.bpm-rate-indicator {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-warning-hover);
-  margin-top: 2px;
-}
-
 .bpm-unit {
   font-size: var(--font-size-sm);
   font-weight: 500;

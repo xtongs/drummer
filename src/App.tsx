@@ -426,7 +426,6 @@ function App() {
         bpm={metronomeBPM}
         baseBPM={baseBPM}
         rateIndex={rateIndex}
-        rateOptions={RATE_OPTIONS}
         timeSignature={pattern.timeSignature}
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
