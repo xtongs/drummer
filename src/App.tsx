@@ -48,7 +48,12 @@ function App() {
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
-  >(() => loadCrossPatternLoop());
+  >(() => loadCrossPatternLoop() ?? {
+    startPatternName: "",
+    startBar: 0,
+    endPatternName: "",
+    endBar: DEFAULT_BARS - 1,
+  });
   const {
     pattern,
     updateBPM,

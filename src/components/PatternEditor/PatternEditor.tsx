@@ -6,6 +6,7 @@ import { LoopRangeSelector } from "./LoopRangeSelector";
 import { PatternTabs } from "../PatternManager/PatternTabs";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
+import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import "./PatternEditor.css";
 
 // 自定义快速动画滚动函数
@@ -145,6 +146,32 @@ export function PatternEditor({
       lastScrollTargetRef.current = null;
     }
   }, [isPlaying, pattern.id]);
+
+  // 当增加小节数量时，如果满足条件，自动滚动到最新添加的小节位置
+  useEffect(() => {
+    if (!scrollContainerRef.current || !crossPatternLoop) return;
+
+    // 检查是否非播放状态
+    if (isPlaying) return;
+
+    // 检查结束小节所属的节奏型是否是当前选中的节奏型
+    const isCurrentPattern = isDraftMode
+      ? crossPatternLoop.endPatternName === ""
+      : crossPatternLoop.endPatternName === pattern.name;
+
+    // 如果是当前节奏型，且有滚动容器，则自动滚动到最新添加的小节位置
+    if (isCurrentPattern) {
+      const container = scrollContainerRef.current;
+      // 计算最新小节的位置（新添加的小节是最后一个小节）
+      const [beatsPerBar] = pattern.timeSignature;
+      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+      const lastBarStartIndex = (pattern.bars - 1) * subdivisionsPerBar;
+      const targetLeft = lastBarStartIndex * cellSize;
+
+      // 滚动到新小节，让它在视图中可见
+      doScroll(container, targetLeft);
+    }
+  }, [pattern.bars, isPlaying, isDraftMode, pattern.name, pattern.timeSignature, cellSize, doScroll, crossPatternLoop]);
 
   return (
     <div className="pattern-editor">
