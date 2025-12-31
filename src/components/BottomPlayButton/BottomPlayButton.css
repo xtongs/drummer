@@ -1,6 +1,6 @@
 .bottom-play-button-container {
   position: fixed;
-  bottom: 0;
+  bottom: calc(var(--spacing-lg) + max(env(safe-area-inset-bottom), var(--spacing-md)));
   left: 0;
   right: 0;
   display: flex;
