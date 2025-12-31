@@ -22,6 +22,7 @@ export function MetronomeBar({
   isPatternPlaying = false,
   onPatternPlayToggle,
 }: MetronomeBarProps) {
+  const [index, setIndex] = useState(0);
   // 注意：调换后，isPatternPlaying 现在代表节拍器播放状态
   const { currentBeat } = useMetronome({
     bpm,
@@ -67,6 +68,16 @@ export function MetronomeBar({
     onBPMChange(newBPM);
   };
 
+  // 快速根据速率设置BPM
+  const rateLabels = ["", "x0.875", "x0.75", "x0.5"];
+  const rates = [0.875, 0.8571428571, 0.6666666667, 2];
+
+  const handleBPMClick = () => {
+    const newBPM = Math.round(bpm * rates[index % rates.length]);
+    setIndex(index + 1);
+    onBPMChange(newBPM);
+  };
+
   return (
     <div className="metronome-bar">
       {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 节奏型播放按钮 */}
@@ -94,10 +105,13 @@ export function MetronomeBar({
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <div className="bpm-display">
-            <span className="bpm-value">
-              {bpm}
-            </span>
+          <div className="bpm-display" onClick={handleBPMClick}>
+            <span className="bpm-value">{bpm}</span>
+            {rateLabels[index % rateLabels.length] && (
+              <span className="bpm-rate-label">
+                {rateLabels[index % rateLabels.length]}
+              </span>
+            )}
           </div>
           <button
             className="bpm-control-button"

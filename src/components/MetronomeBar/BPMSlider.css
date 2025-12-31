@@ -21,10 +21,11 @@
   top: 0;
   left: 0;
   height: 100%;
+  max-width: 100%;
   background: linear-gradient(
     to right,
     var(--color-primary),
-    var(--color-primary-hover)
+    var(--color-primary)
   );
   border-radius: 16px;
   transition: width 0.1s ease;
