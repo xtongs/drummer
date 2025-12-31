@@ -90,10 +90,13 @@
 .bpm-value {
   font-size: 3rem;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   color: var(--color-primary);
   text-shadow: 0 0 20px var(--accent-glow);
-  /* iOS Safari 优化：确保数字垂直居中对齐 */
+  /* 使用系统字体替代等宽字体，iOS Safari 数字对齐更好 */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  /* 启用等宽数字，保持数字宽度一致 */
+  font-variant-numeric: tabular-nums;
   display: inline-block;
   vertical-align: middle;
 }
@@ -114,7 +117,6 @@
 @media (max-width: 768px) {
   .bpm-value {
     font-size: 2rem;
-    line-height: 1.15;
   }
 
   .metronome-row-top {
