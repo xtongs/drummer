@@ -70,26 +70,11 @@ async function loadSample(url: string, name: string): Promise<void> {
     sampleBuffers.set(name, audioBuffer);
 
     // 创建 HTML5 Audio 元素（用于采样播放，不受静音开关影响）
+    // 注意：iOS Safari 不会在页面加载时预加载 Audio 元素，
+    // 必须等到用户交互后才会真正加载，因此我们不等待加载事件
     const audio = new Audio(url);
     audio.preload = "auto";
     audio.volume = 1; // 音量由系统控制
-
-    // 等待音频加载完成
-    await new Promise<void>((resolve, reject) => {
-      const handleCanPlay = () => {
-        audio.removeEventListener("canplaythrough", handleCanPlay);
-        audio.removeEventListener("error", handleError);
-        resolve();
-      };
-      const handleError = () => {
-        audio.removeEventListener("canplaythrough", handleCanPlay);
-        audio.removeEventListener("error", handleError);
-        reject(new Error(`Failed to load audio: ${name}`));
-      };
-      audio.addEventListener("canplaythrough", handleCanPlay);
-      audio.addEventListener("error", handleError);
-    });
-
     audioElements.set(name, audio);
   } catch {
     // Failed to load sample - 继续使用合成音色作为后备

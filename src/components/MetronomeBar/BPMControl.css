@@ -50,8 +50,10 @@
   border: none;
   background-color: transparent;
   color: var(--color-text);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 0;
   -moz-appearance: textfield;
+  line-height: var(--button-size);
+  height: var(--button-size);
 }
 
 .bpm-input::-webkit-outer-spin-button,

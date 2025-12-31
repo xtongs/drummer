@@ -17,11 +17,16 @@ import {
   loadCrossPatternLoop,
 } from "./utils/storage";
 import { DEFAULT_BPM, DEFAULT_BARS } from "./utils/constants";
-import { preInitAudioContext, resumeAudioContext } from "./utils/audioEngine";
+import {
+  preInitAudioContext,
+  resumeAudioContext,
+  ensureSamplesLoaded,
+} from "./utils/audioEngine";
 import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [isMetronomePlaying, setIsMetronomePlaying] = useState(false);
   const [isPatternPlaying, setIsPatternPlaying] = useState(false);
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
@@ -76,6 +81,9 @@ function App() {
       setIsPatternPlaying(false);
     }
 
+    // 重置播放速率到默认值
+    setBpmRate(1);
+
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
     resetPattern();
@@ -126,27 +134,23 @@ function App() {
     saveCrossPatternLoop(crossPatternLoop);
   }, [crossPatternLoop]);
 
-  // 预先初始化 AudioContext（在用户首次交互时）
+  // 加载采样文件
   useEffect(() => {
-    const handleUserInteraction = () => {
-      preInitAudioContext();
-      // 只需要初始化一次
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("touchstart", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
+    const loadSamples = async () => {
+      try {
+        // 预先初始化 AudioContext
+        preInitAudioContext();
+        // 等待采样加载完成
+        await ensureSamplesLoaded();
+      } catch (error) {
+        // 采样加载失败，使用合成音色作为后备
+      } finally {
+        // 无论成功或失败，都显示界面
+        setIsLoading(false);
+      }
     };
 
-    document.addEventListener("click", handleUserInteraction, { once: true });
-    document.addEventListener("touchstart", handleUserInteraction, {
-      once: true,
-    });
-    document.addEventListener("keydown", handleUserInteraction, { once: true });
-
-    return () => {
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("touchstart", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
-    };
+    loadSamples();
   }, []);
 
   // 使用 ref 记住隐藏前的播放状态
@@ -344,12 +348,17 @@ function App() {
       setIsPatternPlaying(false);
     }
 
+    // 重置播放速率到默认值
+    setBpmRate(1);
+
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
-    // 同步 BPM 到节拍器
+    // 同步 BPM 到节拍器（rate为1，所以实际BPM就是原始BPM）
     setMetronomeBPM(loadedPattern.bpm);
     saveMetronomeBPM(loadedPattern.bpm);
+    // 更新 pattern 的 BPM（rate为1，所以使用原始BPM）
+    updateBPM(loadedPattern.bpm);
 
     // 设置 range 为该节奏型的完整范围
     setCrossPatternLoop({
@@ -375,6 +384,17 @@ function App() {
     }
     setSavedPatterns(loadPatterns());
   };
+
+  // 加载中显示加载界面
+  if (isLoading) {
+    return (
+      <div className="app loading">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
