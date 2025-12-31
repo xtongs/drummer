@@ -74,14 +74,16 @@ export function LoopRangeSelector({
     if (!crossPatternLoop) return;
 
     // 如果 pattern 还在加载中，不要调整 range
-    if (!isPatternLoaded(crossPatternLoop.startPatternName) || 
-        !isPatternLoaded(crossPatternLoop.endPatternName)) {
+    if (
+      !isPatternLoaded(crossPatternLoop.startPatternName) ||
+      !isPatternLoaded(crossPatternLoop.endPatternName)
+    ) {
       return;
     }
 
     const startBars = getPatternBars(crossPatternLoop.startPatternName);
     const endBars = getPatternBars(crossPatternLoop.endPatternName);
-    
+
     let needsUpdate = false;
     let updatedLoop = { ...crossPatternLoop };
 
@@ -98,12 +100,15 @@ export function LoopRangeSelector({
     }
 
     // 确保开始位置不超过结束位置
-    if (needsUpdate && comparePositions(
-      updatedLoop.startPatternName,
-      updatedLoop.startBar,
-      updatedLoop.endPatternName,
-      updatedLoop.endBar
-    ) > 0) {
+    if (
+      needsUpdate &&
+      comparePositions(
+        updatedLoop.startPatternName,
+        updatedLoop.startBar,
+        updatedLoop.endPatternName,
+        updatedLoop.endBar
+      ) > 0
+    ) {
       // 如果开始位置超过结束位置，将结束位置调整为开始位置
       updatedLoop.endBar = updatedLoop.startBar;
     }
@@ -116,15 +121,25 @@ export function LoopRangeSelector({
 
   // 获取可选的 patterns 列表（草稿模式用空字符串表示）
   const patternOptions = isDraftMode
-    ? [{ name: "", label: "○" }, ...sortedPatterns.map((p) => ({ name: p.name, label: p.name }))]
+    ? [
+        { name: "", label: "○" },
+        ...sortedPatterns.map((p) => ({ name: p.name, label: p.name })),
+      ]
     : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
 
   const handleStartPatternChange = (newPatternName: string) => {
     const newBars = getPatternBars(newPatternName);
     let newStartBar = Math.min(loop.startBar, newBars - 1);
-    
+
     // 确保开始位置不超过结束位置
-    if (comparePositions(newPatternName, newStartBar, loop.endPatternName, loop.endBar) > 0) {
+    if (
+      comparePositions(
+        newPatternName,
+        newStartBar,
+        loop.endPatternName,
+        loop.endBar
+      ) > 0
+    ) {
       // 如果新的开始位置超过了结束位置，调整结束位置
       onCrossPatternLoopChange({
         startPatternName: newPatternName,
@@ -144,9 +159,16 @@ export function LoopRangeSelector({
   const handleEndPatternChange = (newPatternName: string) => {
     const newBars = getPatternBars(newPatternName);
     let newEndBar = Math.min(loop.endBar, newBars - 1);
-    
+
     // 确保结束位置不早于开始位置
-    if (comparePositions(loop.startPatternName, loop.startBar, newPatternName, newEndBar) > 0) {
+    if (
+      comparePositions(
+        loop.startPatternName,
+        loop.startBar,
+        newPatternName,
+        newEndBar
+      ) > 0
+    ) {
       // 如果新的结束位置早于开始位置，调整开始位置
       onCrossPatternLoopChange({
         startPatternName: newPatternName,
@@ -175,9 +197,16 @@ export function LoopRangeSelector({
   const handleStartBarIncrease = () => {
     const maxBar = getPatternBars(loop.startPatternName) - 1;
     const newStartBar = Math.min(maxBar, loop.startBar + 1);
-    
+
     // 确保不超过结束位置
-    if (comparePositions(loop.startPatternName, newStartBar, loop.endPatternName, loop.endBar) <= 0) {
+    if (
+      comparePositions(
+        loop.startPatternName,
+        newStartBar,
+        loop.endPatternName,
+        loop.endBar
+      ) <= 0
+    ) {
       onCrossPatternLoopChange({
         ...loop,
         startBar: newStartBar,
@@ -187,9 +216,17 @@ export function LoopRangeSelector({
 
   const handleEndBarDecrease = () => {
     const newEndBar = loop.endBar - 1;
-    
+
     // 确保不早于开始位置
-    if (newEndBar >= 0 && comparePositions(loop.startPatternName, loop.startBar, loop.endPatternName, newEndBar) <= 0) {
+    if (
+      newEndBar >= 0 &&
+      comparePositions(
+        loop.startPatternName,
+        loop.startBar,
+        loop.endPatternName,
+        newEndBar
+      ) <= 0
+    ) {
       onCrossPatternLoopChange({
         ...loop,
         endBar: newEndBar,
@@ -209,13 +246,24 @@ export function LoopRangeSelector({
 
   // 判断按钮是否禁用
   const canDecreaseStartBar = loop.startBar > 0;
-  const canIncreaseStartBar = 
+  const canIncreaseStartBar =
     loop.startBar < getPatternBars(loop.startPatternName) - 1 &&
-    comparePositions(loop.startPatternName, loop.startBar + 1, loop.endPatternName, loop.endBar) <= 0;
-  const canDecreaseEndBar = 
+    comparePositions(
+      loop.startPatternName,
+      loop.startBar + 1,
+      loop.endPatternName,
+      loop.endBar
+    ) <= 0;
+  const canDecreaseEndBar =
     loop.endBar > 0 &&
-    comparePositions(loop.startPatternName, loop.startBar, loop.endPatternName, loop.endBar - 1) <= 0;
-  const canIncreaseEndBar = loop.endBar < getPatternBars(loop.endPatternName) - 1;
+    comparePositions(
+      loop.startPatternName,
+      loop.startBar,
+      loop.endPatternName,
+      loop.endBar - 1
+    ) <= 0;
+  const canIncreaseEndBar =
+    loop.endBar < getPatternBars(loop.endPatternName) - 1;
 
   return (
     <div className="loop-range-selector">

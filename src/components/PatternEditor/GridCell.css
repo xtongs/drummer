@@ -3,7 +3,6 @@
   height: var(--grid-cell-size);
   min-width: var(--grid-cell-size);
   min-height: var(--grid-cell-size);
-  max-height: var(--grid-cell-size);
   padding: var(--spacing-xs);
   background-color: var(--color-bg);
   cursor: pointer;

@@ -81,13 +81,25 @@
   --app-max-width: 700px;
 
   /* 网格单元格大小（动态计算）
-   * 基准：393px 宽度下 cellSize = 23px
-   * 比例：23 / 393 ≈ 5.852%
-   * 最大宽度（--app-max-width）时：500 * 23 / 393 ≈ 29.26px
-   * real-size 与 cell-size 比例：20 / 23 ≈ 0.87
+   * 基准：393px 视口宽度下 cellSize = 23px
+   * 可用宽度（减去左右 padding）：393 - var(--spacing-md) * 2 = 369px
+   * 比例：23 / 393 ≈ 5.852%（相对于视口宽度，因为 vw 基于视口）
+   * 最大宽度时：
+   *   可用宽度：var(--app-max-width) - var(--spacing-md) * 2
+   *   最大单元格：(var(--app-max-width) - var(--spacing-md) * 2) * 23 / 369
+   * real-size 与 cell-size 比例：20 / 23
+   *   最大 real-size：(var(--app-max-width) - var(--spacing-md) * 2) * 20 / 369
+   * 使用 min() 限制最大值，确保在超过 max-width 时不会继续增长
+   * 所有值都通过 CSS 变量计算，无需硬编码
    */
-  --grid-cell-size: min(5.852vw, 29.26px);
-  --grid-cell-real-size: min(5.09vw, 25.45px);
+  --grid-cell-size: min(
+    5.852vw,
+    calc((var(--app-max-width) - var(--spacing-md) * 2) * 23 / 369)
+  );
+  --grid-cell-real-size: min(
+    5.09vw,
+    calc((var(--app-max-width) - var(--spacing-md) * 2) * 20 / 369)
+  );
 
   /* 按钮大小 */
   --button-size: 24px;

@@ -46,7 +46,6 @@
   box-shadow: none;
 }
 
-
 .loop-range-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -72,7 +71,6 @@
   border: none;
   color: var(--color-primary);
   font-size: var(--font-size-sm);
-  font-weight: 600;
   font-family: inherit;
   padding: 0;
   cursor: pointer;

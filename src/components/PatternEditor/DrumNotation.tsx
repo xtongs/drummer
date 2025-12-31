@@ -79,7 +79,7 @@ export function DrumNotation({
           x2={totalWidth}
           y2={0}
           stroke={colorText}
-          strokeWidth={1}
+          strokeWidth={2}
           opacity={0.8}
         />
 
@@ -95,7 +95,7 @@ export function DrumNotation({
               x2={totalWidth}
               y2={y}
               stroke={colorText}
-              strokeWidth={1}
+              strokeWidth={i === 5 ? 2 : 1}
               opacity={0.8}
               strokeDasharray={isFirstLine ? "4,4" : "0"}
             />

@@ -43,7 +43,7 @@
   border: none;
   border-radius: 50%;
   cursor: grab;
-  box-shadow: none;
+  box-shadow: var(--shadow-md);
   transition: left 0.1s ease, transform 0.1s ease;
 }
 
@@ -53,5 +53,5 @@
 }
 
 .bpm-slider-track:hover .bpm-slider-thumb {
-  box-shadow: none;
+  box-shadow: var(--shadow-lg);
 }
