@@ -58,23 +58,21 @@ export async function resumeAudioContext(): Promise<void> {
 }
 
 /**
- * 加载采样文件（同时加载为 AudioBuffer 和 HTMLAudioElement）
+ * 加载采样文件（加载为 AudioBuffer 用于精确时序调度，iOS 兼容）
  */
 async function loadSample(url: string, name: string): Promise<void> {
   const ctx = getAudioContext();
   try {
-    // 加载为 AudioBuffer（用于合成音色后备）
+    // 加载为 AudioBuffer（用于 Web Audio API 精确调度）
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
     sampleBuffers.set(name, audioBuffer);
 
-    // 创建 HTML5 Audio 元素（用于采样播放，不受静音开关影响）
-    // 注意：iOS Safari 不会在页面加载时预加载 Audio 元素，
-    // 必须等到用户交互后才会真正加载，因此我们不等待加载事件
+    // 保留 HTML5 Audio 元素作为后备（虽然现在主要使用 AudioBuffer）
     const audio = new Audio(url);
     audio.preload = "auto";
-    audio.volume = 1; // 音量由系统控制
+    audio.volume = 1;
     audioElements.set(name, audio);
   } catch {
     // Failed to load sample - 继续使用合成音色作为后备
@@ -140,48 +138,31 @@ function createNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer {
 }
 
 /**
- * 播放节拍器采样（使用 HTML5 Audio 元素，不受静音开关影响）
+ * 播放节拍器采样（使用 Web Audio API 精确调度，iOS 兼容）
  */
 function playMetronomeSample(
   time: number,
   volume: number = 1,
   playbackRate: number = 1
 ): boolean {
-  const audio = audioElements.get("metronome");
-  if (!audio) return false;
+  const buffer = sampleBuffers.get("metronome");
+  if (!buffer) return false;
 
-  // 创建新的 Audio 元素副本
-  const audioClone = audio.cloneNode() as HTMLAudioElement;
-
-  // 设置音量和播放速率
-  audioClone.volume = Math.max(0, Math.min(1, volume));
-  audioClone.playbackRate = playbackRate;
-
-  // 计算延迟时间
   const ctx = getAudioContext();
-  const currentTime = ctx.currentTime;
-  const delay = Math.max(0, time - currentTime);
+  const source = ctx.createBufferSource();
+  const gainNode = ctx.createGain();
 
-  if (delay > 0) {
-    setTimeout(() => {
-      audioClone.play().catch(() => {
-        // 播放失败时静默处理
-      });
-    }, delay * 1000);
-  } else {
-    audioClone.play().catch(() => {
-      // 播放失败时静默处理
-    });
-  }
+  source.buffer = buffer;
+  source.playbackRate.value = playbackRate;
+  source.connect(gainNode);
+  gainNode.connect(ctx.destination);
 
-  // 播放结束后清理
-  audioClone.addEventListener(
-    "ended",
-    () => {
-      audioClone.remove();
-    },
-    { once: true }
-  );
+  // 设置音量
+  gainNode.gain.value = Math.max(0, Math.min(1, volume));
+
+  // 使用精确的调度时间（确保不早于当前时间）
+  const playTime = Math.max(time, ctx.currentTime);
+  source.start(playTime);
 
   return true;
 }
@@ -270,7 +251,7 @@ function playKickSynth(time: number): void {
 }
 
 /**
- * 播放采样（使用 HTML5 Audio 元素，不受静音开关影响，音量跟随系统）
+ * 播放采样（使用 Web Audio API 精确调度，iOS 兼容）
  * @param applyVolumeMultiplier 是否应用全局音量乘数（用于鬼音等）
  */
 function playSample(
@@ -279,45 +260,26 @@ function playSample(
   volume: number = 1,
   applyVolumeMultiplier: boolean = true
 ): boolean {
-  const audio = audioElements.get(name);
-  if (!audio) return false;
+  const buffer = sampleBuffers.get(name);
+  if (!buffer) return false;
 
-  // 创建新的 Audio 元素副本（因为同一个元素不能同时播放多次）
-  const audioClone = audio.cloneNode() as HTMLAudioElement;
+  const ctx = getAudioContext();
+  const source = ctx.createBufferSource();
+  const gainNode = ctx.createGain();
 
-  // 应用音量乘数（通过 volume 属性，范围 0-1）
+  source.buffer = buffer;
+  source.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  // 应用音量乘数
   const finalVolume = applyVolumeMultiplier
     ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier))
     : Math.max(0, Math.min(1, volume));
-  audioClone.volume = finalVolume;
+  gainNode.gain.value = finalVolume;
 
-  // 计算延迟时间（相对于当前时间）
-  const ctx = getAudioContext();
-  const currentTime = ctx.currentTime;
-  const delay = Math.max(0, time - currentTime);
-
-  if (delay > 0) {
-    // 使用 setTimeout 实现延迟播放
-    setTimeout(() => {
-      audioClone.play().catch(() => {
-        // 播放失败时静默处理
-      });
-    }, delay * 1000);
-  } else {
-    // 立即播放
-    audioClone.play().catch(() => {
-      // 播放失败时静默处理
-    });
-  }
-
-  // 播放结束后清理（避免内存泄漏）
-  audioClone.addEventListener(
-    "ended",
-    () => {
-      audioClone.remove();
-    },
-    { once: true }
-  );
+  // 使用精确的调度时间（确保不早于当前时间）
+  const playTime = Math.max(time, ctx.currentTime);
+  source.start(playTime);
 
   return true;
 }
