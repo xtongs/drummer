@@ -16,7 +16,7 @@ import {
   saveCrossPatternLoop,
   loadCrossPatternLoop,
 } from "./utils/storage";
-import { DEFAULT_BPM } from "./utils/constants";
+import { DEFAULT_BPM, DEFAULT_BARS } from "./utils/constants";
 import { preInitAudioContext, resumeAudioContext } from "./utils/audioEngine";
 import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
@@ -71,9 +71,22 @@ function App() {
 
   // 选择草稿模式
   const handleSelectDraft = () => {
+    // 如果正在播放，停止播放
+    if (isPatternPlaying) {
+      setIsPatternPlaying(false);
+    }
+
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
     resetPattern();
+
+    // 设置 range 为草稿的完整范围
+    setCrossPatternLoop({
+      startPatternName: "",
+      startBar: 0,
+      endPatternName: "",
+      endBar: DEFAULT_BARS - 1,
+    });
   };
 
   // 加载保存的节奏型列表并恢复上次选中的tab
@@ -212,13 +225,19 @@ function App() {
       // 切换到草稿
       setIsDraftMode(true);
       setCurrentPatternId(undefined);
+      setMetronomeBPM(pattern.bpm);
+      saveMetronomeBPM(pattern.bpm);
     } else {
       // 切换到保存的 pattern
       const targetPattern = savedPatterns.find((p) => p.name === patternName);
-      if (targetPattern && targetPattern.id !== pattern.id) {
-        setIsDraftMode(false);
-        loadPattern(targetPattern);
-        setCurrentPatternId(targetPattern.id);
+      if (targetPattern) {
+        if (targetPattern.id !== pattern.id) {
+          setIsDraftMode(false);
+          loadPattern(targetPattern);
+          setCurrentPatternId(targetPattern.id);
+        }
+        setMetronomeBPM(targetPattern.bpm);
+        saveMetronomeBPM(targetPattern.bpm);
       }
     }
   };
@@ -320,12 +339,25 @@ function App() {
   };
 
   const handleLoadFromSlot = (loadedPattern: Pattern) => {
+    // 如果正在播放，停止播放
+    if (isPatternPlaying) {
+      setIsPatternPlaying(false);
+    }
+
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
     // 同步 BPM 到节拍器
     setMetronomeBPM(loadedPattern.bpm);
     saveMetronomeBPM(loadedPattern.bpm);
+
+    // 设置 range 为该节奏型的完整范围
+    setCrossPatternLoop({
+      startPatternName: loadedPattern.name,
+      startBar: 0,
+      endPatternName: loadedPattern.name,
+      endBar: loadedPattern.bars - 1,
+    });
   };
 
   const handleStopAllPlaying = () => {

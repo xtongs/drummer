@@ -46,7 +46,7 @@ export function Grid({
                           left: `${beatStart * cellSize}px`,
                         }}
                       >
-                        {beatIndex + 1}
+                        {barIndex + 1}.{beatIndex + 1}
                       </div>
                     );
                   })}

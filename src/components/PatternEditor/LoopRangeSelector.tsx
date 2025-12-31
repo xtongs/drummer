@@ -35,6 +35,13 @@ export function LoopRangeSelector({
     return pattern?.bars ?? currentPattern.bars;
   };
 
+  // 检查 pattern 是否存在（用于判断是否完成加载）
+  const isPatternLoaded = (patternName: string): boolean => {
+    if (patternName === "") return true; // 草稿总是存在
+    if (patternName === currentPattern.name) return true; // 当前编辑的 pattern
+    return savedPatterns.some((p) => p.name === patternName);
+  };
+
   // 当前的循环范围
   // 如果没有设置跨 pattern 循环，默认使用当前 pattern 的范围
   const defaultLoop: CrossPatternLoop = {
@@ -65,6 +72,12 @@ export function LoopRangeSelector({
   // 当 bars 数量变化时，自动调整 loop 范围
   useEffect(() => {
     if (!crossPatternLoop) return;
+
+    // 如果 pattern 还在加载中，不要调整 range
+    if (!isPatternLoaded(crossPatternLoop.startPatternName) || 
+        !isPatternLoaded(crossPatternLoop.endPatternName)) {
+      return;
+    }
 
     const startBars = getPatternBars(crossPatternLoop.startPatternName);
     const endBars = getPatternBars(crossPatternLoop.endPatternName);
@@ -99,7 +112,7 @@ export function LoopRangeSelector({
       onCrossPatternLoopChange(updatedLoop);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPattern.bars, isDraftMode, currentPattern.name]);
+  }, [currentPattern.bars, isDraftMode, currentPattern.name, savedPatterns]);
 
   // 获取可选的 patterns 列表（草稿模式用空字符串表示）
   const patternOptions = isDraftMode
