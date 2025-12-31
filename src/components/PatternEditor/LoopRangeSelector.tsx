@@ -99,6 +99,20 @@ export function LoopRangeSelector({
       needsUpdate = true;
     }
 
+    // 检查结束小节所属的节奏型是否是当前选中的节奏型
+    const isCurrentPattern = isDraftMode 
+      ? crossPatternLoop.endPatternName === "" 
+      : crossPatternLoop.endPatternName === currentPattern.name;
+    
+    // 如果是当前节奏型，且结束小节不是最新的末尾小节，则自动更新到最新的末尾小节
+    if (isCurrentPattern) {
+      const currentMaxBar = currentPattern.bars - 1;
+      if (updatedLoop.endBar < currentMaxBar) {
+        updatedLoop.endBar = currentMaxBar;
+        needsUpdate = true;
+      }
+    }
+
     // 确保开始位置不超过结束位置
     if (
       needsUpdate &&

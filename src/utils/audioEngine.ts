@@ -403,7 +403,7 @@ function playHiHatClosedSynth(time: number): void {
  * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
-  if (playSample("hiHatOpen", time, 0.6)) {
+  if (playSample("hiHatOpen", time, 0.8)) {
     return;
   }
   // 后备：合成音色
@@ -549,7 +549,7 @@ export function playTom(time: number, frequency: number = 200): void {
     sampleName = "tom3";
   }
 
-  if (playSample(sampleName, time, 0.8)) {
+  if (playSample(sampleName, time, 1)) {
     return;
   }
   // 后备：合成音色

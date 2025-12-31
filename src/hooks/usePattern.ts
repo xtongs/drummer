@@ -187,10 +187,17 @@ export function usePattern(initialPattern: Pattern) {
     setPattern((prev) => {
       const [beatsPerBar] = prev.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const newGrid = prev.grid.map((row) => [
-        ...row,
-        ...Array<CellState>(subdivisionsPerBar).fill(CELL_OFF),
-      ]);
+      
+      // 获取最后一小节的起始索引
+      const lastBarStartIndex = prev.grid[0].length - subdivisionsPerBar;
+      
+      // 复制最后一小节的内容到新小节
+      const newGrid = prev.grid.map((row) => {
+        // 获取最后一小节的内容
+        const lastBarContent = row.slice(lastBarStartIndex);
+        // 添加新小节，内容为最后一小节的复制
+        return [...row, ...lastBarContent];
+      });
 
       return {
         ...prev,

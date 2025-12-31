@@ -28,6 +28,7 @@
   flex-direction: column;
   overflow-x: auto;
   overflow-y: hidden;
+  flex: 1;
 }
 
 .pattern-editor-actions {
@@ -100,5 +101,4 @@
   border: none;
 }
 
-@media (max-width: 768px) {
-}
+@media (max-width: 768px) {}
