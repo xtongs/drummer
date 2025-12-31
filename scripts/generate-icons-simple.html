@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图标生成工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .instructions {
+      background: #e8f4f8;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+    button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #0056CC;
+    }
+    canvas {
+      display: none;
+    }
+    .preview {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .preview img {
+      max-width: 180px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 iOS 图标生成工具</h1>
+    <div class="instructions">
+      <p><strong>说明：</strong></p>
+      <p>iOS Safari 需要 PNG 格式的图标。此工具会将 SVG 图标转换为 PNG 格式。</p>
+      <p>请确保 <code>icon.svg</code> 文件在同一目录下。</p>
+    </div>
+    
+    <div>
+      <button onclick="generateIcon(180)">生成 180x180 图标</button>
+      <button onclick="generateIcon(512)">生成 512x512 图标</button>
+      <button onclick="generateAll()">生成所有尺寸</button>
+    </div>
+    
+    <div class="preview" id="preview"></div>
+    
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    async function generateIcon(size) {
+      try {
+        // 加载 SVG
+        const response = await fetch('./icon.svg');
+        const svgText = await response.text();
+        
+        // 创建图片对象
+        const img = new Image();
+        const blob = new Blob([svgText], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        img.onload = function() {
+          const canvas = document.getElementById('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          
+          // 绘制背景色（Dracula 主题色 #282a36）
+          ctx.fillStyle = '#282a36';
+          ctx.fillRect(0, 0, size, size);
+          
+          // 绘制 SVG
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          // 转换为 PNG 并下载
+          canvas.toBlob(function(blob) {
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            
+            // 显示预览
+            const preview = document.getElementById('preview');
+            const previewImg = document.createElement('img');
+            previewImg.src = URL.createObjectURL(blob);
+            previewImg.alt = `${size}x${size} 图标`;
+            preview.appendChild(previewImg);
+          }, 'image/png');
+          
+          URL.revokeObjectURL(url);
+        };
+        
+        img.onerror = function() {
+          alert('无法加载 icon.svg 文件。请确保文件存在且在同一目录下。');
+        };
+        
+        img.src = url;
+      } catch (error) {
+        alert('生成图标时出错: ' + error.message);
+      }
+    }
+    
+    function generateAll() {
+      generateIcon(180);
+      setTimeout(() => generateIcon(512), 500);
+    }
+  </script>
+</body>
+</html>
+
