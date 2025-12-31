@@ -37,9 +37,6 @@ function App() {
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
     return loadMetronomeBPM() ?? DEFAULT_BPM;
   });
-  // 速率切换状态：原始BPM和速率索引
-  const [baseBPM, setBaseBPM] = useState<number | null>(null);
-  const [rateIndex, setRateIndex] = useState<number>(3); // 3 对应 1倍速（RATE_OPTIONS[3] = 1）
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -56,47 +53,11 @@ function App() {
     resetPattern,
   } = usePattern(createEmptyPattern());
 
-  // 速率选项：0.875倍、0.75倍、0.5倍、1倍
-  const RATE_OPTIONS = [0.875, 0.75, 0.5, 1];
-
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   const handleBPMChange = (bpm: number) => {
     setMetronomeBPM(bpm);
     saveMetronomeBPM(bpm);
     updateBPM(bpm);
-    // 手动更新BPM时，清空速率状态
-    setBaseBPM(null);
-    setRateIndex(3);
-  };
-
-  // 点击BPM数字切换速率
-  const handleBPMClick = () => {
-    // 如果还没有设置基准BPM，使用当前BPM作为基准
-    if (baseBPM === null) {
-      setBaseBPM(metronomeBPM);
-      setRateIndex(0); // 从第一个速率开始（0.875倍）
-      const newBPM = Math.round(metronomeBPM * RATE_OPTIONS[0]);
-      setMetronomeBPM(newBPM);
-      saveMetronomeBPM(newBPM);
-      updateBPM(newBPM);
-    } else {
-      // 循环到下一个速率
-      const nextIndex = (rateIndex + 1) % RATE_OPTIONS.length;
-      setRateIndex(nextIndex);
-      
-      if (nextIndex === 3) {
-        // 回到1倍速，清空速率状态
-        setMetronomeBPM(baseBPM);
-        saveMetronomeBPM(baseBPM);
-        updateBPM(baseBPM);
-        setBaseBPM(null);
-      } else {
-        const newBPM = Math.round(baseBPM * RATE_OPTIONS[nextIndex]);
-        setMetronomeBPM(newBPM);
-        saveMetronomeBPM(newBPM);
-        updateBPM(newBPM);
-      }
-    }
   };
 
   // 选择草稿模式
@@ -253,23 +214,19 @@ function App() {
       setCurrentPatternId(undefined);
       setMetronomeBPM(pattern.bpm);
       saveMetronomeBPM(pattern.bpm);
-      // 播放时BPM变化，清空速率状态
-      setBaseBPM(null);
-      setRateIndex(3);
     } else {
       // 切换到保存的 pattern
       const targetPattern = savedPatterns.find((p) => p.name === patternName);
       if (targetPattern) {
+        // 只有真正切换到不同的pattern时，才更新BPM
         if (targetPattern.id !== pattern.id) {
           setIsDraftMode(false);
           loadPattern(targetPattern);
           setCurrentPatternId(targetPattern.id);
+          setMetronomeBPM(targetPattern.bpm);
+          saveMetronomeBPM(targetPattern.bpm);
         }
-        setMetronomeBPM(targetPattern.bpm);
-        saveMetronomeBPM(targetPattern.bpm);
-        // 播放时BPM变化，清空速率状态
-        setBaseBPM(null);
-        setRateIndex(3);
+        // 如果是同一个pattern循环播放，保持当前BPM不变
       }
     }
   };
@@ -424,12 +381,9 @@ function App() {
     <div className="app">
       <MetronomeBar
         bpm={metronomeBPM}
-        baseBPM={baseBPM}
-        rateIndex={rateIndex}
         timeSignature={pattern.timeSignature}
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
-        onBPMClick={handleBPMClick}
         isPatternPlaying={isMetronomePlaying}
         onPatternPlayToggle={handleMetronomePlayToggle}
       />
