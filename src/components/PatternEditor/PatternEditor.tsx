@@ -87,6 +87,8 @@ export function PatternEditor({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
   const lastScrollTargetRef = useRef<number | null>(null); // 记录上次滚动目标
+  const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
+  const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const cellSize = useGridCellSize(); // 动态计算单元格大小
 
   // 执行滚动的函数
@@ -108,6 +110,12 @@ export function PatternEditor({
       isScrollingRef.current = false;
     });
   }, []);
+
+  // 包装添加小节的函数，设置用户点击标记
+  const handleUserAddBar = useCallback(() => {
+    isUserAddBarRef.current = true;
+    onAddBar();
+  }, [onAddBar]);
 
   // 当播放时，自动滚动到当前游标位置（按页滚动，带提前量）
   useEffect(() => {
@@ -147,12 +155,30 @@ export function PatternEditor({
     }
   }, [isPlaying, pattern.id]);
 
-  // 当增加小节数量时，如果满足条件，自动滚动到最新添加的小节位置
+  // 当用户点击+按钮增加小节数量时，如果满足条件，自动滚动到最新添加的小节位置
   useEffect(() => {
-    if (!scrollContainerRef.current || !crossPatternLoop) return;
+    // 只有当是用户点击+按钮且小节数增加时才执行滚动逻辑
+    if (!isUserAddBarRef.current || pattern.bars <= lastBarsRef.current) {
+      // 重置标记和上一次的小节数
+      isUserAddBarRef.current = false;
+      lastBarsRef.current = pattern.bars;
+      return;
+    }
+
+    if (!scrollContainerRef.current || !crossPatternLoop) {
+      // 重置标记和上一次的小节数
+      isUserAddBarRef.current = false;
+      lastBarsRef.current = pattern.bars;
+      return;
+    }
 
     // 检查是否非播放状态
-    if (isPlaying) return;
+    if (isPlaying) {
+      // 重置标记和上一次的小节数
+      isUserAddBarRef.current = false;
+      lastBarsRef.current = pattern.bars;
+      return;
+    }
 
     // 检查结束小节所属的节奏型是否是当前选中的节奏型
     const isCurrentPattern = isDraftMode
@@ -171,6 +197,10 @@ export function PatternEditor({
       // 滚动到新小节，让它在视图中可见
       doScroll(container, targetLeft);
     }
+
+    // 重置标记和上一次的小节数
+    isUserAddBarRef.current = false;
+    lastBarsRef.current = pattern.bars;
   }, [pattern.bars, isPlaying, isDraftMode, pattern.name, pattern.timeSignature, cellSize, doScroll, crossPatternLoop]);
 
   return (
@@ -178,7 +208,7 @@ export function PatternEditor({
       <div className="pattern-editor-controls">
         <BarControls
           bars={pattern.bars}
-          onAddBar={onAddBar}
+          onAddBar={handleUserAddBar}
           onRemoveBar={onRemoveBar}
           canRemove={pattern.bars > 1}
         />
