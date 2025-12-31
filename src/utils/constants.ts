@@ -4,12 +4,12 @@ import type { DrumType, TimeSignature } from "../types";
 export const DRUMS: DrumType[] = [
   "Crash 1",
   "Crash 2",
-  "Ride",
   "Hi-Hat Open",
   "Hi-Hat Closed",
-  "Snare",
+  "Ride",
   "Tom 1", // 一嗵（高音）
   "Tom 2", // 二嗵（中音）
+  "Snare",
   "Tom 3", // 三嗵（低音）
   "Kick",
 ];
@@ -30,6 +30,9 @@ export const SUBDIVISIONS_PER_BEAT = 4;
 export const GRID_CELL_SIZE = 23;
 
 // 鼓谱符号映射
+// 位置说明：五线谱从上到下5条线，中间线（第3条）为0
+// line: -2=第1条线, -1=第2条线, 0=第3条线, 1=第4条线, 2=第5条线
+// 线间位置：-1.5=第1-2线间, -0.5=第2-3线间, 0.5=第3-4线间, 1.5=第4-5线间
 export const DRUM_NOTATION: Record<
   DrumType,
   {
@@ -38,16 +41,16 @@ export const DRUM_NOTATION: Record<
     line: number; // 相对中间线的位置（-2到2）
   }
 > = {
-  "Crash 1": { position: "above", symbol: "x", line: -2 },
-  "Crash 2": { position: "above", symbol: "x", line: -1.5 },
-  Ride: { position: "above", symbol: "x", line: -1 },
-  "Hi-Hat Open": { position: "above", symbol: "o", line: -0.5 },
-  "Hi-Hat Closed": { position: "above", symbol: "x", line: 0 },
-  Snare: { position: "center", symbol: "●", line: 0 },
-  "Tom 1": { position: "below", symbol: "○", line: 0.5 }, // 一嗵（高音）
-  "Tom 2": { position: "below", symbol: "○", line: 1 }, // 二嗵（中音）
-  "Tom 3": { position: "below", symbol: "○", line: 1.5 }, // 三嗵（低音）
-  Kick: { position: "below", symbol: "●", line: 2 },
+  "Crash 1": { position: "above", symbol: "x", line: -2 }, // 第一条线上 X
+  "Crash 2": { position: "above", symbol: "o", line: -2 }, // 第一条线上 O
+  "Hi-Hat Open": { position: "above", symbol: "o", line: -1.5 }, // 第一线和第二线之间 O
+  "Hi-Hat Closed": { position: "above", symbol: "x", line: -1.5 }, // 第一线和第二线间 X
+  Ride: { position: "above", symbol: "x", line: -1 }, // 第二线上 X
+  "Tom 1": { position: "center", symbol: "●", line: -0.5 }, // 第二和第三线间 实心O
+  "Tom 2": { position: "center", symbol: "●", line: 0 }, // 第三线上 实心O
+  Snare: { position: "center", symbol: "●", line: 0.5 }, // 第三线和第四线间 实心O
+  "Tom 3": { position: "below", symbol: "●", line: 1.5 }, // 第四和第五线间 实心O
+  Kick: { position: "below", symbol: "●", line: 2 }, // 第五线下 实心O
 };
 
 // 主题颜色（与 CSS 变量 --theme-color 保持一致）

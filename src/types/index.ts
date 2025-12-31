@@ -2,12 +2,12 @@
 export type DrumType =
   | "Crash 1" // 高音镲片1
   | "Crash 2" // 高音镲片2
-  | "Ride" // 叮叮镲片
   | "Hi-Hat Open" // 踩镲（开合）
   | "Hi-Hat Closed" // 踩镲（闭合）
-  | "Snare" // 军鼓
+  | "Ride" // 叮叮镲片
   | "Tom 1" // 一嗵鼓（高音）
   | "Tom 2" // 二嗵鼓（中音）
+  | "Snare" // 军鼓
   | "Tom 3" // 三嗵鼓（低音）
   | "Kick"; // 底鼓
 
@@ -20,7 +20,7 @@ export type LoopRange = [number, number]; // [startBar, endBar]
 // 跨 Pattern 循环范围
 export interface CrossPatternLoop {
   startPatternName: string; // pattern 名称 (A, B, C...)
-  startBar: number;         // 0-based 小节索引
+  startBar: number; // 0-based 小节索引
   endPatternName: string;
   endBar: number;
 }

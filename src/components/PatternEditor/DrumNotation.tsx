@@ -70,6 +70,7 @@ export function DrumNotation({
         {/* 五线谱背景 */}
         {Array.from({ length: 5 }, (_, i) => {
           const y = STAFF_TOP + i * LINE_SPACING;
+          const isFirstLine = i === 0;
           return (
             <line
               key={`staff-line-${i}`}
@@ -80,6 +81,7 @@ export function DrumNotation({
               stroke={colorText}
               strokeWidth={1}
               opacity={0.8}
+              strokeDasharray={isFirstLine ? "4,4" : "0"}
             />
           );
         })}
