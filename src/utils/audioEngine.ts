@@ -111,7 +111,7 @@ function loadAllSamples(): Promise<void> {
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
+    ctx.resume().catch(() => { });
   }
   // 开始加载采样
   loadAllSamples();
@@ -289,7 +289,7 @@ function playSample(
  */
 export function playSnare(time: number): void {
   // 尝试使用采样
-  if (playSample("snare", time, 0.8)) {
+  if (playSample("snare", time, 0.6)) {
     return;
   }
 
@@ -304,7 +304,7 @@ function playSnareSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.7;
+  masterGain.gain.value = 0.5;
 
   // 主音调 - 鼓体共振
   const osc = ctx.createOscillator();
@@ -363,7 +363,7 @@ function playSnareSynth(time: number): void {
  * 闭合踩镲 - 优先使用真实采样
  */
 export function playHiHatClosed(time: number): void {
-  if (playSample("hiHatClosed", time, 0.5)) {
+  if (playSample("hiHatClosed", time, 0.3)) {
     return;
   }
   // 后备：合成音色
@@ -377,7 +377,7 @@ function playHiHatClosedSynth(time: number): void {
   const ctx = getAudioContext();
   const masterGain = ctx.createGain();
   masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.45;
+  masterGain.gain.value = 0.25;
 
   const noiseBuffer = createNoiseBuffer(ctx, 0.1);
   const noise = ctx.createBufferSource();

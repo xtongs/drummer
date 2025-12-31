@@ -67,6 +67,11 @@
   background-color: transparent;
   color: var(--color-text);
   border: 1px solid var(--color-border);
+  transition: all 0.1s ease;
+}
+
+.dialog-button.cancel:active {
+  transform: scale(0.95);
 }
 
 
@@ -74,6 +79,12 @@
   background: var(--color-primary);
   color: white;
   box-shadow: 0 0 15px var(--accent-glow);
+  transition: all 0.1s ease;
+}
+
+.dialog-button.save:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 
