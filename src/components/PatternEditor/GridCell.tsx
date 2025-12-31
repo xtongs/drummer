@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import "./GridCell.css";
 import { playDrumSound } from "../../utils/audioEngine";
 import type { DrumType, CellState } from "../../types";
-import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../../types";
+import { CELL_OFF, CELL_NORMAL, CELL_GHOST, CELL_GRACE } from "../../types";
 
 interface GridCellProps {
   cellState: CellState;
@@ -34,6 +34,7 @@ export function GridCell({
 
   const isActive = cellState !== CELL_OFF;
   const isGhost = cellState === CELL_GHOST;
+  const isGrace = cellState === CELL_GRACE;
   // 每4列为一组，奇数组使用交替背景色
   const isAlternateBeat = Math.floor(subdivisionIndex / 4) % 2 === 1;
 
@@ -63,12 +64,22 @@ export function GridCell({
       // 设置长按定时器
       longPressTimerRef.current = window.setTimeout(() => {
         longPressTriggeredRef.current = true;
-        // 长按时切换鬼音状态
+        // 长按时切换音类型状态
         if (isActive) {
           onToggleGhost();
-          // 播放鬼音声音预览
+          // 播放声音预览
           if (drumType) {
-            playDrumSound(drumType, cellState === CELL_NORMAL ? 0.3 : 1);
+            // 根据下一个状态播放预览：正常 -> 鬼音(0.3) -> 倚音(1) -> 正常(1)
+            let nextState: typeof cellState;
+            if (cellState === CELL_NORMAL) {
+              nextState = CELL_GHOST;
+            } else if (cellState === CELL_GHOST) {
+              nextState = CELL_GRACE;
+            } else {
+              nextState = CELL_NORMAL;
+            }
+            const volume = nextState === CELL_GHOST ? 0.3 : 1;
+            playDrumSound(drumType, volume);
           }
         }
       }, LONG_PRESS_DURATION);
@@ -77,14 +88,23 @@ export function GridCell({
   );
 
   const handlePointerUp = useCallback(() => {
+    const wasLongPress = longPressTriggeredRef.current;
+    
     // 清除长按定时器
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
 
-    // 如果不是长按，执行普通点击
-    if (!longPressTriggeredRef.current) {
+    // 如果长按已触发，重置状态并阻止点击
+    if (wasLongPress) {
+      longPressTriggeredRef.current = false;
+      return; // 阻止点击操作
+    }
+
+    // 检查按下时间，如果超过长按阈值，也不执行点击
+    const pressDuration = Date.now() - pressStartTimeRef.current;
+    if (pressDuration < LONG_PRESS_DURATION) {
       handleInteraction();
     }
   }, [handleInteraction]);
@@ -95,20 +115,24 @@ export function GridCell({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    // 如果长按已触发，重置状态
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+    }
   }, []);
 
   return (
     <button
       className={`grid-cell ${isActive ? "active" : ""} ${
         isGhost ? "ghost" : ""
-      } ${isCurrentBeat ? "current-beat" : ""} ${isAlternateBeat ? "alt-beat" : ""}`}
+      } ${isGrace ? "grace" : ""} ${isCurrentBeat ? "current-beat" : ""} ${isAlternateBeat ? "alt-beat" : ""}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
       type="button"
       aria-label={
-        isGhost ? "Ghost note" : isActive ? "Active" : "Inactive"
+        isGrace ? "Grace note" : isGhost ? "Ghost note" : isActive ? "Active" : "Inactive"
       }
     />
   );

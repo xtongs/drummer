@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import type { Pattern, CellState } from "../types";
-import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
+import { CELL_OFF, CELL_NORMAL, CELL_GHOST, CELL_GRACE } from "../types";
 import { DEFAULT_BPM, DEFAULT_TIME_SIGNATURE, DEFAULT_BARS, DRUMS, SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import { generateId } from "../utils/storage";
 
@@ -90,17 +90,27 @@ export function usePattern(initialPattern: Pattern) {
     });
   }, []);
 
-  // 切换鬼音状态：正常 <-> 鬼音（仅对已激活的单元格有效）
+  // 切换音类型状态：正常 -> 鬼音 -> 倚音 -> 正常（仅对已激活的单元格有效）
   const toggleGhost = useCallback((drumIndex: number, beatIndex: number) => {
     setPattern((prev) => {
       const currentState = prev.grid[drumIndex]?.[beatIndex];
-      // 只有激活的单元格才能切换鬼音
+      // 只有激活的单元格才能切换
       if (currentState === CELL_OFF) return prev;
 
       const newGrid = prev.grid.map((row, i) => {
         if (i === drumIndex) {
           const newRow = [...row];
-          newRow[beatIndex] = currentState === CELL_NORMAL ? CELL_GHOST : CELL_NORMAL;
+          // 循环切换：正常 -> 鬼音 -> 倚音 -> 正常
+          let nextState: typeof currentState;
+          if (currentState === CELL_NORMAL) {
+            nextState = CELL_GHOST;
+          } else if (currentState === CELL_GHOST) {
+            nextState = CELL_GRACE;
+          } else {
+            // CELL_GRACE -> CELL_NORMAL
+            nextState = CELL_NORMAL;
+          }
+          newRow[beatIndex] = nextState;
           return newRow;
         }
         return row;

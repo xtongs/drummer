@@ -91,3 +91,20 @@
 .grid-cell.ghost.current-beat::before {
   opacity: 0.4;
 }
+
+/* 倚音样式 - 横向渐变：从左到右为鬼音绿色到正常绿色过渡 */
+.grid-cell.grace::before {
+  background: linear-gradient(
+    to right,
+    rgba(80, 250, 123, 0.4) 0%,
+    rgba(80, 250, 123, 1) 100%
+  );
+}
+
+.grid-cell.grace.current-beat::before {
+  background: linear-gradient(
+    to right,
+    rgba(80, 250, 123, 0.4) 0%,
+    rgba(80, 250, 123, 1) 100%
+  );
+}

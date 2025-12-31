@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { Pattern, CellState } from "../types";
-import { CELL_OFF, CELL_GHOST } from "../types";
+import { CELL_OFF, CELL_GHOST, CELL_GRACE } from "../types";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import {
   playKick,
@@ -106,15 +106,61 @@ export function usePatternPlayer({
   const playSubdivision = useCallback(
     (subdivisionIndex: number, time: number) => {
       const currentPattern = patternRef.current;
+      const subDuration = subdivisionDurationRef.current;
+
       currentPattern.grid.forEach((row, drumIndex) => {
         const cellState: CellState = row[subdivisionIndex];
         if (cellState !== CELL_OFF) {
           const drum = currentPattern.drums[drumIndex];
           const playTime = time;
 
-          // 设置音量乘数：鬼音为 0.3，正常为 1
-          const volumeMultiplier = cellState === CELL_GHOST ? 0.3 : 1;
-          setVolumeMultiplier(volumeMultiplier);
+          // 如果是倚音，需要在主音前播放装饰音（更靠近主音的位置）
+          if (cellState === CELL_GRACE) {
+            // 装饰音在主音前 1/8 的十六分音符时长，使其更靠近主音
+            const graceNoteTime = playTime - subDuration * 0.125;
+            setVolumeMultiplier(0.2);
+            
+            switch (drum) {
+              case "Kick":
+                playKick(graceNoteTime);
+                break;
+              case "Snare":
+                playSnare(graceNoteTime);
+                break;
+              case "Hi-Hat Closed":
+                playHiHatClosed(graceNoteTime);
+                break;
+              case "Hi-Hat Open":
+                playHiHatOpen(graceNoteTime);
+                break;
+              case "Crash 1":
+                playCrash(graceNoteTime, 1.2);
+                break;
+              case "Crash 2":
+                playCrash(graceNoteTime, 1.0);
+                break;
+              case "Ride":
+                playRide(graceNoteTime);
+                break;
+              case "Tom 1":
+                playTom(graceNoteTime, 250);
+                break;
+              case "Tom 2":
+                playTom(graceNoteTime, 200);
+                break;
+              case "Tom 3":
+                playTom(graceNoteTime, 150);
+                break;
+            }
+            resetVolumeMultiplier();
+            
+            // 在主音位置播放正常音
+            setVolumeMultiplier(1);
+          } else {
+            // 设置音量乘数：鬼音为 0.3，正常为 1
+            const volumeMultiplier = cellState === CELL_GHOST ? 0.3 : 1;
+            setVolumeMultiplier(volumeMultiplier);
+          }
 
           switch (drum) {
             case "Kick":
