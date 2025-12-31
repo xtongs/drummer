@@ -1,5 +1,13 @@
 import type { Pattern, StorageData, CellState, CrossPatternLoop } from "../types";
-import { CELL_OFF, CELL_NORMAL } from "../types";
+import {
+  CELL_OFF,
+  CELL_NORMAL,
+  CELL_GHOST,
+  CELL_GRACE,
+  CELL_DOUBLE_32,
+  CELL_FIRST_32,
+  CELL_SECOND_32,
+} from "../types";
 
 const STORAGE_KEY = "drummer-app-data";
 const METRONOME_BPM_KEY = "drummer-metronome-bpm";
@@ -10,15 +18,31 @@ const CROSS_PATTERN_LOOP_KEY = "drummer-cross-pattern-loop";
  * 旧版: boolean[][] (true/false)
  * 新版: CellState[][] (0/1/2)
  */
-function migrateGrid(grid: (boolean | CellState)[][]): CellState[][] {
+const VALID_CELL_STATES = new Set<CellState>([
+  CELL_OFF,
+  CELL_NORMAL,
+  CELL_GHOST,
+  CELL_GRACE,
+  CELL_DOUBLE_32,
+  CELL_FIRST_32,
+  CELL_SECOND_32,
+]);
+
+function migrateGrid(grid: (boolean | CellState | number)[][]): CellState[][] {
   return grid.map((row) =>
     row.map((cell) => {
       // 如果是 boolean，转换为 CellState
       if (typeof cell === "boolean") {
         return cell ? CELL_NORMAL : CELL_OFF;
       }
-      // 已经是 CellState，直接返回
-      return cell as CellState;
+      // 如果是数字，验证是否在允许范围
+      if (typeof cell === "number") {
+        return VALID_CELL_STATES.has(cell as CellState)
+          ? (cell as CellState)
+          : CELL_OFF;
+      }
+      // 其它未知类型降级为关闭
+      return CELL_OFF;
     })
   );
 }

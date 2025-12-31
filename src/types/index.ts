@@ -25,12 +25,17 @@ export interface CrossPatternLoop {
   endBar: number;
 }
 
-// 单元格状态：0=未激活, 1=正常, 2=鬼音, 3=倚音
-export type CellState = 0 | 1 | 2 | 3;
+// 单元格状态：
+// 0=未激活, 1=正常16分, 2=鬼音, 3=倚音
+// 4=双32分, 5=前半32分, 6=后半32分
+export type CellState = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export const CELL_OFF = 0 as const;
 export const CELL_NORMAL = 1 as const;
 export const CELL_GHOST = 2 as const;
 export const CELL_GRACE = 3 as const;
+export const CELL_DOUBLE_32 = 4 as const;
+export const CELL_FIRST_32 = 5 as const;
+export const CELL_SECOND_32 = 6 as const;
 
 // 节奏型接口
 export interface Pattern {

@@ -42,6 +42,7 @@ interface PatternEditorProps {
   pattern: Pattern;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
   onToggleGhost: (drumIndex: number, beatIndex: number) => void;
+  onCycleThirtySecond: (drumIndex: number, beatIndex: number) => void;
   onAddBar: () => void;
   onRemoveBar: () => void;
   onClearGrid: () => void;
@@ -64,6 +65,7 @@ export function PatternEditor({
   pattern,
   onCellClick,
   onToggleGhost,
+  onCycleThirtySecond,
   onAddBar,
   onRemoveBar,
   onClearGrid,
@@ -256,6 +258,7 @@ export function PatternEditor({
           pattern={pattern}
           onCellClick={onCellClick}
           onToggleGhost={onToggleGhost}
+          onCellDoubleClick={onCycleThirtySecond}
           currentBeat={currentBeat}
           scrollContainerRef={scrollContainerRef}
         />

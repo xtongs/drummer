@@ -54,6 +54,7 @@ function App() {
     updateBPM,
     toggleCell,
     toggleGhost,
+    cycleThirtySecond,
     addBar,
     removeBar,
     clearGrid,
@@ -406,6 +407,7 @@ function App() {
           pattern={pattern}
           onCellClick={toggleCell}
           onToggleGhost={toggleGhost}
+          onCycleThirtySecond={cycleThirtySecond}
           onAddBar={addBar}
           onRemoveBar={removeBar}
           onClearGrid={clearGrid}

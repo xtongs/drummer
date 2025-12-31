@@ -1,6 +1,14 @@
 import { useState, useCallback } from "react";
 import type { Pattern, CellState } from "../types";
-import { CELL_OFF, CELL_NORMAL, CELL_GHOST, CELL_GRACE } from "../types";
+import {
+  CELL_OFF,
+  CELL_NORMAL,
+  CELL_GHOST,
+  CELL_GRACE,
+  CELL_DOUBLE_32,
+  CELL_FIRST_32,
+  CELL_SECOND_32,
+} from "../types";
 import { DEFAULT_BPM, DEFAULT_TIME_SIGNATURE, DEFAULT_BARS, DRUMS, SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import { generateId } from "../utils/storage";
 
@@ -28,6 +36,11 @@ export function createEmptyPattern(name: string = "New Pattern"): Pattern {
 /**
  * 使用节奏型管理的 Hook
  */
+const isThirtySecondState = (state: CellState) =>
+  state === CELL_DOUBLE_32 ||
+  state === CELL_FIRST_32 ||
+  state === CELL_SECOND_32;
+
 export function usePattern(initialPattern: Pattern) {
   const [pattern, setPattern] = useState<Pattern>(initialPattern);
 
@@ -94,8 +107,10 @@ export function usePattern(initialPattern: Pattern) {
   const toggleGhost = useCallback((drumIndex: number, beatIndex: number) => {
     setPattern((prev) => {
       const currentState = prev.grid[drumIndex]?.[beatIndex];
-      // 只有激活的单元格才能切换
-      if (currentState === CELL_OFF) return prev;
+      // 只有激活的单元格且不是32分状态才能切换
+      if (currentState === CELL_OFF || isThirtySecondState(currentState)) {
+        return prev;
+      }
 
       const newGrid = prev.grid.map((row, i) => {
         if (i === drumIndex) {
@@ -123,6 +138,49 @@ export function usePattern(initialPattern: Pattern) {
       };
     });
   }, []);
+
+  // 双击循环 16分 -> 双32 -> 前32 -> 后32 -> 16分
+  const cycleThirtySecond = useCallback(
+    (drumIndex: number, beatIndex: number) => {
+      setPattern((prev) => {
+        const currentState = prev.grid[drumIndex]?.[beatIndex];
+
+        let nextState: CellState;
+        if (
+          currentState === CELL_NORMAL ||
+          currentState === CELL_GHOST ||
+          currentState === CELL_GRACE
+        ) {
+          nextState = CELL_DOUBLE_32;
+        } else if (currentState === CELL_DOUBLE_32) {
+          nextState = CELL_FIRST_32;
+        } else if (currentState === CELL_FIRST_32) {
+          nextState = CELL_SECOND_32;
+        } else if (currentState === CELL_SECOND_32) {
+          nextState = CELL_NORMAL;
+        } else {
+          // 未激活时先进入正常16分
+          nextState = CELL_NORMAL;
+        }
+
+        const newGrid = prev.grid.map((row, i) => {
+          if (i === drumIndex) {
+            const newRow = [...row];
+            newRow[beatIndex] = nextState;
+            return newRow;
+          }
+          return row;
+        });
+
+        return {
+          ...prev,
+          grid: newGrid,
+          updatedAt: Date.now(),
+        };
+      });
+    },
+    []
+  );
 
   // 添加小节
   const addBar = useCallback(() => {
@@ -213,6 +271,7 @@ export function usePattern(initialPattern: Pattern) {
     updateTimeSignature,
     toggleCell,
     toggleGhost,
+    cycleThirtySecond,
     addBar,
     removeBar,
     clearGrid,

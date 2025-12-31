@@ -8,6 +8,7 @@ interface GridProps {
   pattern: Pattern;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
   onToggleGhost: (drumIndex: number, beatIndex: number) => void;
+  onCellDoubleClick: (drumIndex: number, beatIndex: number) => void;
   currentBeat?: number;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
@@ -16,6 +17,7 @@ export function Grid({
   pattern,
   onCellClick,
   onToggleGhost,
+  onCellDoubleClick,
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
@@ -69,6 +71,9 @@ export function Grid({
                         key={subdivisionIndex}
                         cellState={cellState}
                         onClick={() => onCellClick(drumIndex, subdivisionIndex)}
+                        onDoubleClick={() =>
+                          onCellDoubleClick(drumIndex, subdivisionIndex)
+                        }
                         onToggleGhost={() =>
                           onToggleGhost(drumIndex, subdivisionIndex)
                         }
