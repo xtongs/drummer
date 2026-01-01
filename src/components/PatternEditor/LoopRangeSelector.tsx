@@ -51,6 +51,28 @@ export function LoopRangeSelector({
     endBar: currentPattern.bars - 1,
   };
 
+  // 当切换到不同的 pattern 或 draft 模式时，自动更新循环范围到当前 pattern
+  useEffect(() => {
+    if (!crossPatternLoop) return;
+
+    const expectedPatternName = isDraftMode ? "" : currentPattern.name;
+    
+    // 检查循环范围的开始或结束是否在当前 pattern 上
+    const isCurrentPatternLoop = 
+      crossPatternLoop.startPatternName === expectedPatternName ||
+      crossPatternLoop.endPatternName === expectedPatternName;
+    
+    // 如果循环范围完全不属于当前 pattern，更新到默认范围
+    if (!isCurrentPatternLoop) {
+      onCrossPatternLoopChange({
+        startPatternName: expectedPatternName,
+        startBar: 0,
+        endPatternName: expectedPatternName,
+        endBar: currentPattern.bars - 1,
+      });
+    }
+  }, [isDraftMode, currentPattern.name, crossPatternLoop, onCrossPatternLoopChange, currentPattern.bars]);
+
   // 比较两个位置的先后顺序
   const comparePositions = (
     patternName1: string,
