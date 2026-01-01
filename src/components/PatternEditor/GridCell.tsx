@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import "./GridCell.css";
 import { playDrumSound } from "../../utils/audioEngine";
 import type { DrumType, CellState } from "../../types";
@@ -23,7 +23,8 @@ interface GridCellProps {
 }
 
 const LONG_PRESS_DURATION = 300; // 长按阈值（毫秒）
-const DOUBLE_CLICK_INTERVAL = 250;
+const DOUBLE_CLICK_INTERVAL = 200; // 缩短双击检测间隔以减少延迟
+const VISUAL_FEEDBACK_DELAY = 30; // 视觉反馈延迟，确保能被用户感知
 
 export function GridCell({
   cellState,
@@ -39,11 +40,16 @@ export function GridCell({
   const DEBOUNCE_TIME = 100;
   const lastClickTimeRef = useRef<number>(0);
   const singleClickTimerRef = useRef<number | null>(null);
+  const visualFeedbackTimerRef = useRef<number | null>(null);
+  const pendingClickRef = useRef<boolean>(false);
 
   // 长按检测
   const pressStartTimeRef = useRef<number>(0);
   const longPressTriggeredRef = useRef<boolean>(false);
   const longPressTimerRef = useRef<number | null>(null);
+
+  // 视觉反馈状态
+  const [isPressing, setIsPressing] = useState(false);
 
   const isActive = cellState !== CELL_OFF;
   const isGhost = cellState === CELL_GHOST;
@@ -77,10 +83,16 @@ export function GridCell({
 
       pressStartTimeRef.current = Date.now();
       longPressTriggeredRef.current = false;
+      pendingClickRef.current = true;
+
+      // 立即提供视觉反馈
+      setIsPressing(true);
 
       // 设置长按定时器
       longPressTimerRef.current = window.setTimeout(() => {
         longPressTriggeredRef.current = true;
+        pendingClickRef.current = false;
+        
         // 长按时切换音类型状态
         if (isActive && !isThirtySecond) {
           onToggleGhost();
@@ -99,6 +111,9 @@ export function GridCell({
             playDrumSound(drumType, volume);
           }
         }
+        
+        // 长按后移除视觉反馈
+        setIsPressing(false);
       }, LONG_PRESS_DURATION);
     },
     [isActive, onToggleGhost, drumType, cellState]
@@ -106,12 +121,18 @@ export function GridCell({
 
   const handlePointerUp = useCallback(() => {
     const wasLongPress = longPressTriggeredRef.current;
+    const wasPendingClick = pendingClickRef.current;
     
     // 清除长按定时器
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+
+    // 移除视觉反馈
+    visualFeedbackTimerRef.current = window.setTimeout(() => {
+      setIsPressing(false);
+    }, VISUAL_FEEDBACK_DELAY);
 
     // 如果长按已触发，重置状态并阻止点击
     if (wasLongPress) {
@@ -121,7 +142,7 @@ export function GridCell({
 
     // 检查按下时间，如果超过长按阈值，也不执行点击
     const pressDuration = Date.now() - pressStartTimeRef.current;
-    if (pressDuration < LONG_PRESS_DURATION) {
+    if (pressDuration < LONG_PRESS_DURATION && wasPendingClick) {
       const now = Date.now();
       const timeSinceLastClick = now - lastClickTimeRef.current;
 
@@ -134,8 +155,8 @@ export function GridCell({
         }
         if (onDoubleClick) {
           onDoubleClick();
-          return;
         }
+        return;
       }
 
       // 否则延迟执行单击，等待是否有第二次点击
@@ -156,23 +177,45 @@ export function GridCell({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    
+    // 清除视觉反馈定时器
+    if (visualFeedbackTimerRef.current) {
+      clearTimeout(visualFeedbackTimerRef.current);
+      visualFeedbackTimerRef.current = null;
+    }
+    
+    // 移除视觉反馈
+    setIsPressing(false);
+    
     // 如果长按已触发，重置状态
     if (longPressTriggeredRef.current) {
       longPressTriggeredRef.current = false;
     }
+    
+    pendingClickRef.current = false;
   }, []);
 
   return (
     <button
       className={`grid-cell ${isActive ? "active" : ""} ${
         isGhost ? "ghost" : ""
-      } ${isGrace ? "grace" : ""} ${
+      } ${
+        isGrace ? "grace" : ""
+      } ${
         isThirtySecond ? "thirty-second" : ""
-      } ${isDouble32 ? "double-32" : ""} ${
+      } ${
+        isDouble32 ? "double-32" : ""
+      } ${
         isFirst32 ? "first-32" : ""
-      } ${isSecond32 ? "second-32" : ""} ${
+      } ${
+        isSecond32 ? "second-32" : ""
+      } ${
         isCurrentBeat ? "current-beat" : ""
-      } ${isAlternateBeat ? "alt-beat" : ""}`}
+      } ${
+        isAlternateBeat ? "alt-beat" : ""
+      } ${
+        isPressing ? "pressing" : ""
+      }`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}

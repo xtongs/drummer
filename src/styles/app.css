@@ -145,8 +145,9 @@ button {
   justify-content: center;
 }
 
-button:active {
+button:not(.grid-cell):active {
   transform: scale(0.95);
+  opacity: 0.8;
 }
 
 button:disabled {
