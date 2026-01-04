@@ -45,6 +45,8 @@ function App() {
   // 节拍器独立拍号（与 pattern 分开存储）
   const [metronomeTimeSignature, setMetronomeTimeSignature] =
     useState<TimeSignature>(DEFAULT_TIME_SIGNATURE);
+  // 重置 BPM rate 的触发器
+  const [resetRateTrigger, setResetRateTrigger] = useState<number>(0);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -85,6 +87,14 @@ function App() {
     if (isPatternPlaying) {
       setIsPatternPlaying(false);
     }
+
+    // 停止节拍器播放
+    if (isMetronomePlaying) {
+      setIsMetronomePlaying(false);
+    }
+
+    // 重置 BPM rate
+    setResetRateTrigger((prev) => prev + 1);
 
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
@@ -352,6 +362,14 @@ function App() {
       setIsPatternPlaying(false);
     }
 
+    // 停止节拍器播放
+    if (isMetronomePlaying) {
+      setIsMetronomePlaying(false);
+    }
+
+    // 重置 BPM rate
+    setResetRateTrigger((prev) => prev + 1);
+
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
@@ -406,6 +424,7 @@ function App() {
         isPatternPlaying={isMetronomePlaying}
         onPatternPlayToggle={handleMetronomePlayToggle}
         onTimeSignatureChange={handleMetronomeTimeSignatureChange}
+        onResetRate={resetRateTrigger}
       />
       <main className="app-main">
         <PatternEditor

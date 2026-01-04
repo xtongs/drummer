@@ -13,6 +13,7 @@ interface MetronomeBarProps {
   isPatternPlaying?: boolean;
   onPatternPlayToggle?: () => void;
   onTimeSignatureChange?: (timeSignature: [number, number]) => void;
+  onResetRate?: number;
 }
 
 export function MetronomeBar({
@@ -23,8 +24,18 @@ export function MetronomeBar({
   isPatternPlaying = false,
   onPatternPlayToggle,
   onTimeSignatureChange,
+  onResetRate,
 }: MetronomeBarProps) {
   const [index, setIndex] = useState(0);
+  const prevResetRateRef = useRef<number>(0);
+
+  // 重置 BPM rate index
+  useEffect(() => {
+    if (onResetRate && onResetRate !== prevResetRateRef.current) {
+      setIndex(0);
+      prevResetRateRef.current = onResetRate;
+    }
+  }, [onResetRate]);
 
   // 常用拍号列表
   const commonTimeSignatures: [number, number][] = [
@@ -91,6 +102,7 @@ export function MetronomeBar({
   useEffect(() => {
     if (!isPatternPlaying) {
       prevBeatRef.current = -1;
+      setLoopCount(0);
     }
   }, [isPatternPlaying]);
 
