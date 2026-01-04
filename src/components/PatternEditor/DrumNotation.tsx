@@ -16,6 +16,7 @@ interface DrumNotationProps {
   pattern: Pattern;
   currentBeat?: number;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
+  onDoubleClick?: (subdivision: number) => void;
 }
 
 const SYMBOL_SIZE = 7;
@@ -31,10 +32,55 @@ export function DrumNotation({
   pattern,
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
+  onDoubleClick,
 }: DrumNotationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const cellWidth = useGridCellSize(); // 动态计算单元格宽度
+  const cellWidth = useGridCellSize();
+
+  const handleDoubleClick = (event: React.MouseEvent<SVGSVGElement>) => {
+    if (!onDoubleClick) return;
+
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+
+    const subdivision = Math.floor(x / cellWidth);
+    onDoubleClick(subdivision);
+  };
+
+  const lastTouchRef = useRef<{ time: number; x: number } | null>(null);
+  const DOUBLE_TAP_DELAY = 300;
+  const DOUBLE_TAP_DISTANCE = 30;
+
+  const handleTouchStart = (event: React.TouchEvent<SVGSVGElement>) => {
+    if (!onDoubleClick) return;
+
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const touch = event.touches[0];
+    const currentTime = Date.now();
+    const rect = svg.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+
+    if (lastTouchRef.current) {
+      const { time: lastTime, x: lastX } = lastTouchRef.current;
+      const timeDiff = currentTime - lastTime;
+      const distanceDiff = Math.abs(x - lastX);
+
+      if (timeDiff < DOUBLE_TAP_DELAY && distanceDiff < DOUBLE_TAP_DISTANCE) {
+        const subdivision = Math.floor(x / cellWidth);
+        onDoubleClick(subdivision);
+        lastTouchRef.current = null;
+        return;
+      }
+    }
+
+    lastTouchRef.current = { time: currentTime, x };
+  };
 
   // 获取 CSS 变量值
   const getCSSVariable = (varName: string) => {
@@ -77,6 +123,8 @@ export function DrumNotation({
         width={totalWidth}
         height={svgHeight}
         preserveAspectRatio="none"
+        onDoubleClick={handleDoubleClick}
+        onTouchStart={handleTouchStart}
       >
         {/* 上边界横线 */}
         <line
@@ -181,9 +229,9 @@ export function DrumNotation({
             const symbolXs =
               isDouble32 || isFirst32 || isSecond32
                 ? [
-                    ...(isDouble32 || isFirst32 ? [baseX - xOffset] : []),
-                    ...(isDouble32 || isSecond32 ? [baseX + xOffset] : []),
-                  ]
+                  ...(isDouble32 || isFirst32 ? [baseX - xOffset] : []),
+                  ...(isDouble32 || isSecond32 ? [baseX + xOffset] : []),
+                ]
                 : [baseX];
 
             // 渲染括号的辅助函数

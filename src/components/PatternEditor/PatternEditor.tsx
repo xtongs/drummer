@@ -60,6 +60,7 @@ interface PatternEditorProps {
   isPlaying?: boolean;
   onPlayToggle?: () => void;
   isDraftMode: boolean;
+  onNotationDoubleClick?: (subdivision: number) => void;
 }
 
 export function PatternEditor({
@@ -83,6 +84,7 @@ export function PatternEditor({
   isPlaying = false,
   onPlayToggle: _onPlayToggle,
   isDraftMode,
+  onNotationDoubleClick,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
@@ -310,6 +312,7 @@ export function PatternEditor({
           pattern={pattern}
           currentBeat={currentBeat}
           scrollContainerRef={scrollContainerRef}
+          onDoubleClick={onNotationDoubleClick}
         />
         <Grid
           pattern={pattern}

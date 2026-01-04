@@ -261,7 +261,7 @@ function App() {
   };
 
   // 节奏型播放（支持跨 pattern 循环）
-  useMultiPatternPlayer({
+  const { seekTo } = useMultiPatternPlayer({
     currentPattern: pattern,
     savedPatterns,
     crossPatternLoop,
@@ -270,6 +270,11 @@ function App() {
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
   });
+
+  // 处理鼓谱区域双击事件
+  const handleNotationDoubleClick = (subdivision: number) => {
+    seekTo(subdivision);
+  };
 
   const handleMetronomePlayToggle = () => {
     setIsMetronomePlaying((prev) => {
@@ -448,6 +453,7 @@ function App() {
           isPlaying={isPatternPlaying}
           onPlayToggle={handlePatternPlayToggle}
           isDraftMode={isDraftMode}
+          onNotationDoubleClick={handleNotationDoubleClick}
         />
       </main>
       <BottomPlayButton
