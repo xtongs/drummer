@@ -16,6 +16,7 @@ export function BPMSlider({
 }: BPMSliderProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [trackWidth, setTrackWidth] = useState<number | null>(null);
 
   // 将BPM值转换为百分比
   const getPercentage = useCallback(
@@ -87,9 +88,25 @@ export function BPMSlider({
     }
   }, [isDragging, handlePointerMoveEvent, handlePointerUp]);
 
+  // 测量轨道宽度，避免每次渲染都调用 getBoundingClientRect
+  useEffect(() => {
+    const measureTrackWidth = () => {
+      if (sliderRef.current) {
+        const rect = sliderRef.current.getBoundingClientRect();
+        setTrackWidth(rect.width);
+      }
+    };
+
+    measureTrackWidth();
+    window.addEventListener("resize", measureTrackWidth);
+    return () => window.removeEventListener("resize", measureTrackWidth);
+  }, []);
+
   const percentage = getPercentage(bpm);
-  // 限制滑块位置在 0% 到 100% 之间
-  const thumbPosition = Math.max(0, Math.min(100, percentage));
+  const thumbSize = 20;
+  const fillPercentage = trackWidth
+    ? percentage * (trackWidth - thumbSize) / trackWidth
+    : percentage;
 
   return (
     <div className="bpm-slider-container">
@@ -100,13 +117,12 @@ export function BPMSlider({
       >
         <div
           className="bpm-slider-fill"
-          style={{ width: `${percentage}%` }}
+          style={{ width: `calc(${fillPercentage}% + ${thumbSize / 2}px)` }}
         />
         <div
           className="bpm-slider-thumb"
-          style={{ 
-            // 滑块左边缘从 0 移动到 (100% - 20px)，确保永远不超出边界
-            left: `calc((100% - 20px) * ${thumbPosition / 100})`,
+          style={{
+            left: `calc((100% - ${thumbSize}px) * ${percentage / 100})`,
           }}
         />
       </div>
