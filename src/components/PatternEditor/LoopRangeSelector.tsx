@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { Pattern, CrossPatternLoop } from "../../types";
+import { useLongPress } from "../../hooks/useLongPress";
 import "./LoopRangeSelector.css";
 
 interface LoopRangeSelectorProps {
@@ -56,12 +57,12 @@ export function LoopRangeSelector({
     if (!crossPatternLoop) return;
 
     const expectedPatternName = isDraftMode ? "" : currentPattern.name;
-    
+
     // 检查循环范围的开始或结束是否在当前 pattern 上
-    const isCurrentPatternLoop = 
+    const isCurrentPatternLoop =
       crossPatternLoop.startPatternName === expectedPatternName ||
       crossPatternLoop.endPatternName === expectedPatternName;
-    
+
     // 如果循环范围完全不属于当前 pattern，更新到默认范围
     if (!isCurrentPatternLoop) {
       onCrossPatternLoopChange({
@@ -122,10 +123,10 @@ export function LoopRangeSelector({
     }
 
     // 检查结束小节所属的节奏型是否是当前选中的节奏型
-    const isCurrentPattern = isDraftMode 
-      ? crossPatternLoop.endPatternName === "" 
+    const isCurrentPattern = isDraftMode
+      ? crossPatternLoop.endPatternName === ""
       : crossPatternLoop.endPatternName === currentPattern.name;
-    
+
     // 如果是当前节奏型，且结束小节不是最新的末尾小节，则自动更新到最新的末尾小节
     if (isCurrentPattern) {
       const currentMaxBar = currentPattern.bars - 1;
@@ -158,9 +159,9 @@ export function LoopRangeSelector({
   // 获取可选的 patterns 列表（草稿模式用空字符串表示）
   const patternOptions = isDraftMode
     ? [
-        { name: "", label: "○" },
-        ...sortedPatterns.map((p) => ({ name: p.name, label: p.name })),
-      ]
+      { name: "", label: "○" },
+      ...sortedPatterns.map((p) => ({ name: p.name, label: p.name })),
+    ]
     : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
 
   const handleStartPatternChange = (newPatternName: string) => {
@@ -301,6 +302,22 @@ export function LoopRangeSelector({
   const canIncreaseEndBar =
     loop.endBar < getPatternBars(loop.endPatternName) - 1;
 
+  const startBarDecreaseHandlers = useLongPress(handleStartBarDecrease, {
+    shouldStop: () => !canDecreaseStartBar,
+  });
+
+  const startBarIncreaseHandlers = useLongPress(handleStartBarIncrease, {
+    shouldStop: () => !canIncreaseStartBar,
+  });
+
+  const endBarDecreaseHandlers = useLongPress(handleEndBarDecrease, {
+    shouldStop: () => !canDecreaseEndBar,
+  });
+
+  const endBarIncreaseHandlers = useLongPress(handleEndBarIncrease, {
+    shouldStop: () => !canIncreaseEndBar,
+  });
+
   return (
     <div className="loop-range-selector">
       <div className="loop-range-controls">
@@ -321,7 +338,7 @@ export function LoopRangeSelector({
           {/* 小节选择 */}
           <button
             className="loop-range-button"
-            onClick={handleStartBarDecrease}
+            {...startBarDecreaseHandlers}
             disabled={!canDecreaseStartBar}
             aria-label="Decrease start bar"
           >
@@ -341,7 +358,7 @@ export function LoopRangeSelector({
           <span className="loop-range-value">{loop.startBar + 1}</span>
           <button
             className="loop-range-button"
-            onClick={handleStartBarIncrease}
+            {...startBarIncreaseHandlers}
             disabled={!canIncreaseStartBar}
             aria-label="Increase start bar"
           >
@@ -380,7 +397,7 @@ export function LoopRangeSelector({
           {/* 小节选择 */}
           <button
             className="loop-range-button"
-            onClick={handleEndBarDecrease}
+            {...endBarDecreaseHandlers}
             disabled={!canDecreaseEndBar}
             aria-label="Decrease end bar"
           >
@@ -400,7 +417,7 @@ export function LoopRangeSelector({
           <span className="loop-range-value">{loop.endBar + 1}</span>
           <button
             className="loop-range-button"
-            onClick={handleEndBarIncrease}
+            {...endBarIncreaseHandlers}
             disabled={!canIncreaseEndBar}
             aria-label="Increase end bar"
           >

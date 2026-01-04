@@ -1,4 +1,5 @@
 import "./BPMControl.css";
+import { useLongPress } from "../../hooks/useLongPress";
 
 interface BPMControlProps {
   bpm: number;
@@ -32,13 +33,21 @@ export function BPMControl({
     }
   };
 
+  const decreasePressHandlers = useLongPress(handleDecrease, {
+    shouldStop: () => bpm <= min,
+  });
+
+  const increasePressHandlers = useLongPress(handleIncrease, {
+    shouldStop: () => bpm >= max,
+  });
+
   return (
     <div className="bpm-control">
       <label className="bpm-label">BPM</label>
       <div className="bpm-input-group">
         <button
           className="bpm-button"
-          onClick={handleDecrease}
+          {...decreasePressHandlers}
           disabled={bpm <= min}
           aria-label="Decrease BPM"
         >
@@ -66,7 +75,7 @@ export function BPMControl({
         />
         <button
           className="bpm-button"
-          onClick={handleIncrease}
+          {...increasePressHandlers}
           disabled={bpm >= max}
           aria-label="Increase BPM"
         >

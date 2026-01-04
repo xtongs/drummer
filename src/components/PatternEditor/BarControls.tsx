@@ -1,4 +1,5 @@
 import "./BarControls.css";
+import { useLongPress } from "../../hooks/useLongPress";
 
 interface BarControlsProps {
   bars: number;
@@ -13,12 +14,18 @@ export function BarControls({
   onRemoveBar,
   canRemove,
 }: BarControlsProps) {
+  const removePressHandlers = useLongPress(onRemoveBar, {
+    shouldStop: () => !canRemove,
+  });
+
+  const addPressHandlers = useLongPress(onAddBar);
+
   return (
     <div className="bar-controls">
       <span className="bar-count">
         <button
           className="bar-control-button"
-          onClick={onRemoveBar}
+          {...removePressHandlers}
           disabled={!canRemove}
           aria-label="Remove bar"
         >
@@ -38,7 +45,7 @@ export function BarControls({
         {bars}
         <button
           className="bar-control-button"
-          onClick={onAddBar}
+          {...addPressHandlers}
           aria-label="Add bar"
         >
           <svg

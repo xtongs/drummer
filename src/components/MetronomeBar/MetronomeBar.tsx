@@ -3,6 +3,7 @@ import { BPMSlider } from "./BPMSlider";
 import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
 import { useMetronome } from "../../hooks/useMetronome";
+import { useLongPress } from "../../hooks/useLongPress";
 import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
@@ -123,6 +124,14 @@ export function MetronomeBar({
     onBPMChange(newBPM);
   };
 
+  const decreasePressHandlers = useLongPress(handleDecrease, {
+    shouldStop: () => bpm <= min,
+  });
+
+  const increasePressHandlers = useLongPress(handleIncrease, {
+    shouldStop: () => bpm >= max,
+  });
+
   // 快速根据速率设置BPM
   // 使用精确的分数值，确保乘积为1，循环后能精确回到原始值
   const rateLabels = ["", "x0.875", "x0.75", "x0.5"];
@@ -147,7 +156,7 @@ export function MetronomeBar({
         <div className="bpm-control-group">
           <button
             className="bpm-control-button"
-            onClick={handleDecrease}
+            {...decreasePressHandlers}
             disabled={bpm <= min}
             aria-label="Decrease BPM"
           >
@@ -174,7 +183,7 @@ export function MetronomeBar({
           </div>
           <button
             className="bpm-control-button"
-            onClick={handleIncrease}
+            {...increasePressHandlers}
             disabled={bpm >= max}
             aria-label="Increase BPM"
           >
