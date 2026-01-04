@@ -37,10 +37,6 @@
   border-radius: var(--border-radius-sm);
 }
 
-.bpm-button:disabled {
-  opacity: 0.3;
-}
-
 .bpm-input {
   width: 60px;
   text-align: center;

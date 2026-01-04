@@ -17,7 +17,11 @@
   /* 禁用文本选择 */
   user-select: none;
   -webkit-user-select: none;
-  /* 禁用触摸高亮 */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* 禁用触摸高亮和默认行为 */
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
   -webkit-tap-highlight-color: transparent;
 }
 

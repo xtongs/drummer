@@ -92,11 +92,6 @@
   flex-shrink: 0;
 }
 
-.bpm-control-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 .bpm-value {
   font-size: 2.5rem;
   font-weight: 600;

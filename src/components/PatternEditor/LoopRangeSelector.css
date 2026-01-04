@@ -46,11 +46,6 @@
   box-shadow: none;
 }
 
-.loop-range-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 .loop-range-value {
   font-size: var(--font-size-sm);
   color: var(--color-text);

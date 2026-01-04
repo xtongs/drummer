@@ -36,9 +36,3 @@
   box-shadow: none;
   cursor: pointer;
 }
-
-
-.bar-control-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}

@@ -20,7 +20,6 @@
   display: flex;
   background: transparent;
   backdrop-filter: none;
-  border-bottom: 1px solid var(--grid-border);
   height: 24px;
   position: relative;
   flex-shrink: 0;

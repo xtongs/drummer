@@ -9,6 +9,11 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  /* 禁用触摸高亮和默认行为 */
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {
@@ -143,6 +148,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 禁用文本选择和拖拽 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:not(.grid-cell):active {
@@ -151,8 +164,13 @@ button:not(.grid-cell):active {
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
+}
+
+button:disabled:active {
+  transform: none;
+  opacity: 0.3;
 }
 
 /* 玻璃态效果 */
