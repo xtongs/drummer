@@ -46,19 +46,25 @@ async function releaseWakeLock() {
   }
 }
 
-// 使用 setTimeout + requestAnimationFrame 来同步动画更新
-// 确保动画与音频播放时间对齐
+let lastAnimationUpdateTime = 0;
+const ANIMATION_THROTTLE = 16;
+
 function scheduleAnimationUpdate(
   subdivision: number,
   callback: (subdivision: number) => void,
   delayMs: number
 ) {
-  // 使用 setTimeout 延迟到声音播放时间，然后使用 requestAnimationFrame 确保在渲染帧更新
   const timeoutDelay = Math.max(0, delayMs);
   setTimeout(() => {
-    requestAnimationFrame(() => {
+    const now = Date.now();
+    if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
+      requestAnimationFrame(() => {
+        lastAnimationUpdateTime = Date.now();
+        callback(subdivision);
+      });
+    } else {
       callback(subdivision);
-    });
+    }
   }, timeoutDelay);
 }
 
@@ -74,8 +80,8 @@ export function usePatternPlayer({
   onSubdivisionChange,
 }: UsePatternPlayerOptions) {
   const nextNoteTimeRef = useRef<number>(0);
-  const scheduleAheadTimeRef = useRef<number>(0.1);
-  const lookaheadRef = useRef<number>(25);
+  const scheduleAheadTimeRef = useRef<number>(0.2);
+  const lookaheadRef = useRef<number>(50);
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
   const currentSubdivisionRef = useRef<number>(0);

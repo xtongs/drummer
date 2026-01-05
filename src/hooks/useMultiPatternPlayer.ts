@@ -46,6 +46,9 @@ async function releaseWakeLock() {
   }
 }
 
+let lastAnimationUpdateTime = 0;
+const ANIMATION_THROTTLE = 16;
+
 function scheduleAnimationUpdate(
   subdivision: number,
   callback: (subdivision: number) => void,
@@ -53,9 +56,15 @@ function scheduleAnimationUpdate(
 ) {
   const timeoutDelay = Math.max(0, delayMs);
   setTimeout(() => {
-    requestAnimationFrame(() => {
+    const now = Date.now();
+    if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
+      requestAnimationFrame(() => {
+        lastAnimationUpdateTime = Date.now();
+        callback(subdivision);
+      });
+    } else {
       callback(subdivision);
-    });
+    }
   }, timeoutDelay);
 }
 
@@ -87,8 +96,8 @@ export function useMultiPatternPlayer({
   onPatternChange,
 }: UseMultiPatternPlayerOptions) {
   const nextNoteTimeRef = useRef<number>(0);
-  const scheduleAheadTimeRef = useRef<number>(0.1);
-  const lookaheadRef = useRef<number>(25);
+  const scheduleAheadTimeRef = useRef<number>(0.2);
+  const lookaheadRef = useRef<number>(50);
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
 

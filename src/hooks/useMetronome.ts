@@ -26,6 +26,9 @@ async function releaseWakeLock() {
   }
 }
 
+let lastAnimationUpdateTime = 0;
+const ANIMATION_THROTTLE = 16;
+
 interface UseMetronomeOptions {
   bpm: number;
   timeSignature: [number, number]; // [beatsPerBar, noteValue]
@@ -105,10 +108,17 @@ export function useMetronome({
       const subIdx = subdivisionIndex;
       const beatNum = beatNumber;
       setTimeout(() => {
-        requestAnimationFrame(() => {
+        const now = Date.now();
+        if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
+          requestAnimationFrame(() => {
+            lastAnimationUpdateTime = Date.now();
+            setCurrentSubdivision(subIdx);
+            setCurrentBeat(beatNum);
+          });
+        } else {
           setCurrentSubdivision(subIdx);
           setCurrentBeat(beatNum);
-        });
+        }
       }, Math.max(0, delayMs));
 
       // 移动到下一个 subdivision

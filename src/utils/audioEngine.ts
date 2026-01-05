@@ -157,12 +157,16 @@ function playMetronomeSample(
   source.connect(gainNode);
   gainNode.connect(ctx.destination);
 
-  // 设置音量
   gainNode.gain.value = Math.max(0, Math.min(1, volume));
 
-  // 使用精确的调度时间（确保不早于当前时间）
   const playTime = Math.max(time, ctx.currentTime);
   source.start(playTime);
+
+  const duration = buffer.duration;
+  setTimeout(() => {
+    source.disconnect();
+    gainNode.disconnect();
+  }, (duration + 0.1) * 1000);
 
   return true;
 }
@@ -190,6 +194,11 @@ function playClickSynth(
 
   oscillator.start(time);
   oscillator.stop(time + duration);
+
+  setTimeout(() => {
+    oscillator.disconnect();
+    gainNode.disconnect();
+  }, (duration + 0.1) * 1000);
 }
 
 /**
@@ -248,6 +257,12 @@ function playKickSynth(time: number): void {
 
   osc.start(time);
   osc.stop(time + 0.25);
+
+  setTimeout(() => {
+    osc.disconnect();
+    oscGain.disconnect();
+    masterGain.disconnect();
+  }, 350);
 }
 
 /**
@@ -271,15 +286,19 @@ function playSample(
   source.connect(gainNode);
   gainNode.connect(ctx.destination);
 
-  // 应用音量乘数
   const finalVolume = applyVolumeMultiplier
     ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier))
     : Math.max(0, Math.min(1, volume));
   gainNode.gain.value = finalVolume;
 
-  // 使用精确的调度时间（确保不早于当前时间）
   const playTime = Math.max(time, ctx.currentTime);
   source.start(playTime);
+
+  const duration = buffer.duration;
+  setTimeout(() => {
+    source.disconnect();
+    gainNode.disconnect();
+  }, (duration + 0.1) * 1000);
 
   return true;
 }
@@ -306,7 +325,6 @@ function playSnareSynth(time: number): void {
   masterGain.connect(ctx.destination);
   masterGain.gain.value = 0.5;
 
-  // 主音调 - 鼓体共振
   const osc = ctx.createOscillator();
   const oscGain = ctx.createGain();
   osc.connect(oscGain);
@@ -319,7 +337,6 @@ function playSnareSynth(time: number): void {
   oscGain.gain.setValueAtTime(0.7, time);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
 
-  // 谐波 - 增加明亮感
   const osc2 = ctx.createOscillator();
   const osc2Gain = ctx.createGain();
   osc2.connect(osc2Gain);
@@ -332,12 +349,10 @@ function playSnareSynth(time: number): void {
   osc2Gain.gain.setValueAtTime(0.3, time);
   osc2Gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
 
-  // 噪声 - 弹簧沙沙声
   const noiseBuffer = createNoiseBuffer(ctx, 0.2);
   const noise = ctx.createBufferSource();
   noise.buffer = noiseBuffer;
 
-  // 带通滤波器 - 让噪声更像弹簧
   const filter = ctx.createBiquadFilter();
   filter.type = "bandpass";
   filter.frequency.value = 5000;
@@ -357,6 +372,17 @@ function playSnareSynth(time: number): void {
   osc2.stop(time + 0.08);
   noise.start(time);
   noise.stop(time + 0.18);
+
+  setTimeout(() => {
+    osc.disconnect();
+    oscGain.disconnect();
+    osc2.disconnect();
+    osc2Gain.disconnect();
+    noise.disconnect();
+    filter.disconnect();
+    noiseGain.disconnect();
+    masterGain.disconnect();
+  }, 280);
 }
 
 /**
@@ -397,6 +423,13 @@ function playHiHatClosedSynth(time: number): void {
 
   noise.start(time);
   noise.stop(time + 0.05);
+
+  setTimeout(() => {
+    noise.disconnect();
+    highpass.disconnect();
+    noiseGain.disconnect();
+    masterGain.disconnect();
+  }, 150);
 }
 
 /**
@@ -437,6 +470,13 @@ function playHiHatOpenSynth(time: number): void {
 
   noise.start(time);
   noise.stop(time + 0.35);
+
+  setTimeout(() => {
+    noise.disconnect();
+    highpass.disconnect();
+    noiseGain.disconnect();
+    masterGain.disconnect();
+  }, 450);
 }
 
 /**
@@ -486,6 +526,13 @@ function playCrashSynth(time: number, brightness: number = 1): void {
 
   noise.start(time);
   noise.stop(time + 1.2);
+
+  setTimeout(() => {
+    noise.disconnect();
+    highpass.disconnect();
+    noiseGain.disconnect();
+    masterGain.disconnect();
+  }, 1300);
 }
 
 /**
@@ -521,6 +568,12 @@ function playRideSynth(time: number): void {
 
   bell.start(time);
   bell.stop(time + 0.5);
+
+  setTimeout(() => {
+    bell.disconnect();
+    bellGain.disconnect();
+    masterGain.disconnect();
+  }, 600);
 }
 
 /**
@@ -579,6 +632,12 @@ function playTomSynth(time: number, frequency: number = 200): void {
 
   osc.start(time);
   osc.stop(time + 0.3);
+
+  setTimeout(() => {
+    osc.disconnect();
+    oscGain.disconnect();
+    masterGain.disconnect();
+  }, 400);
 }
 /**
  * 根据鼓件类型播放对应的声音
