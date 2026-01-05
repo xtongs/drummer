@@ -308,7 +308,7 @@ function playSample(
  */
 export function playSnare(time: number): void {
   // 尝试使用采样
-  if (playSample("snare", time, 0.6)) {
+  if (playSample("snare", time, 1)) {
     return;
   }
 
