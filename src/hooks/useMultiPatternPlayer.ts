@@ -312,7 +312,7 @@ export function useMultiPatternPlayer({
 
         if (cellState === CELL_GRACE) {
           const graceNoteTime = playTime - subDuration * 0.125;
-          triggerDrum(drum, graceNoteTime, 0.2);
+          triggerDrum(drum, graceNoteTime, 0.5);
           triggerDrum(drum, playTime, 1);
           return;
         }
