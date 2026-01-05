@@ -3,6 +3,7 @@ import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
+import { VersionDisplay } from "./components/VersionDisplay/VersionDisplay";
 import { useMultiPatternPlayer } from "./hooks/useMultiPatternPlayer";
 import {
   savePattern,
@@ -218,11 +219,8 @@ function App() {
   // 防误触退出：播放时阻止页面关闭
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // 如果正在播放，显示确认对话框
       if (isMetronomePlayingRef.current || isPatternPlayingRef.current) {
-        // 现代浏览器会忽略自定义消息，只显示默认消息
         e.preventDefault();
-        // 为了兼容性，需要设置 returnValue
         e.returnValue = "";
         return "";
       }
@@ -232,6 +230,55 @@ function App() {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  // 快速点击body空白区域5次显示版本号
+  useEffect(() => {
+    const clickCountRef = { count: 0 };
+    const lastClickTimeRef = { time: 0 };
+    const CLICK_THRESHOLD = 500;
+    const REQUIRED_CLICKS = 5;
+
+    const shouldIgnoreClick = (target: HTMLElement): boolean => {
+      return !!(
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("select") ||
+        target.closest("a") ||
+        target.closest(".bottom-play-button-container")
+      );
+    };
+
+    const handleInteraction = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement;
+
+      if (shouldIgnoreClick(target)) {
+        return;
+      }
+
+      const now = Date.now();
+      const timeDiff = now - lastClickTimeRef.time;
+
+      if (timeDiff > CLICK_THRESHOLD) {
+        clickCountRef.count = 0;
+      }
+
+      clickCountRef.count++;
+      lastClickTimeRef.time = now;
+
+      if (clickCountRef.count >= REQUIRED_CLICKS) {
+        window.dispatchEvent(new CustomEvent("show-version"));
+        clickCountRef.count = 0;
+      }
+    };
+
+    document.body.addEventListener("click", handleInteraction);
+    document.body.addEventListener("touchstart", handleInteraction, { passive: true });
+
+    return () => {
+      document.body.removeEventListener("click", handleInteraction);
+      document.body.removeEventListener("touchstart", handleInteraction);
     };
   }, []);
 
@@ -460,6 +507,7 @@ function App() {
         isPlaying={isPatternPlaying}
         onClick={handlePatternPlayToggle}
       />
+      <VersionDisplay />
     </div>
   );
 }
