@@ -1,7 +1,8 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { THEME_COLOR } from "./src/utils/constants";
+import packageJson from "./package.json";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -55,6 +56,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   server: {
     port: 3000,
     host: "0.0.0.0",

@@ -238,7 +238,7 @@ function App() {
     const clickCountRef = { count: 0 };
     const lastClickTimeRef = { time: 0 };
     const CLICK_THRESHOLD = 300;
-    const REQUIRED_CLICKS = 3;
+    const REQUIRED_CLICKS = 5;
 
     const shouldIgnoreClick = (target: HTMLElement): boolean => {
       return !!(
@@ -250,7 +250,7 @@ function App() {
       );
     };
 
-    const handleInteraction = (e: MouseEvent | TouchEvent) => {
+    const handleInteraction = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
 
       if (shouldIgnoreClick(target)) {
@@ -273,12 +273,10 @@ function App() {
       }
     };
 
-    document.body.addEventListener("click", handleInteraction);
-    document.body.addEventListener("touchstart", handleInteraction, { passive: true });
+    document.body.addEventListener("pointerdown", handleInteraction, { passive: true });
 
     return () => {
-      document.body.removeEventListener("click", handleInteraction);
-      document.body.removeEventListener("touchstart", handleInteraction);
+      document.body.removeEventListener("pointerdown", handleInteraction);
     };
   }, []);
 
