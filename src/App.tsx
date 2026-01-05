@@ -237,8 +237,8 @@ function App() {
   useEffect(() => {
     const clickCountRef = { count: 0 };
     const lastClickTimeRef = { time: 0 };
-    const CLICK_THRESHOLD = 500;
-    const REQUIRED_CLICKS = 5;
+    const CLICK_THRESHOLD = 300;
+    const REQUIRED_CLICKS = 3;
 
     const shouldIgnoreClick = (target: HTMLElement): boolean => {
       return !!(
