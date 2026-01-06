@@ -308,7 +308,7 @@ function playSample(
  */
 export function playSnare(time: number): void {
   // 尝试使用采样
-  if (playSample("snare", time, 1)) {
+  if (playSample("snare", time, 0.5)) {
     return;
   }
 
@@ -436,7 +436,7 @@ function playHiHatClosedSynth(time: number): void {
  * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
-  if (playSample("hiHatOpen", time, 0.7)) {
+  if (playSample("hiHatOpen", time, 0.5)) {
     return;
   }
   // 后备：合成音色
