@@ -436,7 +436,7 @@ function playHiHatClosedSynth(time: number): void {
  * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
-  if (playSample("hiHatOpen", time, 0.5)) {
+  if (playSample("hiHatOpen", time, 0.3)) {
     return;
   }
   // 后备：合成音色
