@@ -4,7 +4,6 @@ import "./VersionDisplay.css";
 
 export function VersionDisplay() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleShowVersion = () => {
@@ -19,10 +18,7 @@ export function VersionDisplay() {
   }, []);
 
   const handleRefresh = async () => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-
+    console.log("Refreshing...");
     try {
       if ("serviceWorker" in navigator) {
         const registration = await navigator.serviceWorker.getRegistration();
