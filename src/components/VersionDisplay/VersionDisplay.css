@@ -1,18 +1,25 @@
 .version-display {
   position: fixed;
-  bottom: calc(
-    var(--spacing-sm) + max(env(safe-area-inset-bottom), var(--spacing-md))
-  );
+  bottom: calc(var(--spacing-sm) + max(env(safe-area-inset-bottom), var(--spacing-md)));
   left: 0;
   right: 0;
   text-align: center;
   font-size: 10px;
   color: var(--color-text-tertiary);
   opacity: 0.6;
-  pointer-events: default;
+  cursor: pointer;
   z-index: 99;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  transition: opacity 0.2s;
+}
+
+.version-display:hover {
+  opacity: 1;
+}
+
+.version-display:active {
+  opacity: 0.8;
 }

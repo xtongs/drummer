@@ -17,20 +17,8 @@ export function VersionDisplay() {
     };
   }, []);
 
-  const handleRefresh = async () => {
-    console.log("Refreshing...");
-    try {
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration) {
-          await registration.update();
-        }
-      }
-      window.location.reload();
-    } catch (error) {
-      console.error("Failed to refresh:", error);
-      window.location.reload();
-    }
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   if (!isVisible) {
