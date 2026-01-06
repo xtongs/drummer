@@ -9,7 +9,13 @@ import {
   CELL_FIRST_32,
   CELL_SECOND_32,
 } from "../types";
-import { DEFAULT_BPM, DEFAULT_TIME_SIGNATURE, DEFAULT_BARS, DRUMS, SUBDIVISIONS_PER_BEAT } from "../utils/constants";
+import {
+  DEFAULT_BPM,
+  DEFAULT_TIME_SIGNATURE,
+  DEFAULT_BARS,
+  DRUMS,
+  SUBDIVISIONS_PER_BEAT,
+} from "../utils/constants";
 import { generateId } from "../utils/storage";
 
 /**
@@ -53,35 +59,6 @@ export function usePattern(initialPattern: Pattern) {
     }));
   }, []);
 
-  // 更新拍号
-  const updateTimeSignature = useCallback((timeSignature: [number, number]) => {
-    setPattern((prev) => {
-      const [newBeatsPerBar] = timeSignature;
-      const [oldBeatsPerBar] = prev.timeSignature;
-      const totalSubdivisions = prev.bars * oldBeatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const newTotalSubdivisions = prev.bars * newBeatsPerBar * SUBDIVISIONS_PER_BEAT;
-
-      // 重新调整grid大小
-      const newGrid = prev.grid.map((row) => {
-        if (newTotalSubdivisions > totalSubdivisions) {
-          // 增加列
-          return [...row, ...Array<CellState>(newTotalSubdivisions - totalSubdivisions).fill(CELL_OFF)];
-        } else if (newTotalSubdivisions < totalSubdivisions) {
-          // 减少列
-          return row.slice(0, newTotalSubdivisions);
-        }
-        return row;
-      });
-
-      return {
-        ...prev,
-        timeSignature,
-        grid: newGrid,
-        updatedAt: Date.now(),
-      };
-    });
-  }, []);
-
   // 切换网格单元格状态：未激活 -> 正常 -> 未激活
   const toggleCell = useCallback((drumIndex: number, beatIndex: number) => {
     setPattern((prev) => {
@@ -89,7 +66,8 @@ export function usePattern(initialPattern: Pattern) {
         if (i === drumIndex) {
           const newRow = [...row];
           // 未激活 -> 正常, 正常/鬼音 -> 未激活
-          newRow[beatIndex] = newRow[beatIndex] === CELL_OFF ? CELL_NORMAL : CELL_OFF;
+          newRow[beatIndex] =
+            newRow[beatIndex] === CELL_OFF ? CELL_NORMAL : CELL_OFF;
           return newRow;
         }
         return row;
@@ -187,10 +165,10 @@ export function usePattern(initialPattern: Pattern) {
     setPattern((prev) => {
       const [beatsPerBar] = prev.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      
+
       // 获取最后一小节的起始索引
       const lastBarStartIndex = prev.grid[0].length - subdivisionsPerBar;
-      
+
       // 复制最后一小节的内容到新小节
       const newGrid = prev.grid.map((row) => {
         // 获取最后一小节的内容
@@ -244,24 +222,6 @@ export function usePattern(initialPattern: Pattern) {
     });
   }, []);
 
-  // 设置循环范围
-  const setLoopRange = useCallback((loopRange: [number, number] | undefined) => {
-    setPattern((prev) => ({
-      ...prev,
-      loopRange,
-      updatedAt: Date.now(),
-    }));
-  }, []);
-
-  // 更新节奏型名称
-  const updateName = useCallback((name: string) => {
-    setPattern((prev) => ({
-      ...prev,
-      name,
-      updatedAt: Date.now(),
-    }));
-  }, []);
-
   // 加载节奏型
   const loadPattern = useCallback((newPattern: Pattern) => {
     setPattern(newPattern);
@@ -275,17 +235,13 @@ export function usePattern(initialPattern: Pattern) {
   return {
     pattern,
     updateBPM,
-    updateTimeSignature,
     toggleCell,
     toggleGhost,
     cycleThirtySecond,
     addBar,
     removeBar,
     clearGrid,
-    setLoopRange,
-    updateName,
     loadPattern,
     resetPattern,
   };
 }
-

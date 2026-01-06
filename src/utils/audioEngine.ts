@@ -111,7 +111,7 @@ function loadAllSamples(): Promise<void> {
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => { });
+    ctx.resume().catch(() => {});
   }
   // 开始加载采样
   loadAllSamples();
@@ -480,13 +480,6 @@ function playHiHatOpenSynth(time: number): void {
 }
 
 /**
- * 踩镲通用接口（默认闭合）
- */
-export function playHiHat(time: number): void {
-  playHiHatClosed(time);
-}
-
-/**
  * Crash 镲 - 优先使用真实采样
  */
 export function playCrash(time: number, brightness: number = 1): void {
@@ -574,17 +567,6 @@ function playRideSynth(time: number): void {
     bellGain.disconnect();
     masterGain.disconnect();
   }, 600);
-}
-
-/**
- * 兼容旧接口
- */
-export function playCymbal(time: number, frequency: number = 1000): void {
-  if (frequency >= 1000) {
-    playCrash(time, frequency / 1000);
-  } else {
-    playRide(time);
-  }
 }
 
 /**
@@ -694,13 +676,6 @@ export async function playDrumSound(
 
   // 重置音量乘数
   currentVolumeMultiplier = 1;
-}
-
-/**
- * 获取当前音量乘数
- */
-export function getVolumeMultiplier(): number {
-  return currentVolumeMultiplier;
 }
 
 /**
