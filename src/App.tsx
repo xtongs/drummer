@@ -100,6 +100,10 @@ function App() {
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
     resetPattern();
+    // 同步 BPM 到节拍器（使用默认BPM）
+    setMetronomeBPM(DEFAULT_BPM);
+    saveMetronomeBPM(DEFAULT_BPM);
+    updateBPM(DEFAULT_BPM);
 
     // 设置 range 为草稿的完整范围
     setCrossPatternLoop({
