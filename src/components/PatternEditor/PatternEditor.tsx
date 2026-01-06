@@ -44,8 +44,8 @@ interface PatternEditorProps {
   onCellClick: (drumIndex: number, beatIndex: number) => void;
   onToggleGhost: (drumIndex: number, beatIndex: number) => void;
   onCycleThirtySecond: (drumIndex: number, beatIndex: number) => void;
-  onAddBar: () => void;
-  onRemoveBar: () => void;
+  onAddBar: (cursorPosition?: number) => void;
+  onRemoveBar: (cursorPosition?: number) => void;
   onClearGrid: () => void;
   crossPatternLoop: CrossPatternLoop | undefined;
   onCrossPatternLoopChange: (loop: CrossPatternLoop | undefined) => void;
@@ -91,6 +91,7 @@ export function PatternEditor({
   const lastScrollTargetRef = useRef<number | null>(null); // 记录上次滚动目标
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
+  const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
   const cellSize = useGridCellSize(); // 动态计算单元格大小
 
   // 执行滚动的函数
@@ -116,8 +117,9 @@ export function PatternEditor({
   // 包装添加小节的函数，设置用户点击标记
   const handleUserAddBar = useCallback(() => {
     isUserAddBarRef.current = true;
-    onAddBar();
-  }, [onAddBar]);
+    addBarCursorBeatRef.current = currentBeat;
+    onAddBar(currentBeat);
+  }, [onAddBar, currentBeat]);
 
   // 当播放时，自动滚动到当前游标位置（按页滚动，带提前量）
   useEffect(() => {
@@ -190,11 +192,33 @@ export function PatternEditor({
     // 如果是当前节奏型，且有滚动容器，则自动滚动到最新添加的小节位置
     if (isCurrentPattern) {
       const container = scrollContainerRef.current;
-      // 计算最新小节的位置（新添加的小节是最后一个小节）
       const [beatsPerBar] = pattern.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const lastBarStartIndex = (pattern.bars - 1) * subdivisionsPerBar;
-      const targetLeft = lastBarStartIndex * cellSize;
+
+      // 根据添加 bar 时的游标位置计算新添加的小节位置
+      let newBarIndex: number;
+      if (addBarCursorBeatRef.current !== undefined) {
+        const cursorBarIndex = Math.floor(
+          addBarCursorBeatRef.current / subdivisionsPerBar
+        );
+        const cursorPositionInBar =
+          addBarCursorBeatRef.current % subdivisionsPerBar;
+        const barMidpoint = subdivisionsPerBar / 2;
+
+        if (cursorPositionInBar < barMidpoint) {
+          // 在小节前半部分添加，新小节在该小节前
+          newBarIndex = cursorBarIndex;
+        } else {
+          // 在小节后半部分添加，新小节在该小节后
+          newBarIndex = cursorBarIndex + 1;
+        }
+      } else {
+        // 没有游标位置，新小节是最后一个小节
+        newBarIndex = pattern.bars - 1;
+      }
+
+      const newBarStartIndex = newBarIndex * subdivisionsPerBar;
+      const targetLeft = newBarStartIndex * cellSize;
 
       // 滚动到新小节，让它在视图中可见
       doScroll(container, targetLeft);
@@ -203,7 +227,16 @@ export function PatternEditor({
     // 重置标记和上一次的小节数
     isUserAddBarRef.current = false;
     lastBarsRef.current = pattern.bars;
-  }, [pattern.bars, isPlaying, isDraftMode, pattern.name, pattern.timeSignature, cellSize, doScroll, crossPatternLoop]);
+  }, [
+    pattern.bars,
+    isPlaying,
+    isDraftMode,
+    pattern.name,
+    pattern.timeSignature,
+    cellSize,
+    doScroll,
+    crossPatternLoop,
+  ]);
 
   return (
     <div className="pattern-editor">
@@ -213,6 +246,7 @@ export function PatternEditor({
           onAddBar={handleUserAddBar}
           onRemoveBar={onRemoveBar}
           canRemove={pattern.bars > 1}
+          currentBeat={currentBeat}
         />
         <LoopRangeSelector
           currentPattern={pattern}

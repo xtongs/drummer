@@ -161,20 +161,44 @@ export function usePattern(initialPattern: Pattern) {
   );
 
   // 添加小节
-  const addBar = useCallback(() => {
+  const addBar = useCallback((cursorPosition?: number) => {
     setPattern((prev) => {
       const [beatsPerBar] = prev.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
 
-      // 获取最后一小节的起始索引
-      const lastBarStartIndex = prev.grid[0].length - subdivisionsPerBar;
+      let insertIndex: number;
+      let barToCopy: number;
 
-      // 复制最后一小节的内容到新小节
+      if (cursorPosition !== undefined) {
+        // 根据游标位置决定插入位置
+        const cursorBarIndex = Math.floor(cursorPosition / subdivisionsPerBar);
+        const cursorPositionInBar = cursorPosition % subdivisionsPerBar;
+        const barMidpoint = subdivisionsPerBar / 2;
+
+        if (cursorPositionInBar < barMidpoint) {
+          // 在小节前半部分，在该小节前插入
+          insertIndex = cursorBarIndex;
+          barToCopy = cursorBarIndex;
+        } else {
+          // 在小节后半部分，在该小节后插入
+          insertIndex = cursorBarIndex + 1;
+          barToCopy = cursorBarIndex;
+        }
+      } else {
+        // 没有游标位置，在末尾添加
+        insertIndex = prev.bars;
+        barToCopy = prev.bars - 1;
+      }
+
+      // 复制指定小节的内容
+      const barStartIndex = barToCopy * subdivisionsPerBar;
+      const barEndIndex = barStartIndex + subdivisionsPerBar;
+
       const newGrid = prev.grid.map((row) => {
-        // 获取最后一小节的内容
-        const lastBarContent = row.slice(lastBarStartIndex);
-        // 添加新小节，内容为最后一小节的复制
-        return [...row, ...lastBarContent];
+        const barContent = row.slice(barStartIndex, barEndIndex);
+        const newRow = [...row];
+        newRow.splice(insertIndex * subdivisionsPerBar, 0, ...barContent);
+        return newRow;
       });
 
       return {
@@ -187,13 +211,40 @@ export function usePattern(initialPattern: Pattern) {
   }, []);
 
   // 删除小节
-  const removeBar = useCallback(() => {
+  const removeBar = useCallback((cursorPosition?: number) => {
     setPattern((prev) => {
       if (prev.bars <= 1) return prev; // 至少保留1个小节
 
       const [beatsPerBar] = prev.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const newGrid = prev.grid.map((row) => row.slice(0, -subdivisionsPerBar));
+
+      let barToRemove: number;
+
+      if (cursorPosition !== undefined) {
+        // 根据游标位置决定删除哪个小节
+        const cursorBarIndex = Math.floor(cursorPosition / subdivisionsPerBar);
+        const cursorPositionInBar = cursorPosition % subdivisionsPerBar;
+        const barMidpoint = subdivisionsPerBar / 2;
+
+        if (cursorPositionInBar < barMidpoint) {
+          // 在小节前半部分，删除该小节
+          barToRemove = cursorBarIndex;
+        } else {
+          // 在小节后半部分，删除该小节
+          barToRemove = cursorBarIndex;
+        }
+      } else {
+        // 没有游标位置，删除最后一小节
+        barToRemove = prev.bars - 1;
+      }
+
+      const removeStartIndex = barToRemove * subdivisionsPerBar;
+
+      const newGrid = prev.grid.map((row) => {
+        const newRow = [...row];
+        newRow.splice(removeStartIndex, subdivisionsPerBar);
+        return newRow;
+      });
 
       return {
         ...prev,
