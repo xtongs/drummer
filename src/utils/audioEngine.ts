@@ -4,6 +4,11 @@
  */
 
 import type { DrumType } from "../types";
+import {
+  getCachedAudioBuffer,
+  cacheAudioBuffer,
+  checkAndUpdateCacheVersion,
+} from "./audioCache";
 
 // 导入采样文件
 import kickUrl from "../sounds/kick.mp3";
@@ -30,6 +35,10 @@ let samplesLoadPromise: Promise<void> | null = null;
 
 // 当前音量乘数（用于鬼音等）
 let currentVolumeMultiplier = 1;
+
+// 采样加载进度回调
+export type SampleLoadProgressCallback = (loaded: number, total: number, currentName: string) => void;
+let progressCallback: SampleLoadProgressCallback | null = null;
 
 /**
  * 获取或创建 AudioContext（共享实例）
@@ -59,14 +68,27 @@ export async function resumeAudioContext(): Promise<void> {
 
 /**
  * 加载采样文件（加载为 AudioBuffer 用于精确时序调度，iOS 兼容）
+ * 优先从 IndexedDB 缓存读取，避免重复解码
  */
 async function loadSample(url: string, name: string): Promise<void> {
   const ctx = getAudioContext();
   try {
-    // 加载为 AudioBuffer（用于 Web Audio API 精确调度）
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    let audioBuffer: AudioBuffer;
+
+    // 尝试从 IndexedDB 缓存读取
+    const cachedBuffer = await getCachedAudioBuffer(ctx, name);
+    if (cachedBuffer) {
+      audioBuffer = cachedBuffer;
+    } else {
+      // 缓存不存在，从网络加载并解码
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+      // 缓存解码后的 AudioBuffer 到 IndexedDB
+      await cacheAudioBuffer(name, audioBuffer);
+    }
+
     sampleBuffers.set(name, audioBuffer);
 
     // 保留 HTML5 Audio 元素作为后备（虽然现在主要使用 AudioBuffer）
@@ -86,21 +108,32 @@ function loadAllSamples(): Promise<void> {
   if (samplesLoaded) return Promise.resolve();
   if (samplesLoadPromise) return samplesLoadPromise;
 
-  samplesLoadPromise = Promise.all([
-    loadSample(kickUrl, "kick"),
-    loadSample(snareUrl, "snare"),
-    loadSample(hiHatClosedUrl, "hiHatClosed"),
-    loadSample(hiHatOpenUrl, "hiHatOpen"),
-    loadSample(crash1Url, "crash1"),
-    loadSample(crash2Url, "crash2"),
-    loadSample(rideUrl, "ride"),
-    loadSample(tom1Url, "tom1"),
-    loadSample(tom2Url, "tom2"),
-    loadSample(tom3Url, "tom3"),
-    loadSample(metronomeUrl, "metronome"),
-  ]).then(() => {
+  const samples = [
+    { url: kickUrl, name: "kick" },
+    { url: snareUrl, name: "snare" },
+    { url: hiHatClosedUrl, name: "hiHatClosed" },
+    { url: hiHatOpenUrl, name: "hiHatOpen" },
+    { url: crash1Url, name: "crash1" },
+    { url: crash2Url, name: "crash2" },
+    { url: rideUrl, name: "ride" },
+    { url: tom1Url, name: "tom1" },
+    { url: tom2Url, name: "tom2" },
+    { url: tom3Url, name: "tom3" },
+    { url: metronomeUrl, name: "metronome" },
+  ];
+
+  let loadedCount = 0;
+
+  samplesLoadPromise = (async () => {
+    for (const sample of samples) {
+      await loadSample(sample.url, sample.name);
+      loadedCount++;
+      if (progressCallback) {
+        progressCallback(loadedCount, samples.length, sample.name);
+      }
+    }
     samplesLoaded = true;
-  });
+  })();
 
   return samplesLoadPromise;
 }
@@ -111,7 +144,7 @@ function loadAllSamples(): Promise<void> {
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
+    ctx.resume().catch(() => { });
   }
   // 开始加载采样
   loadAllSamples();
@@ -121,7 +154,18 @@ export function preInitAudioContext(): void {
  * 等待采样加载完成
  */
 export async function ensureSamplesLoaded(): Promise<void> {
+  // 检查并更新缓存版本
+  await checkAndUpdateCacheVersion();
   await loadAllSamples();
+}
+
+/**
+ * 设置采样加载进度回调
+ */
+export function setSampleLoadProgressCallback(
+  callback: SampleLoadProgressCallback | null
+): void {
+  progressCallback = callback;
 }
 
 /**

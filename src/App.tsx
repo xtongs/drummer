@@ -27,12 +27,16 @@ import {
   preInitAudioContext,
   resumeAudioContext,
   ensureSamplesLoaded,
+  setSampleLoadProgressCallback,
+  type SampleLoadProgressCallback,
 } from "./utils/audioEngine";
 import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 11, currentName: "" });
+  const [showProgress, setShowProgress] = useState(false);
   const [isMetronomePlaying, setIsMetronomePlaying] = useState(false);
   const [isPatternPlaying, setIsPatternPlaying] = useState(false);
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
@@ -159,14 +163,37 @@ function App() {
   // 加载采样文件
   useEffect(() => {
     const loadSamples = async () => {
+      // 设置200ms后显示进度条
+      const progressTimer = setTimeout(() => {
+        setShowProgress(true);
+      }, 200);
+
       try {
+        // 设置进度回调
+        const progressCallback: SampleLoadProgressCallback = (loaded, total, currentName) => {
+          setLoadingProgress({ loaded, total, currentName });
+        };
+        setSampleLoadProgressCallback(progressCallback);
+
         // 预先初始化 AudioContext
         preInitAudioContext();
-        // 等待采样加载完成
-        await ensureSamplesLoaded();
+
+        // 设置10秒超时
+        const timeoutPromise = new Promise<void>((_, reject) => {
+          setTimeout(() => reject(new Error('Sample loading timeout')), 10000);
+        });
+
+        // 等待采样加载完成或超时
+        await Promise.race([ensureSamplesLoaded(), timeoutPromise]);
+
+        // 清除进度回调
+        setSampleLoadProgressCallback(null);
       } catch (error) {
-        // 采样加载失败，使用合成音色作为后备
+        // 采样加载失败或超时，使用合成音色作为后备
+        console.log('Sample loading failed or timed out, using synthetic sounds as fallback');
       } finally {
+        // 清除进度条定时器
+        clearTimeout(progressTimer);
         // 无论成功或失败，都显示界面
         setIsLoading(false);
       }
@@ -473,10 +500,20 @@ function App() {
 
   // 加载中显示加载界面
   if (isLoading) {
+    const progressPercent = Math.round((loadingProgress.loaded / loadingProgress.total) * 100);
     return (
       <div className="app loading">
         <div className="loading-container">
-          <div className="loading-spinner"></div>
+          {showProgress && (
+            <div className="loading-progress">
+              <div className="loading-progress-bar">
+                <div
+                  className="loading-progress-fill"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
