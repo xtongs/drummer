@@ -36,15 +36,15 @@ export default defineConfig({
         orientation: "portrait",
         icons: [
           {
-            src: "icon.svg",
-            sizes: "192x192",
-            type: "image/svg+xml",
+            src: "icon-180.png",
+            sizes: "180x180",
+            type: "image/png",
             purpose: "any maskable",
           },
           {
-            src: "icon.svg",
+            src: "icon-512.png",
             sizes: "512x512",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "any maskable",
           },
         ],
