@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { BPMSlider } from "./BPMSlider";
 import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
@@ -38,23 +38,22 @@ export function MetronomeBar({
     }
   }, [onResetRate]);
 
-  // 常用拍号列表
-  const commonTimeSignatures: [number, number][] = [
+  // 查找当前拍号在列表中的索引
+  const commonTimeSignatures = useMemo((): [number, number][] => [
     [4, 4], // 4/4拍
     [3, 4], // 3/4拍
     [2, 4], // 2/4拍
     [6, 8], // 6/8拍
     [5, 4], // 5/4拍
     [7, 8], // 7/8拍
-  ];
+  ], []);
 
-  // 查找当前拍号在列表中的索引
   const getCurrentTimeSignatureIndex = useCallback(() => {
     const index = commonTimeSignatures.findIndex(
       (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1]
     );
     return index >= 0 ? index : 0;
-  }, [timeSignature]);
+  }, [timeSignature, commonTimeSignatures]);
 
   const [timeSignatureIndex, setTimeSignatureIndex] = useState(() => {
     const index = commonTimeSignatures.findIndex(

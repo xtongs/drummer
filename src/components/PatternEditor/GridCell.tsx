@@ -92,7 +92,7 @@ export function GridCell({
       longPressTimerRef.current = window.setTimeout(() => {
         longPressTriggeredRef.current = true;
         pendingClickRef.current = false;
-        
+
         // 长按时切换音类型状态
         if (isActive && !isThirtySecond) {
           onToggleGhost();
@@ -111,18 +111,18 @@ export function GridCell({
             playDrumSound(drumType, volume);
           }
         }
-        
+
         // 长按后移除视觉反馈
         setIsPressing(false);
       }, LONG_PRESS_DURATION);
     },
-    [isActive, onToggleGhost, drumType, cellState]
+    [isActive, onToggleGhost, drumType, cellState, isThirtySecond]
   );
 
   const handlePointerUp = useCallback(() => {
     const wasLongPress = longPressTriggeredRef.current;
     const wasPendingClick = pendingClickRef.current;
-    
+
     // 清除长按定时器
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -177,45 +177,36 @@ export function GridCell({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    
+
     // 清除视觉反馈定时器
     if (visualFeedbackTimerRef.current) {
       clearTimeout(visualFeedbackTimerRef.current);
       visualFeedbackTimerRef.current = null;
     }
-    
+
     // 移除视觉反馈
     setIsPressing(false);
-    
+
     // 如果长按已触发，重置状态
     if (longPressTriggeredRef.current) {
       longPressTriggeredRef.current = false;
     }
-    
+
     pendingClickRef.current = false;
   }, []);
 
   return (
     <button
-      className={`grid-cell ${isActive ? "active" : ""} ${
-        isGhost ? "ghost" : ""
-      } ${
-        isGrace ? "grace" : ""
-      } ${
-        isThirtySecond ? "thirty-second" : ""
-      } ${
-        isDouble32 ? "double-32" : ""
-      } ${
-        isFirst32 ? "first-32" : ""
-      } ${
-        isSecond32 ? "second-32" : ""
-      } ${
-        isCurrentBeat ? "current-beat" : ""
-      } ${
-        isAlternateBeat ? "alt-beat" : ""
-      } ${
-        isPressing ? "pressing" : ""
-      }`}
+      className={`grid-cell ${isActive ? "active" : ""} ${isGhost ? "ghost" : ""
+        } ${isGrace ? "grace" : ""
+        } ${isThirtySecond ? "thirty-second" : ""
+        } ${isDouble32 ? "double-32" : ""
+        } ${isFirst32 ? "first-32" : ""
+        } ${isSecond32 ? "second-32" : ""
+        } ${isCurrentBeat ? "current-beat" : ""
+        } ${isAlternateBeat ? "alt-beat" : ""
+        } ${isPressing ? "pressing" : ""
+        }`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
@@ -227,9 +218,8 @@ export function GridCell({
     >
       {isThirtySecond && (
         <div
-          className={`cell-32-dots ${
-            isDouble32 ? "double" : isFirst32 ? "first" : "second"
-          }`}
+          className={`cell-32-dots ${isDouble32 ? "double" : isFirst32 ? "first" : "second"
+            }`}
           aria-hidden="true"
         >
           {(isDouble32 || isFirst32) && <span className="dot left" />}

@@ -108,7 +108,7 @@ export function LoopRangeSelector({
     const endBars = getPatternBars(crossPatternLoop.endPatternName);
 
     let needsUpdate = false;
-    let updatedLoop = { ...crossPatternLoop };
+    const updatedLoop = { ...crossPatternLoop };
 
     // 如果开始小节超出范围，调整到最大值
     if (crossPatternLoop.startBar >= startBars) {
@@ -166,7 +166,7 @@ export function LoopRangeSelector({
 
   const handleStartPatternChange = (newPatternName: string) => {
     const newBars = getPatternBars(newPatternName);
-    let newStartBar = Math.min(loop.startBar, newBars - 1);
+    const newStartBar = Math.min(loop.startBar, newBars - 1);
 
     // 确保开始位置不超过结束位置
     if (
@@ -195,7 +195,7 @@ export function LoopRangeSelector({
 
   const handleEndPatternChange = (newPatternName: string) => {
     const newBars = getPatternBars(newPatternName);
-    let newEndBar = Math.min(loop.endBar, newBars - 1);
+    const newEndBar = Math.min(loop.endBar, newBars - 1);
 
     // 确保结束位置不早于开始位置
     if (

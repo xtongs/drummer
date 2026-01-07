@@ -20,6 +20,20 @@ export function useLongPress(
 
     callbackRef.current = callback;
 
+    const stopPress = useCallback(() => {
+        isPressingRef.current = false;
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, []);
+
     const startPress = useCallback(() => {
         if (isPressingRef.current) return;
         isPressingRef.current = true;
@@ -48,21 +62,7 @@ export function useLongPress(
                 callbackRef.current();
             }, interval);
         }, delay);
-    }, [delay, interval, shouldStop]);
-
-    const stopPress = useCallback(() => {
-        isPressingRef.current = false;
-
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-    }, []);
+    }, [delay, interval, shouldStop, stopPress]);
 
     const handleClick = useCallback(() => {
         const pressDuration = Date.now() - startTimeRef.current;
