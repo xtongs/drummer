@@ -6,6 +6,7 @@ interface BPMSliderProps {
   onChange: (bpm: number) => void;
   min?: number;
   max?: number;
+  disabled?: boolean;
 }
 
 export function BPMSlider({
@@ -13,6 +14,7 @@ export function BPMSlider({
   onChange,
   min = 40,
   max = 200,
+  disabled = false,
 }: BPMSliderProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -55,12 +57,13 @@ export function BPMSlider({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      if (disabled) return;
       setIsDragging(true);
       handlePointerMove(e.clientX);
       // 捕获指针以确保拖动时事件不会丢失
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [handlePointerMove]
+    [disabled, handlePointerMove]
   );
 
   const handlePointerMoveEvent = useCallback(
@@ -105,14 +108,14 @@ export function BPMSlider({
   const percentage = getPercentage(bpm);
   const thumbSize = 20;
   const fillPercentage = trackWidth
-    ? percentage * (trackWidth - thumbSize) / trackWidth
+    ? (percentage * (trackWidth - thumbSize)) / trackWidth
     : percentage;
 
   return (
     <div className="bpm-slider-container">
       <div
         ref={sliderRef}
-        className="bpm-slider-track"
+        className={`bpm-slider-track ${disabled ? "bpm-slider-disabled" : ""}`}
         onPointerDown={handlePointerDown}
       >
         <div
@@ -129,4 +132,3 @@ export function BPMSlider({
     </div>
   );
 }
-

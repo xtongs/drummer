@@ -22,6 +22,10 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "icon-180.png", "icon-512.png"],
+      // 使用自定义的 service worker 文件
+      strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw.js",
       manifest: {
         name: "Drummer - Beat Maker",
         short_name: "Drummer",

@@ -10,7 +10,7 @@ interface MetronomeBarProps {
   bpm: number;
   timeSignature: [number, number];
   isPlaying: boolean;
-  onBPMChange: (bpm: number) => void;
+  onBPMChange: (bpm: number, shouldSave?: boolean) => void;
   isPatternPlaying?: boolean;
   onPatternPlayToggle?: () => void;
   onTimeSignatureChange?: (timeSignature: [number, number]) => void;
@@ -140,7 +140,7 @@ export function MetronomeBar({
   const handleBPMClick = () => {
     const newBPM = bpm * rates[index % rates.length];
     setIndex(index + 1);
-    onBPMChange(newBPM);
+    onBPMChange(newBPM, false);
   };
 
   return (
@@ -157,7 +157,7 @@ export function MetronomeBar({
           <button
             className="bpm-control-button"
             {...decreasePressHandlers}
-            disabled={bpm <= min}
+            disabled={bpm <= min || !!rateLabels[index % rateLabels.length]}
             aria-label="Decrease BPM"
           >
             <svg
@@ -184,7 +184,7 @@ export function MetronomeBar({
           <button
             className="bpm-control-button"
             {...increasePressHandlers}
-            disabled={bpm >= max}
+            disabled={bpm >= max || !!rateLabels[index % rateLabels.length]}
             aria-label="Increase BPM"
           >
             <svg
@@ -216,7 +216,11 @@ export function MetronomeBar({
       </div>
       {/* 第二行：BPM滑块（撑满） */}
       <div className="metronome-row metronome-row-bottom">
-        <BPMSlider bpm={bpm} onChange={onBPMChange} />
+        <BPMSlider
+          bpm={bpm}
+          onChange={onBPMChange}
+          disabled={!!rateLabels[index % rateLabels.length]}
+        />
       </div>
     </div>
   );

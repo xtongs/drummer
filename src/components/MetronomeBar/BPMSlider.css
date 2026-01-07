@@ -56,3 +56,8 @@
 .bpm-slider-track:hover .bpm-slider-thumb {
   box-shadow: var(--shadow-lg);
 }
+
+.bpm-slider-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

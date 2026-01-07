@@ -51,12 +51,15 @@ function App() {
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
-  >(() => loadCrossPatternLoop() ?? {
-    startPatternName: "",
-    startBar: 0,
-    endPatternName: "",
-    endBar: DEFAULT_BARS - 1,
-  });
+  >(
+    () =>
+      loadCrossPatternLoop() ?? {
+        startPatternName: "",
+        startBar: 0,
+        endPatternName: "",
+        endBar: DEFAULT_BARS - 1,
+      }
+  );
   const {
     pattern,
     updateBPM,
@@ -71,9 +74,11 @@ function App() {
   } = usePattern(createEmptyPattern());
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
-  const handleBPMChange = (bpm: number) => {
+  const handleBPMChange = (bpm: number, shouldSave = true) => {
     setMetronomeBPM(bpm);
-    saveMetronomeBPM(bpm);
+    if (shouldSave) {
+      saveMetronomeBPM(bpm);
+    }
     updateBPM(bpm);
   };
 
@@ -277,7 +282,9 @@ function App() {
       }
     };
 
-    document.body.addEventListener("pointerdown", handleInteraction, { passive: true });
+    document.body.addEventListener("pointerdown", handleInteraction, {
+      passive: true,
+    });
 
     return () => {
       document.body.removeEventListener("pointerdown", handleInteraction);
@@ -319,6 +326,13 @@ function App() {
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
   });
+
+  // 处理长按底部播放按钮，重置播放游标到开头
+  const handleBottomPlayButtonLongPress = () => {
+    if (!isPatternPlaying) {
+      seekTo(0);
+    }
+  };
 
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
@@ -508,6 +522,7 @@ function App() {
       <BottomPlayButton
         isPlaying={isPatternPlaying}
         onClick={handlePatternPlayToggle}
+        onLongPress={handleBottomPlayButtonLongPress}
       />
       <VersionDisplay />
     </div>
