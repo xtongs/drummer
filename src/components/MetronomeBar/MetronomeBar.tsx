@@ -133,8 +133,17 @@ export function MetronomeBar({
 
   // 快速根据速率设置BPM
   // 使用精确的分数值，确保乘积为1，循环后能精确回到原始值
-  const rateLabels = ["", "x0.875", "x0.75", "x0.5"];
-  const rates = [7 / 8, 6 / 7, 2 / 3, 2]; // 精确分数：7/8 × 6/7 × 2/3 × 2 = 1
+  const rateLabels = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5", "x0.4", "x0.3"];
+  const rates = [
+    9 / 10,
+    8 / 9,
+    7 / 8,
+    6 / 7,
+    5 / 6,
+    4 / 5,
+    3 / 4,
+    10 / 3,
+  ]; // 精确分数：9/10 × 8/9 × 7/8 × 6/7 × 5/6 × 4/5 × 3/4 × 10/3 = 1
 
   const handleBPMClick = () => {
     const newBPM = bpm * rates[index % rates.length];

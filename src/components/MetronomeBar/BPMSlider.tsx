@@ -106,10 +106,11 @@ export function BPMSlider({
   }, []);
 
   const percentage = getPercentage(bpm);
+  const clampedPercentage = Math.max(0, percentage);
   const thumbSize = 20;
   const fillPercentage = trackWidth
-    ? (percentage * (trackWidth - thumbSize)) / trackWidth
-    : percentage;
+    ? (clampedPercentage * (trackWidth - thumbSize)) / trackWidth
+    : clampedPercentage;
 
   return (
     <div className="bpm-slider-container">
@@ -125,7 +126,7 @@ export function BPMSlider({
         <div
           className="bpm-slider-thumb"
           style={{
-            left: `calc((100% - ${thumbSize}px) * ${percentage / 100})`,
+            left: `calc((100% - ${thumbSize}px) * ${clampedPercentage / 100})`,
           }}
         />
       </div>
