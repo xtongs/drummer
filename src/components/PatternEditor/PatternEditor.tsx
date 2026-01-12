@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { DrumNotation } from "./DrumNotation";
 import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
@@ -6,7 +6,13 @@ import { LoopRangeSelector } from "./LoopRangeSelector";
 import { PatternTabs } from "../PatternManager/PatternTabs";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
+import { useSingleLongPress } from "../../hooks/useSingleLongPress";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import {
+  copyToClipboard,
+  isClipboardWriteSupported,
+} from "../../utils/clipboard";
+import { serializePatternToJSON } from "../../utils/storage";
 import "./PatternEditor.css";
 
 // 自定义快速动画滚动函数
@@ -51,6 +57,7 @@ interface PatternEditorProps {
   onCrossPatternLoopChange: (loop: CrossPatternLoop | undefined) => void;
   onSave: () => void;
   onSaveCurrentPattern: () => void;
+  onImportPattern?: (jsonString: string) => void;
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
   onStopAllPlaying?: () => void;
@@ -75,6 +82,7 @@ export function PatternEditor({
   onCrossPatternLoopChange,
   onSave,
   onSaveCurrentPattern,
+  onImportPattern,
   onLoadFromSlot,
   onDeletePattern,
   onStopAllPlaying,
@@ -93,6 +101,51 @@ export function PatternEditor({
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
   const cellSize = useGridCellSize(); // 动态计算单元格大小
+
+  // 导出模式状态
+  const [isExportMode, setIsExportMode] = useState(false);
+  const [exportValue, setExportValue] = useState("");
+  const exportInputRef = useRef<HTMLInputElement>(null);
+
+  // 进入导出模式时自动聚焦并选中输入框内容
+  useEffect(() => {
+    if (isExportMode && exportInputRef.current) {
+      exportInputRef.current.focus();
+      exportInputRef.current.select();
+    }
+  }, [isExportMode]);
+
+  // 长按保存按钮处理：先尝试自动写入剪贴板，失败则进入手动复制模式
+  const handleLongPressSave = async () => {
+    // 从 savedPatterns 中找到当前 pattern
+    const currentPattern = savedPatterns.find((p) => p.id === pattern.id);
+    if (!currentPattern) return;
+
+    const jsonString = serializePatternToJSON(currentPattern);
+
+    // 如果支持剪贴板写入，先尝试自动写入
+    if (isClipboardWriteSupported()) {
+      try {
+        const success = await copyToClipboard(jsonString);
+        if (success) {
+          console.log("Pattern copied to clipboard");
+          return;
+        }
+      } catch {
+        // 写入失败，继续进入手动复制模式
+      }
+    }
+
+    // 不支持或写入失败，进入手动复制模式
+    setExportValue(jsonString);
+    setIsExportMode(true);
+  };
+
+  // 取消导出模式
+  const handleCancelExport = () => {
+    setIsExportMode(false);
+    setExportValue("");
+  };
 
   // 执行滚动的函数
   const doScroll = useCallback((container: HTMLElement, targetLeft: number) => {
@@ -120,6 +173,13 @@ export function PatternEditor({
     addBarCursorBeatRef.current = currentBeat;
     onAddBar(currentBeat);
   }, [onAddBar, currentBeat]);
+
+  // 保存按钮的长按事件处理
+  const saveButtonLongPressProps = useSingleLongPress({
+    delay: 500,
+    onLongPress: handleLongPressSave,
+    onClick: onSaveCurrentPattern,
+  });
 
   // 当播放时，自动滚动到当前游标位置（按页滚动，带提前量）
   useEffect(() => {
@@ -264,32 +324,66 @@ export function PatternEditor({
             onSelectPattern={onLoadFromSlot}
             onSelectDraft={onSelectDraft}
             onAddPattern={onSave}
+            onImportPattern={onImportPattern}
             isDraftMode={isDraftMode}
           />
         </div>
         <div className="pattern-editor-actions-right">
-          {/* 保存按钮 - 仅在非草稿模式下显示 */}
+          {/* 保存按钮 / 导出输入框 - 仅在非草稿模式下显示 */}
           {!isDraftMode && savedPatterns.some((p) => p.id === pattern.id) && (
-            <button
-              className="action-button save-current-button"
-              onClick={onSaveCurrentPattern}
-              aria-label="Save Pattern"
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            isExportMode ? (
+              <input
+                ref={exportInputRef}
+                type="text"
+                className="export-input"
+                value={exportValue}
+                onChange={() => {
+                  // 忽略变化，保持原值（替代 readOnly，因为 readOnly 在某些移动浏览器上阻止选择）
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    handleCancelExport();
+                  }
+                }}
+                onBlur={() => {
+                  // 延迟取消，以便用户有时间复制
+                  setTimeout(handleCancelExport, 150);
+                }}
+                onFocus={(e) => {
+                  // 聚焦时全选内容
+                  e.target.select();
+                }}
+                onClick={(e) => {
+                  // 点击时全选内容
+                  (e.target as HTMLInputElement).select();
+                }}
+                onTouchEnd={(e) => {
+                  // 触摸结束时全选内容（移动端）
+                  (e.target as HTMLInputElement).select();
+                }}
+              />
+            ) : (
+              <button
+                className="action-button save-current-button"
+                {...saveButtonLongPressProps}
+                aria-label="Save Pattern"
               >
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-            </button>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+              </button>
+            )
           )}
           {savedPatterns.some((p) => p.id === pattern.id) && (
             <button

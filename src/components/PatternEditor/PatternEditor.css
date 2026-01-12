@@ -111,4 +111,26 @@
   border: none;
 }
 
-@media (max-width: 768px) {}
+/* 导出输入框 */
+.export-input {
+  width: calc(var(--button-size) * 3);
+  height: var(--button-size);
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  /* 确保移动端可以选中文本 */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.export-input:focus {
+  border-color: var(--color-secondary);
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+}

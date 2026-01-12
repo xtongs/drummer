@@ -1,4 +1,9 @@
-import type { Pattern, StorageData, CellState, CrossPatternLoop } from "../types";
+import type {
+  Pattern,
+  StorageData,
+  CellState,
+  CrossPatternLoop,
+} from "../types";
 import {
   CELL_OFF,
   CELL_NORMAL,
@@ -230,4 +235,126 @@ export function loadCrossPatternLoop(): CrossPatternLoop | undefined {
     console.error("Failed to load cross pattern loop:", error);
   }
   return undefined;
+}
+
+/**
+ * 验证 Pattern 数据是否合法
+ * 用于从剪贴板导入时验证数据格式
+ */
+export function validatePattern(data: unknown): data is Pattern {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const pattern = data as Record<string, unknown>;
+
+  // 验证必需字段存在且类型正确
+  if (typeof pattern.id !== "string" || pattern.id.length === 0) {
+    return false;
+  }
+
+  if (typeof pattern.name !== "string" || pattern.name.length === 0) {
+    return false;
+  }
+
+  if (
+    typeof pattern.bpm !== "number" ||
+    pattern.bpm < 20 ||
+    pattern.bpm > 300
+  ) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(pattern.timeSignature) ||
+    pattern.timeSignature.length !== 2 ||
+    typeof pattern.timeSignature[0] !== "number" ||
+    typeof pattern.timeSignature[1] !== "number"
+  ) {
+    return false;
+  }
+
+  if (
+    typeof pattern.bars !== "number" ||
+    pattern.bars < 1 ||
+    pattern.bars > 100
+  ) {
+    return false;
+  }
+
+  // 验证 grid
+  if (!Array.isArray(pattern.grid)) {
+    return false;
+  }
+
+  // 验证 grid 的每一行
+  for (const row of pattern.grid) {
+    if (!Array.isArray(row)) {
+      return false;
+    }
+    for (const cell of row) {
+      if (
+        typeof cell !== "number" ||
+        !VALID_CELL_STATES.has(cell as CellState)
+      ) {
+        return false;
+      }
+    }
+  }
+
+  // 验证 drums
+  if (!Array.isArray(pattern.drums)) {
+    return false;
+  }
+
+  for (const drum of pattern.drums) {
+    if (typeof drum !== "string") {
+      return false;
+    }
+  }
+
+  // 验证时间戳
+  if (
+    typeof pattern.createdAt !== "number" ||
+    typeof pattern.updatedAt !== "number"
+  ) {
+    return false;
+  }
+
+  // 验证可选的 loopRange
+  if (pattern.loopRange !== undefined) {
+    if (
+      !Array.isArray(pattern.loopRange) ||
+      pattern.loopRange.length !== 2 ||
+      typeof pattern.loopRange[0] !== "number" ||
+      typeof pattern.loopRange[1] !== "number"
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * 从 JSON 字符串解析 Pattern
+ * 如果解析失败或数据无效，返回 null
+ */
+export function parsePatternFromJSON(jsonString: string): Pattern | null {
+  try {
+    const data = JSON.parse(jsonString);
+    if (validatePattern(data)) {
+      return data;
+    }
+  } catch {
+    // JSON 解析失败
+  }
+  return null;
+}
+
+/**
+ * 将 Pattern 序列化为 JSON 字符串
+ */
+export function serializePatternToJSON(pattern: Pattern): string {
+  return JSON.stringify(pattern);
 }

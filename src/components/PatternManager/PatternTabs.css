@@ -43,3 +43,48 @@
 .pattern-tab.draft-tab.active {
   color: white;
 }
+
+/* 导入输入框容器 */
+.import-input-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* 导入输入框 */
+.import-input {
+  width: calc(var(--button-size) * 2);
+  height: var(--button-size);
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  /* 确保移动端可以选中文本 */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.import-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.import-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: none;
+}
+
+/* 确认按钮 */
+.action-button.confirm-button {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.action-button.confirm-button:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}

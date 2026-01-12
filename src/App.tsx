@@ -16,6 +16,7 @@ import {
   loadMetronomeBPM,
   saveCrossPatternLoop,
   loadCrossPatternLoop,
+  parsePatternFromJSON,
 } from "./utils/storage";
 import {
   DEFAULT_BPM,
@@ -498,6 +499,65 @@ function App() {
     setSavedPatterns(loadPatterns());
   };
 
+  // 从 JSON 字符串导入 pattern 数据并创建新 tab
+  const handleImportPattern = (jsonString: string) => {
+    const importedPattern = parsePatternFromJSON(jsonString);
+    if (!importedPattern) {
+      console.log("Invalid pattern data");
+      return;
+    }
+
+    // 生成新的 ID 和时间戳，使用下一个可用的字母作为名称
+    const existingLetters = savedPatterns
+      .map((p) => p.name)
+      .filter((name) => /^[A-Z]$/.test(name));
+
+    let nextLetter = "A";
+    if (existingLetters.length > 0) {
+      const usedCodes = existingLetters.map((l) => l.charCodeAt(0));
+      const maxCode = Math.max(...usedCodes);
+      if (maxCode < 90) {
+        nextLetter = String.fromCharCode(maxCode + 1);
+      } else {
+        for (let code = 65; code <= 90; code++) {
+          if (!usedCodes.includes(code)) {
+            nextLetter = String.fromCharCode(code);
+            break;
+          }
+        }
+      }
+    }
+
+    const now = Date.now();
+    const newPattern: Pattern = {
+      ...importedPattern,
+      id: generateId(),
+      name: nextLetter,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // 保存并切换到新 pattern
+    savePattern(newPattern);
+    setIsDraftMode(false);
+    loadPattern(newPattern);
+    setCurrentPatternId(newPattern.id);
+    setMetronomeBPM(newPattern.bpm);
+    saveMetronomeBPM(newPattern.bpm);
+    updateBPM(newPattern.bpm);
+    setSavedPatterns(loadPatterns());
+
+    // 设置 range 为新节奏型的完整范围
+    setCrossPatternLoop({
+      startPatternName: newPattern.name,
+      startBar: 0,
+      endPatternName: newPattern.name,
+      endBar: newPattern.bars - 1,
+    });
+
+    console.log("Pattern imported successfully");
+  };
+
   // 加载中显示加载界面
   if (isLoading) {
     const progressPercent = Math.round((loadingProgress.loaded / loadingProgress.total) * 100);
@@ -544,6 +604,7 @@ function App() {
           onCrossPatternLoopChange={setCrossPatternLoop}
           onSave={handleSave}
           onSaveCurrentPattern={handleSaveCurrentPattern}
+          onImportPattern={handleImportPattern}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
           onStopAllPlaying={handleStopAllPlaying}
