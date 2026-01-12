@@ -189,26 +189,15 @@ export function PatternEditor({
 
     const container = scrollContainerRef.current;
     const cursorPosition = currentBeat * cellSize;
-    const containerWidth = container.clientWidth;
     const scrollLeft = container.scrollLeft;
-    const scrollRight = scrollLeft + containerWidth;
+    const scrollRight = scrollLeft + container.clientWidth;
+    const rightLead = cellSize * SUBDIVISIONS_PER_BEAT;
 
-    // 提前量：在游标距离右边界还有 20% 容器宽度时就开始滚动
-    const rightLeadAmount = containerWidth * 0.2;
-    // 左边界提前量稍小
-    const leftLeadAmount = containerWidth * 0.1;
-
-    // 检查游标是否接近可视区域边界
-    if (cursorPosition < scrollLeft + leftLeadAmount) {
-      // 游标接近可视区域左侧，向前滚动
-      // 滚动到让游标在视图中间偏右的位置
-      const targetLeft = Math.max(0, cursorPosition - containerWidth * 0.3);
-      doScroll(container, targetLeft);
-    } else if (cursorPosition + cellSize > scrollRight - rightLeadAmount) {
-      // 游标接近可视区域右侧，向后滚动
-      // 滚动到让游标在视图左侧 1/4 处，给后面留出更多空间
-      const targetLeft = cursorPosition - containerWidth * 0.25;
-      doScroll(container, targetLeft);
+    // 游标超出可视区域或接近右侧提前量时，滚动到让游标位于最左侧
+    if (cursorPosition < scrollLeft) {
+      doScroll(container, Math.max(0, cursorPosition));
+    } else if (cursorPosition + cellSize > scrollRight - rightLead) {
+      doScroll(container, Math.max(0, cursorPosition));
     }
   }, [currentBeat, cellSize, doScroll]);
 
