@@ -58,10 +58,14 @@ body {
   margin: 0 auto;
   overflow: hidden;
   box-sizing: border-box;
-  padding-top: calc(var(--spacing-md) + max(env(safe-area-inset-top), var(--spacing-xs)));
+  padding-top: calc(
+    var(--spacing-md) + max(env(safe-area-inset-top), var(--spacing-xs))
+  );
   padding-left: var(--spacing-md);
   padding-right: var(--spacing-md);
-  padding-bottom: calc(var(--spacing-md) + max(env(safe-area-inset-bottom), var(--spacing-xs)));
+  padding-bottom: calc(
+    var(--spacing-md) + max(env(safe-area-inset-bottom), var(--spacing-xs))
+  );
   gap: var(--spacing-md);
 }
 
@@ -144,9 +148,11 @@ body {
 .app-title {
   font-size: 2rem;
   letter-spacing: 0.1rem;
-  background: linear-gradient(to right,
-      var(--color-primary),
-      var(--color-secondary));
+  background: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-secondary)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -238,4 +244,22 @@ input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* PWA standalone 模式：没有地址栏，使用固定视口高度 */
+@media all and (display-mode: standalone) {
+  body {
+    height: 100vh;
+    height: 100svh;
+  }
+
+  #root {
+    height: 100vh;
+    height: 100svh;
+  }
+
+  .app {
+    height: 100vh;
+    height: 100svh;
+  }
 }
