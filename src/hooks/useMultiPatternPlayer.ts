@@ -82,6 +82,7 @@ interface UseMultiPatternPlayerOptions {
   crossPatternLoop: CrossPatternLoop | undefined;
   isPlaying: boolean;
   isDraftMode: boolean;
+  playbackRate?: number; // 播放速率（累积 rate），默认为 1
   onSubdivisionChange?: (subdivision: number) => void;
   onPatternChange?: (patternName: string) => void;
 }
@@ -92,6 +93,7 @@ export function useMultiPatternPlayer({
   crossPatternLoop,
   isPlaying,
   isDraftMode,
+  playbackRate = 1,
   onSubdivisionChange,
   onPatternChange,
 }: UseMultiPatternPlayerOptions) {
@@ -117,9 +119,16 @@ export function useMultiPatternPlayer({
   currentPatternRef.current = currentPattern;
   isDraftModeRef.current = isDraftMode;
 
-  // 计算指定 pattern 的 subdivision 时长
+  // 使用 ref 存储 playbackRate 以便在调度器中使用
+  const playbackRateRef = useRef(playbackRate);
+  playbackRateRef.current = playbackRate;
+
+  // 计算指定 pattern 的 subdivision 时长（考虑 playbackRate）
   const getSubdivisionDuration = useCallback((pattern: Pattern): number => {
-    const beatDuration = (60.0 / pattern.bpm) * (4.0 / pattern.timeSignature[1]);
+    // 应用 playbackRate：rate 越小，BPM 越慢，duration 越长
+    // 因为 rate 已经是累积倍率（如 0.9 表示减速到 90%），直接除以 rate
+    const effectiveBPM = pattern.bpm * playbackRateRef.current;
+    const beatDuration = (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
     return beatDuration / SUBDIVISIONS_PER_BEAT;
   }, []);
 

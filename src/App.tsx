@@ -377,6 +377,7 @@ function App() {
     crossPatternLoop,
     isPlaying: isPatternPlaying,
     isDraftMode,
+    playbackRate: calculateCumulativeRate(rateIndex),
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
   });
