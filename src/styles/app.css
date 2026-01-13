@@ -250,16 +250,13 @@ input:focus {
 @media all and (display-mode: standalone) {
   body {
     height: 100vh;
-    height: 100svh;
   }
 
   #root {
     height: 100vh;
-    height: 100svh;
   }
 
   .app {
     height: 100vh;
-    height: 100svh;
   }
 }
