@@ -51,8 +51,19 @@ function App() {
   // 节拍器独立拍号（与 pattern 分开存储）
   const [metronomeTimeSignature, setMetronomeTimeSignature] =
     useState<TimeSignature>(DEFAULT_TIME_SIGNATURE);
-  // 重置 BPM rate 的触发器
-  const [resetRateTrigger, setResetRateTrigger] = useState<number>(0);
+  // BPM rate index（控制 x0.9, x0.8 等变速状态）
+  const [rateIndex, setRateIndex] = useState<number>(0);
+  // 用于跨 pattern 播放时计算累积 rate 的常量
+  // 精确分数：9/10 × 8/9 × 7/8 × 6/7 × 5/6 × 2 = 1
+  const rates = [
+    9 / 10,
+    8 / 9,
+    7 / 8,
+    6 / 7,
+    5 / 6,
+    2,
+  ];
+  const rateLabels = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5"];
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -105,7 +116,7 @@ function App() {
     }
 
     // 重置 BPM rate
-    setResetRateTrigger((prev) => prev + 1);
+    setRateIndex(0);
 
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
@@ -319,14 +330,26 @@ function App() {
     };
   }, []);
 
+  // 计算当前 rate 的累积倍率（根据 rateIndex）
+  const calculateCumulativeRate = (currentRateIndex: number): number => {
+    let cumulativeRate = 1;
+    for (let i = 0; i < currentRateIndex; i++) {
+      cumulativeRate *= rates[i % rates.length];
+    }
+    return cumulativeRate;
+  };
+
   // 播放时切换 pattern 的回调
   const handlePlayingPatternChange = (patternName: string) => {
     if (patternName === "") {
       // 切换到草稿
       setIsDraftMode(true);
       setCurrentPatternId(undefined);
-      setMetronomeBPM(pattern.bpm);
-      saveMetronomeBPM(pattern.bpm);
+      // 如果有 rate 设置，应用到显示的 BPM，但保存原始 BPM
+      const cumulativeRate = calculateCumulativeRate(rateIndex);
+      const newBPM = pattern.bpm * cumulativeRate;
+      setMetronomeBPM(newBPM);
+      saveMetronomeBPM(pattern.bpm); // 保存原始 BPM
     } else {
       // 切换到保存的 pattern
       const targetPattern = savedPatterns.find((p) => p.name === patternName);
@@ -336,8 +359,11 @@ function App() {
           setIsDraftMode(false);
           loadPattern(targetPattern);
           setCurrentPatternId(targetPattern.id);
-          setMetronomeBPM(targetPattern.bpm);
-          saveMetronomeBPM(targetPattern.bpm);
+          // 如果有 rate 设置，应用到显示的 BPM，但保存原始 BPM
+          const cumulativeRate = calculateCumulativeRate(rateIndex);
+          const newBPM = targetPattern.bpm * cumulativeRate;
+          setMetronomeBPM(newBPM);
+          saveMetronomeBPM(targetPattern.bpm); // 保存原始 BPM
         }
         // 如果是同一个pattern循环播放，保持当前BPM不变
       }
@@ -463,24 +489,61 @@ function App() {
       setIsMetronomePlaying(false);
     }
 
-    // 重置 BPM rate
-    setResetRateTrigger((prev) => prev + 1);
+    // 检查当前是否有跨 pattern 的 range 设置，且新 pattern 在范围内
+    const isInCrossPatternRange = (() => {
+      if (!crossPatternLoop) return false;
+      const { startPatternName, endPatternName } = crossPatternLoop;
+      // 如果起始和结束是同一个 pattern，不算跨 pattern
+      if (startPatternName === endPatternName) return false;
+      
+      // 获取所有 pattern 的排序列表（按字母顺序）
+      const sortedPatternNames = [...savedPatterns]
+        .map((p) => p.name)
+        .sort((a, b) => a.localeCompare(b));
+      
+      // 添加草稿模式（空字符串）到最前面
+      const allPatternNames = ["", ...sortedPatternNames];
+      
+      const startIndex = allPatternNames.indexOf(startPatternName);
+      const endIndex = allPatternNames.indexOf(endPatternName);
+      const loadedIndex = allPatternNames.indexOf(loadedPattern.name);
+      
+      // 检查新 pattern 是否在范围内
+      return loadedIndex >= startIndex && loadedIndex <= endIndex;
+    })();
+
+    // 如果新 pattern 在跨 pattern range 内，保持 rate 不变；否则重置
+    if (!isInCrossPatternRange) {
+      setRateIndex(0);
+    }
 
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
-    // 同步 BPM 到节拍器
-    setMetronomeBPM(loadedPattern.bpm);
-    saveMetronomeBPM(loadedPattern.bpm);
-    updateBPM(loadedPattern.bpm);
+    
+    // 如果在跨 pattern range 内且有 rate 设置，应用 rate 到显示的 BPM
+    if (isInCrossPatternRange && rateIndex > 0) {
+      const cumulativeRate = calculateCumulativeRate(rateIndex);
+      const newBPM = loadedPattern.bpm * cumulativeRate;
+      setMetronomeBPM(newBPM);
+      saveMetronomeBPM(loadedPattern.bpm); // 保存原始 BPM
+      updateBPM(newBPM);
+    } else {
+      // 同步 BPM 到节拍器
+      setMetronomeBPM(loadedPattern.bpm);
+      saveMetronomeBPM(loadedPattern.bpm);
+      updateBPM(loadedPattern.bpm);
+    }
 
-    // 设置 range 为该节奏型的完整范围
-    setCrossPatternLoop({
-      startPatternName: loadedPattern.name,
-      startBar: 0,
-      endPatternName: loadedPattern.name,
-      endBar: loadedPattern.bars - 1,
-    });
+    // 如果在跨 pattern range 内，保持 range 不变；否则设置为该节奏型的完整范围
+    if (!isInCrossPatternRange) {
+      setCrossPatternLoop({
+        startPatternName: loadedPattern.name,
+        startBar: 0,
+        endPatternName: loadedPattern.name,
+        endBar: loadedPattern.bars - 1,
+      });
+    }
   };
 
   const handleStopAllPlaying = () => {
@@ -589,7 +652,10 @@ function App() {
         isPatternPlaying={isMetronomePlaying}
         onPatternPlayToggle={handleMetronomePlayToggle}
         onTimeSignatureChange={handleMetronomeTimeSignatureChange}
-        onResetRate={resetRateTrigger}
+        rateIndex={rateIndex}
+        onRateIndexChange={setRateIndex}
+        rates={rates}
+        rateLabels={rateLabels}
       />
       <main className="app-main">
         <PatternEditor

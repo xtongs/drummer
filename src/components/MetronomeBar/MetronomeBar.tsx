@@ -14,7 +14,10 @@ interface MetronomeBarProps {
   isPatternPlaying?: boolean;
   onPatternPlayToggle?: () => void;
   onTimeSignatureChange?: (timeSignature: [number, number]) => void;
-  onResetRate?: number;
+  rateIndex: number;
+  onRateIndexChange: (index: number) => void;
+  rates: number[];
+  rateLabels: string[];
 }
 
 export function MetronomeBar({
@@ -25,18 +28,11 @@ export function MetronomeBar({
   isPatternPlaying = false,
   onPatternPlayToggle,
   onTimeSignatureChange,
-  onResetRate,
+  rateIndex,
+  onRateIndexChange,
+  rates,
+  rateLabels,
 }: MetronomeBarProps) {
-  const [index, setIndex] = useState(0);
-  const prevResetRateRef = useRef<number>(0);
-
-  // 重置 BPM rate index
-  useEffect(() => {
-    if (onResetRate && onResetRate !== prevResetRateRef.current) {
-      setIndex(0);
-      prevResetRateRef.current = onResetRate;
-    }
-  }, [onResetRate]);
 
   // 查找当前拍号在列表中的索引
   const commonTimeSignatures = useMemo((): [number, number][] => [
@@ -132,22 +128,9 @@ export function MetronomeBar({
   });
 
   // 快速根据速率设置BPM
-  // 使用精确的分数值，确保乘积为1，循环后能精确回到原始值
-  const rateLabels = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5", "x0.4", "x0.3"];
-  const rates = [
-    9 / 10,
-    8 / 9,
-    7 / 8,
-    6 / 7,
-    5 / 6,
-    4 / 5,
-    3 / 4,
-    10 / 3,
-  ]; // 精确分数：9/10 × 8/9 × 7/8 × 6/7 × 5/6 × 4/5 × 3/4 × 10/3 = 1
-
   const handleBPMClick = () => {
-    const newBPM = bpm * rates[index % rates.length];
-    setIndex(index + 1);
+    const newBPM = bpm * rates[rateIndex % rates.length];
+    onRateIndexChange(rateIndex + 1);
     onBPMChange(newBPM, false);
   };
 
@@ -165,7 +148,7 @@ export function MetronomeBar({
           <button
             className="bpm-control-button"
             {...decreasePressHandlers}
-            disabled={bpm <= min || !!rateLabels[index % rateLabels.length]}
+            disabled={bpm <= min || !!rateLabels[rateIndex % rateLabels.length]}
             aria-label="Decrease BPM"
           >
             <svg
@@ -183,16 +166,16 @@ export function MetronomeBar({
           </button>
           <div className="bpm-display" onClick={handleBPMClick}>
             <span className="bpm-value">{Math.round(bpm)}</span>
-            {rateLabels[index % rateLabels.length] && (
+            {rateLabels[rateIndex % rateLabels.length] && (
               <span className="bpm-rate-label">
-                {rateLabels[index % rateLabels.length]}
+                {rateLabels[rateIndex % rateLabels.length]}
               </span>
             )}
           </div>
           <button
             className="bpm-control-button"
             {...increasePressHandlers}
-            disabled={bpm >= max || !!rateLabels[index % rateLabels.length]}
+            disabled={bpm >= max || !!rateLabels[rateIndex % rateLabels.length]}
             aria-label="Increase BPM"
           >
             <svg
@@ -227,7 +210,7 @@ export function MetronomeBar({
         <BPMSlider
           bpm={bpm}
           onChange={onBPMChange}
-          disabled={!!rateLabels[index % rateLabels.length]}
+          disabled={!!rateLabels[rateIndex % rateLabels.length]}
         />
       </div>
     </div>

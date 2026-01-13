@@ -127,8 +127,13 @@ export function LoopRangeSelector({
       ? crossPatternLoop.endPatternName === ""
       : crossPatternLoop.endPatternName === currentPattern.name;
 
+    // 检查是否是跨 pattern 的 range（起始和结束不是同一个 pattern）
+    const isCrossPatternRange =
+      crossPatternLoop.startPatternName !== crossPatternLoop.endPatternName;
+
     // 如果是当前节奏型，且结束小节不是最新的末尾小节，则自动更新到最新的末尾小节
-    if (isCurrentPattern) {
+    // 但如果是跨 pattern 的 range，则不自动扩展（保持用户设置的范围）
+    if (isCurrentPattern && !isCrossPatternRange) {
       const currentMaxBar = currentPattern.bars - 1;
       if (updatedLoop.endBar < currentMaxBar) {
         updatedLoop.endBar = currentMaxBar;
