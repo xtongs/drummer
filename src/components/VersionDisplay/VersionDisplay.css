@@ -1,7 +1,10 @@
 .version-display {
   position: fixed;
-  bottom: calc(var(--spacing-sm) + max(env(safe-area-inset-bottom), var(--spacing-md)));
-  left: 0;
+  bottom: calc(
+    var(--spacing-xs) + max(env(safe-area-inset-bottom), var(--spacing-xs))
+  );
+  left: 50%;
+  transform: translateX(-50%);
   right: 0;
   text-align: center;
   font-size: 10px;
@@ -14,6 +17,7 @@
   -moz-user-select: none;
   -ms-user-select: none;
   transition: opacity 0.2s, color 0.2s;
+  width: fit-content;
 }
 
 .version-display:hover {

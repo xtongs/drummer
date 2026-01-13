@@ -215,7 +215,7 @@ export function VersionDisplay() {
       case "no-update":
         return "Latest version";
       default:
-        return `v${VERSION} (${BUILD_TIME})`;
+        return `v${VERSION} - ${BUILD_TIME}`;
     }
   };
 

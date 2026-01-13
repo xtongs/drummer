@@ -1,14 +1,15 @@
 .bottom-play-button-container {
   position: fixed;
-  bottom: calc(var(--spacing-lg) + max(env(safe-area-inset-bottom), var(--spacing-md)));
+  bottom: calc(
+    var(--spacing-lg) + var(--spacing-xs) +
+      max(env(safe-area-inset-bottom), var(--spacing-xs))
+  );
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: var(--spacing-md);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-bottom: max(env(safe-area-inset-bottom), var(--spacing-md));
   padding-left: var(--spacing-md);
   padding-right: var(--spacing-md);
   z-index: 100;
