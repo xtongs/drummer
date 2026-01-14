@@ -93,6 +93,7 @@
 }
 
 .bpm-value {
+  position: relative;
   font-size: 2.5rem;
   font-weight: 600;
   line-height: 1;
@@ -100,6 +101,17 @@
   text-shadow: 0 0 20px var(--accent-glow);
   display: inline-block;
   vertical-align: middle;
+}
+
+.bpm-value-clickable {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  z-index: 1;
 }
 
 .bpm-rate-label {

@@ -164,8 +164,11 @@ export function MetronomeBar({
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <div className="bpm-display" onClick={handleBPMClick}>
-            <span className="bpm-value">{Math.round(bpm)}</span>
+          <div className="bpm-display">
+            <span className="bpm-value">
+              <span className="bpm-value-clickable" onClick={handleBPMClick}></span>
+              {Math.round(bpm)}
+            </span>
             {rateLabels[rateIndex % rateLabels.length] && (
               <span className="bpm-rate-label">
                 {rateLabels[rateIndex % rateLabels.length]}
