@@ -90,12 +90,14 @@ function App() {
   } = usePattern(createEmptyPattern());
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
+  // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
+  // 这样 pattern.bpm 保持原始值，playbackRate 会在 useMultiPatternPlayer 中应用
   const handleBPMChange = (bpm: number, shouldSave = true) => {
     setMetronomeBPM(bpm);
     if (shouldSave) {
       saveMetronomeBPM(bpm);
+      updateBPM(bpm);
     }
-    updateBPM(bpm);
   };
 
   // 节拍器拍号改变（只影响节拍器，不影响节奏型）
@@ -496,19 +498,19 @@ function App() {
       const { startPatternName, endPatternName } = crossPatternLoop;
       // 如果起始和结束是同一个 pattern，不算跨 pattern
       if (startPatternName === endPatternName) return false;
-      
+
       // 获取所有 pattern 的排序列表（按字母顺序）
       const sortedPatternNames = [...savedPatterns]
         .map((p) => p.name)
         .sort((a, b) => a.localeCompare(b));
-      
+
       // 添加草稿模式（空字符串）到最前面
       const allPatternNames = ["", ...sortedPatternNames];
-      
+
       const startIndex = allPatternNames.indexOf(startPatternName);
       const endIndex = allPatternNames.indexOf(endPatternName);
       const loadedIndex = allPatternNames.indexOf(loadedPattern.name);
-      
+
       // 检查新 pattern 是否在范围内
       return loadedIndex >= startIndex && loadedIndex <= endIndex;
     })();
@@ -521,20 +523,21 @@ function App() {
     setIsDraftMode(false);
     loadPattern(loadedPattern);
     setCurrentPatternId(loadedPattern.id);
-    
+
     // 如果在跨 pattern range 内且有 rate 设置，应用 rate 到显示的 BPM
     if (isInCrossPatternRange && rateIndex > 0) {
       const cumulativeRate = calculateCumulativeRate(rateIndex);
       const newBPM = loadedPattern.bpm * cumulativeRate;
       setMetronomeBPM(newBPM);
       saveMetronomeBPM(loadedPattern.bpm); // 保存原始 BPM
-      updateBPM(newBPM);
+      // 注意：不要用 newBPM 更新 pattern.bpm，pattern.bpm 应该保持原始值
+      // playbackRate 会在 useMultiPatternPlayer 中统一应用
     } else {
       // 同步 BPM 到节拍器
       setMetronomeBPM(loadedPattern.bpm);
       saveMetronomeBPM(loadedPattern.bpm);
-      updateBPM(loadedPattern.bpm);
     }
+    // loadPattern 已经设置了正确的 pattern.bpm，不需要再调用 updateBPM
 
     // 如果在跨 pattern range 内，保持 range 不变；否则设置为该节奏型的完整范围
     if (!isInCrossPatternRange) {
