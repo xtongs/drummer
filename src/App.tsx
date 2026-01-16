@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { useBeforeUnloadWarning } from "./hooks/useBeforeUnloadWarning";
 import { useVisibilityHandler } from "./hooks/useVisibilityHandler";
+import { useSampleLoader } from "./hooks/useSampleLoader";
+import { useVersionShortcut } from "./hooks/useVersionShortcut";
+import { usePlaybackState } from "./hooks/usePlaybackState";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
@@ -30,25 +33,24 @@ import {
   calculateCumulativeRate,
 } from "./utils/constants";
 import type { TimeSignature } from "./types";
-import {
-  preInitAudioContext,
-  ensureSamplesLoaded,
-  setSampleLoadProgressCallback,
-  type SampleLoadProgressCallback,
-} from "./utils/audioEngine";
 import type { Pattern, CrossPatternLoop } from "./types";
 import "./index.css";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState({
-    loaded: 0,
-    total: 11,
-    currentName: "",
-  });
-  const [showProgress, setShowProgress] = useState(false);
-  const [isMetronomePlaying, setIsMetronomePlaying] = useState(false);
-  const [isPatternPlaying, setIsPatternPlaying] = useState(false);
+  // 采样加载
+  const { isLoading, loadingProgress, showProgress } = useSampleLoader();
+
+  // 播放状态管理
+  const {
+    isMetronomePlaying,
+    isPatternPlaying,
+    toggleMetronomePlay,
+    togglePatternPlay,
+    stopAll,
+    setIsMetronomePlaying,
+    setIsPatternPlaying,
+  } = usePlaybackState();
+
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
   // 草稿模式：当前编辑的 pattern 不保存到本地
@@ -172,54 +174,6 @@ function App() {
     saveCrossPatternLoop(crossPatternLoop);
   }, [crossPatternLoop]);
 
-  // 加载采样文件
-  useEffect(() => {
-    const loadSamples = async () => {
-      // 设置200ms后显示进度条
-      const progressTimer = setTimeout(() => {
-        setShowProgress(true);
-      }, 200);
-
-      try {
-        // 设置进度回调
-        const progressCallback: SampleLoadProgressCallback = (
-          loaded,
-          total,
-          currentName
-        ) => {
-          setLoadingProgress({ loaded, total, currentName });
-        };
-        setSampleLoadProgressCallback(progressCallback);
-
-        // 预先初始化 AudioContext
-        preInitAudioContext();
-
-        // 设置10秒超时
-        const timeoutPromise = new Promise<void>((_, reject) => {
-          setTimeout(() => reject(new Error("Sample loading timeout")), 10000);
-        });
-
-        // 等待采样加载完成或超时
-        await Promise.race([ensureSamplesLoaded(), timeoutPromise]);
-
-        // 清除进度回调
-        setSampleLoadProgressCallback(null);
-      } catch (error) {
-        // 采样加载失败或超时，使用合成音色作为后备
-        console.log(
-          "Sample loading failed or timed out, using synthetic sounds as fallback"
-        );
-      } finally {
-        // 清除进度条定时器
-        clearTimeout(progressTimer);
-        // 无论成功或失败，都显示界面
-        setIsLoading(false);
-      }
-    };
-
-    loadSamples();
-  }, []);
-
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
   useVisibilityHandler({
     isMetronomePlaying,
@@ -232,53 +186,7 @@ function App() {
   useBeforeUnloadWarning(isMetronomePlaying, isPatternPlaying);
 
   // 快速点击body空白区域5次显示版本号
-  useEffect(() => {
-    const clickCountRef = { count: 0 };
-    const lastClickTimeRef = { time: 0 };
-    const CLICK_THRESHOLD = 300;
-    const REQUIRED_CLICKS = 5;
-
-    const shouldIgnoreClick = (target: HTMLElement): boolean => {
-      return !!(
-        target.closest("button") ||
-        target.closest("input") ||
-        target.closest("select") ||
-        target.closest("a") ||
-        target.closest(".bottom-play-button-container")
-      );
-    };
-
-    const handleInteraction = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
-
-      if (shouldIgnoreClick(target)) {
-        return;
-      }
-
-      const now = Date.now();
-      const timeDiff = now - lastClickTimeRef.time;
-
-      if (timeDiff > CLICK_THRESHOLD) {
-        clickCountRef.count = 0;
-      }
-
-      clickCountRef.count++;
-      lastClickTimeRef.time = now;
-
-      if (clickCountRef.count >= REQUIRED_CLICKS) {
-        window.dispatchEvent(new CustomEvent("show-version"));
-        clickCountRef.count = 0;
-      }
-    };
-
-    document.body.addEventListener("pointerdown", handleInteraction, {
-      passive: true,
-    });
-
-    return () => {
-      document.body.removeEventListener("pointerdown", handleInteraction);
-    };
-  }, []);
+  useVersionShortcut();
 
   // 播放时切换 pattern 的回调
   const handlePlayingPatternChange = (patternName: string) => {
@@ -333,38 +241,6 @@ function App() {
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
     seekTo(subdivision);
-  };
-
-  const handleMetronomePlayToggle = () => {
-    setIsMetronomePlaying((prev) => {
-      const newValue = !prev;
-      // 如果节拍器开始播放，停止节奏型播放
-      if (newValue) {
-        setIsPatternPlaying((patternPrev) => {
-          if (patternPrev) {
-            return false;
-          }
-          return patternPrev;
-        });
-      }
-      return newValue;
-    });
-  };
-
-  const handlePatternPlayToggle = () => {
-    setIsPatternPlaying((prev) => {
-      const newValue = !prev;
-      // 如果节奏型开始播放，停止节拍器播放
-      if (newValue) {
-        setIsMetronomePlaying((metronomePrev) => {
-          if (metronomePrev) {
-            return false;
-          }
-          return metronomePrev;
-        });
-      }
-      return newValue;
-    });
   };
 
   // 保存当前正在编辑的 pattern（非草稿模式下）
@@ -466,11 +342,6 @@ function App() {
     }
   };
 
-  const handleStopAllPlaying = () => {
-    setIsMetronomePlaying(false);
-    setIsPatternPlaying(false);
-  };
-
   const handleDeletePattern = (patternId: string) => {
     deletePattern(patternId);
     if (pattern.id === patternId) {
@@ -552,7 +423,7 @@ function App() {
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
         isPatternPlaying={isMetronomePlaying}
-        onPatternPlayToggle={handleMetronomePlayToggle}
+        onPatternPlayToggle={toggleMetronomePlay}
         onTimeSignatureChange={handleMetronomeTimeSignatureChange}
         rateIndex={rateIndex}
         onRateIndexChange={setRateIndex}
@@ -575,19 +446,19 @@ function App() {
           onImportPattern={handleImportPattern}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
-          onStopAllPlaying={handleStopAllPlaying}
+          onStopAllPlaying={stopAll}
           onSelectDraft={handleSelectDraft}
           savedPatterns={savedPatterns}
           currentBeat={currentSubdivision}
           isPlaying={isPatternPlaying}
-          onPlayToggle={handlePatternPlayToggle}
+          onPlayToggle={togglePatternPlay}
           isDraftMode={isDraftMode}
           onNotationDoubleClick={handleNotationDoubleClick}
         />
       </main>
       <BottomPlayButton
         isPlaying={isPatternPlaying}
-        onClick={handlePatternPlayToggle}
+        onClick={togglePatternPlay}
         onLongPress={handleBottomPlayButtonLongPress}
       />
       <VersionDisplay />
