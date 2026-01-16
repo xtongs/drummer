@@ -58,3 +58,26 @@ export const DRUM_NOTATION: Record<
 
 // 主题颜色（与 CSS 变量 --theme-color 保持一致）
 export const THEME_COLOR = "#282a36";
+
+// BPM Rate 变速相关常量
+// 用于跨 pattern 播放时计算累积 rate
+// 精确分数：9/10 × 8/9 × 7/8 × 6/7 × 5/6 × 2 = 1
+export const BPM_RATES = [9 / 10, 8 / 9, 7 / 8, 6 / 7, 5 / 6, 2];
+export const BPM_RATE_LABELS = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5"];
+
+/**
+ * 计算累积的 BPM 倍率（根据 rateIndex）
+ * @param rateIndex - 当前的 rate 索引
+ * @param rates - rate 数组（默认使用 BPM_RATES）
+ * @returns 累积的倍率值
+ */
+export function calculateCumulativeRate(
+  rateIndex: number,
+  rates: number[] = BPM_RATES
+): number {
+  let cumulativeRate = 1;
+  for (let i = 0; i < rateIndex; i++) {
+    cumulativeRate *= rates[i % rates.length];
+  }
+  return cumulativeRate;
+}

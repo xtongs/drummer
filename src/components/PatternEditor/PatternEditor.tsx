@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { DrumNotation } from "./DrumNotation";
 import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
@@ -7,43 +7,11 @@ import { PatternTabs } from "../PatternManager/PatternTabs";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import { useSingleLongPress } from "../../hooks/useSingleLongPress";
+import { useExportMode } from "../../hooks/useExportMode";
+import { usePlaybackAutoScroll } from "../../hooks/usePlaybackAutoScroll";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
-import {
-  copyToClipboard,
-  isClipboardWriteSupported,
-} from "../../utils/clipboard";
 import { serializePatternToJSON } from "../../utils/storage";
 import "./PatternEditor.css";
-
-// 自定义快速动画滚动函数
-function smoothScrollTo(
-  element: HTMLElement,
-  targetLeft: number,
-  duration: number = 150, // 150ms 快速动画
-  onComplete?: () => void
-) {
-  const startLeft = element.scrollLeft;
-  const distance = targetLeft - startLeft;
-  const startTime = performance.now();
-
-  function animate(currentTime: number) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    // 使用 easeOutCubic 缓动函数
-    const easeProgress = 1 - Math.pow(1 - progress, 3);
-
-    element.scrollLeft = startLeft + distance * easeProgress;
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      onComplete?.();
-    }
-  }
-
-  requestAnimationFrame(animate);
-}
 
 interface PatternEditorProps {
   pattern: Pattern;
@@ -95,77 +63,45 @@ export function PatternEditor({
   onNotationDoubleClick,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isScrollingRef = useRef(false); // 防止滚动过程中重复触发
-  const lastScrollTargetRef = useRef<number | null>(null); // 记录上次滚动目标
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
   const cellSize = useGridCellSize(); // 动态计算单元格大小
 
-  // 导出模式状态
-  const [isExportMode, setIsExportMode] = useState(false);
-  const [exportValue, setExportValue] = useState("");
-  const exportInputRef = useRef<HTMLInputElement>(null);
+  // 播放时自动滚动
+  const { doScroll } = usePlaybackAutoScroll({
+    scrollContainerRef,
+    currentBeat,
+    cellSize,
+    pattern,
+    crossPatternLoop,
+    isDraftMode,
+    isPlaying,
+  });
 
-  // 进入导出模式时自动聚焦并选中输入框内容
-  useEffect(() => {
-    if (isExportMode && exportInputRef.current) {
-      exportInputRef.current.focus();
-      exportInputRef.current.select();
-    }
-  }, [isExportMode]);
+  // 导出模式：获取当前 pattern 的 JSON 内容
+  const currentPatternForExport = savedPatterns.find(
+    (p) => p.id === pattern.id
+  );
+  const exportContent = currentPatternForExport
+    ? serializePatternToJSON(currentPatternForExport)
+    : "";
+  const {
+    isExportMode,
+    exportValue,
+    exportInputRef,
+    cancelExport: handleCancelExport,
+    tryExportToClipboard,
+  } = useExportMode(exportContent);
 
   // 长按保存按钮处理：先尝试自动写入剪贴板，失败则进入手动复制模式
   const handleLongPressSave = async () => {
-    // 从 savedPatterns 中找到当前 pattern
-    const currentPattern = savedPatterns.find((p) => p.id === pattern.id);
-    if (!currentPattern) return;
-
-    const jsonString = serializePatternToJSON(currentPattern);
-
-    // 如果支持剪贴板写入，先尝试自动写入
-    if (isClipboardWriteSupported()) {
-      try {
-        const success = await copyToClipboard(jsonString);
-        if (success) {
-          console.log("Pattern copied to clipboard");
-          return;
-        }
-      } catch {
-        // 写入失败，继续进入手动复制模式
-      }
+    if (!currentPatternForExport) return;
+    const success = await tryExportToClipboard();
+    if (success) {
+      console.log("Pattern copied to clipboard");
     }
-
-    // 不支持或写入失败，进入手动复制模式
-    setExportValue(jsonString);
-    setIsExportMode(true);
   };
-
-  // 取消导出模式
-  const handleCancelExport = () => {
-    setIsExportMode(false);
-    setExportValue("");
-  };
-
-  // 执行滚动的函数
-  const doScroll = useCallback((container: HTMLElement, targetLeft: number) => {
-    // 如果目标位置与上次相同，不重复滚动
-    if (lastScrollTargetRef.current === targetLeft) {
-      return;
-    }
-
-    // 如果正在滚动中，不触发新的滚动
-    if (isScrollingRef.current) {
-      return;
-    }
-
-    isScrollingRef.current = true;
-    lastScrollTargetRef.current = targetLeft;
-
-    smoothScrollTo(container, targetLeft, 150, () => {
-      isScrollingRef.current = false;
-    });
-  }, []);
 
   // 包装添加小节的函数，设置用户点击标记
   const handleUserAddBar = useCallback(() => {
@@ -180,80 +116,6 @@ export function PatternEditor({
     onLongPress: handleLongPressSave,
     onClick: onSaveCurrentPattern,
   });
-
-  // 当播放时，自动滚动到当前游标位置（按页滚动，带提前量）
-  useEffect(() => {
-    if (currentBeat === undefined || !scrollContainerRef.current) {
-      return;
-    }
-
-    const container = scrollContainerRef.current;
-    const cursorPosition = currentBeat * cellSize;
-    const scrollLeft = container.scrollLeft;
-    const scrollRight = scrollLeft + container.clientWidth;
-    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4;
-
-    // 游标超出可视区域左侧时，滚动到游标位置
-    if (cursorPosition < scrollLeft) {
-      doScroll(container, Math.max(0, cursorPosition));
-    } else if (cursorPosition + cellSize > scrollRight - rightLead) {
-      // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
-      const [beatsPerBar] = pattern.timeSignature;
-      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
-
-      // 确定当前 pattern 在 range 中的范围
-      let rangeStartBar = 0;
-      let rangeEndBar = pattern.bars - 1;
-
-      if (crossPatternLoop) {
-        // 检查当前 pattern 是否是 range 的开始 pattern
-        const isStartPattern = isDraftMode
-          ? crossPatternLoop.startPatternName === ""
-          : crossPatternLoop.startPatternName === pattern.name;
-        // 检查当前 pattern 是否是 range 的结束 pattern
-        const isEndPattern = isDraftMode
-          ? crossPatternLoop.endPatternName === ""
-          : crossPatternLoop.endPatternName === pattern.name;
-
-        if (isStartPattern) {
-          rangeStartBar = crossPatternLoop.startBar;
-        }
-        if (isEndPattern) {
-          rangeEndBar = crossPatternLoop.endBar;
-        }
-      }
-
-      // 计算下一个小节的位置
-      let nextBarIndex: number;
-      if (currentBarIndex >= rangeEndBar) {
-        // 当前是 range 最后一个小节，回到 range 开头
-        nextBarIndex = rangeStartBar;
-      } else {
-        // 滚到下一个小节
-        nextBarIndex = currentBarIndex + 1;
-      }
-
-      const targetLeft = nextBarIndex * subdivisionsPerBar * cellSize;
-      doScroll(container, Math.max(0, targetLeft));
-    }
-  }, [
-    currentBeat,
-    cellSize,
-    doScroll,
-    pattern.timeSignature,
-    pattern.bars,
-    pattern.name,
-    crossPatternLoop,
-    isDraftMode,
-  ]);
-
-  // 当停止播放或切换 pattern 时，重置滚动状态
-  useEffect(() => {
-    if (!isPlaying) {
-      lastScrollTargetRef.current = null;
-    }
-  }, [isPlaying, pattern.id]);
 
   // 当用户点击+按钮增加小节数量时，如果满足条件，自动滚动到最新添加的小节位置
   useEffect(() => {

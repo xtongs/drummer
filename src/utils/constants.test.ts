@@ -11,6 +11,9 @@ import {
   GRID_CELL_SIZE,
   DRUM_NOTATION,
   THEME_COLOR,
+  BPM_RATES,
+  BPM_RATE_LABELS,
+  calculateCumulativeRate,
 } from "./constants";
 
 describe("Constants", () => {
@@ -128,6 +131,71 @@ describe("Constants", () => {
   describe("THEME_COLOR", () => {
     it("应该是有效的颜色值", () => {
       expect(THEME_COLOR).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
+  });
+
+  describe("BPM_RATES", () => {
+    it("应该包含 6 个 rate 值", () => {
+      expect(BPM_RATES).toHaveLength(6);
+    });
+
+    it("前 5 个值应该小于 1（减速）", () => {
+      for (let i = 0; i < 5; i++) {
+        expect(BPM_RATES[i]).toBeLessThan(1);
+      }
+    });
+
+    it("最后一个值应该是 2（加速回到原速）", () => {
+      expect(BPM_RATES[5]).toBe(2);
+    });
+
+    it("所有 rate 相乘应该等于 1（循环回到原速）", () => {
+      const product = BPM_RATES.reduce((acc, rate) => acc * rate, 1);
+      expect(product).toBeCloseTo(1, 10);
+    });
+  });
+
+  describe("BPM_RATE_LABELS", () => {
+    it("应该与 BPM_RATES 长度相同", () => {
+      expect(BPM_RATE_LABELS).toHaveLength(BPM_RATES.length);
+    });
+
+    it("第一个标签应该为空（原速）", () => {
+      expect(BPM_RATE_LABELS[0]).toBe("");
+    });
+
+    it("应该包含减速标签", () => {
+      expect(BPM_RATE_LABELS).toContain("x0.9");
+      expect(BPM_RATE_LABELS).toContain("x0.5");
+    });
+  });
+
+  describe("calculateCumulativeRate", () => {
+    it("rateIndex 为 0 时应该返回 1", () => {
+      expect(calculateCumulativeRate(0)).toBe(1);
+    });
+
+    it("rateIndex 为 1 时应该返回第一个 rate 值", () => {
+      expect(calculateCumulativeRate(1)).toBe(BPM_RATES[0]);
+    });
+
+    it("rateIndex 为 2 时应该返回前两个 rate 的乘积", () => {
+      const expected = BPM_RATES[0] * BPM_RATES[1];
+      expect(calculateCumulativeRate(2)).toBeCloseTo(expected, 10);
+    });
+
+    it("完整循环后应该返回 1", () => {
+      expect(calculateCumulativeRate(6)).toBeCloseTo(1, 10);
+    });
+
+    it("应该支持自定义 rates 数组", () => {
+      const customRates = [0.5, 2];
+      expect(calculateCumulativeRate(1, customRates)).toBe(0.5);
+      expect(calculateCumulativeRate(2, customRates)).toBe(1);
+    });
+
+    it("负数 rateIndex 应该返回 1", () => {
+      expect(calculateCumulativeRate(-1)).toBe(1);
     });
   });
 });

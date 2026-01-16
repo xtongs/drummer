@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
+import { useBeforeUnloadWarning } from "./hooks/useBeforeUnloadWarning";
+import { useVisibilityHandler } from "./hooks/useVisibilityHandler";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
@@ -17,16 +19,19 @@ import {
   saveCrossPatternLoop,
   loadCrossPatternLoop,
   parsePatternFromJSON,
+  getNextPatternName,
 } from "./utils/storage";
 import {
   DEFAULT_BPM,
   DEFAULT_BARS,
   DEFAULT_TIME_SIGNATURE,
+  BPM_RATES,
+  BPM_RATE_LABELS,
+  calculateCumulativeRate,
 } from "./utils/constants";
 import type { TimeSignature } from "./types";
 import {
   preInitAudioContext,
-  resumeAudioContext,
   ensureSamplesLoaded,
   setSampleLoadProgressCallback,
   type SampleLoadProgressCallback,
@@ -36,7 +41,11 @@ import "./index.css";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 11, currentName: "" });
+  const [loadingProgress, setLoadingProgress] = useState({
+    loaded: 0,
+    total: 11,
+    currentName: "",
+  });
   const [showProgress, setShowProgress] = useState(false);
   const [isMetronomePlaying, setIsMetronomePlaying] = useState(false);
   const [isPatternPlaying, setIsPatternPlaying] = useState(false);
@@ -53,17 +62,6 @@ function App() {
     useState<TimeSignature>(DEFAULT_TIME_SIGNATURE);
   // BPM rate index（控制 x0.9, x0.8 等变速状态）
   const [rateIndex, setRateIndex] = useState<number>(0);
-  // 用于跨 pattern 播放时计算累积 rate 的常量
-  // 精确分数：9/10 × 8/9 × 7/8 × 6/7 × 5/6 × 2 = 1
-  const rates = [
-    9 / 10,
-    8 / 9,
-    7 / 8,
-    6 / 7,
-    5 / 6,
-    2,
-  ];
-  const rateLabels = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5"];
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -184,7 +182,11 @@ function App() {
 
       try {
         // 设置进度回调
-        const progressCallback: SampleLoadProgressCallback = (loaded, total, currentName) => {
+        const progressCallback: SampleLoadProgressCallback = (
+          loaded,
+          total,
+          currentName
+        ) => {
           setLoadingProgress({ loaded, total, currentName });
         };
         setSampleLoadProgressCallback(progressCallback);
@@ -194,7 +196,7 @@ function App() {
 
         // 设置10秒超时
         const timeoutPromise = new Promise<void>((_, reject) => {
-          setTimeout(() => reject(new Error('Sample loading timeout')), 10000);
+          setTimeout(() => reject(new Error("Sample loading timeout")), 10000);
         });
 
         // 等待采样加载完成或超时
@@ -204,7 +206,9 @@ function App() {
         setSampleLoadProgressCallback(null);
       } catch (error) {
         // 采样加载失败或超时，使用合成音色作为后备
-        console.log('Sample loading failed or timed out, using synthetic sounds as fallback');
+        console.log(
+          "Sample loading failed or timed out, using synthetic sounds as fallback"
+        );
       } finally {
         // 清除进度条定时器
         clearTimeout(progressTimer);
@@ -216,72 +220,16 @@ function App() {
     loadSamples();
   }, []);
 
-  // 使用 ref 记住隐藏前的播放状态
-  const wasMetronomePlayingRef = useRef(false);
-  const wasPatternPlayingRef = useRef(false);
-  // 使用 ref 存储当前播放状态，避免闭包问题
-  const isMetronomePlayingRef = useRef(isMetronomePlaying);
-  const isPatternPlayingRef = useRef(isPatternPlaying);
-
-  // 同步更新 ref 中的播放状态
-  useEffect(() => {
-    isMetronomePlayingRef.current = isMetronomePlaying;
-  }, [isMetronomePlaying]);
-
-  useEffect(() => {
-    isPatternPlayingRef.current = isPatternPlaying;
-  }, [isPatternPlaying]);
-
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // 页面被隐藏时，记住当前播放状态并暂停所有播放
-        wasMetronomePlayingRef.current = isMetronomePlayingRef.current;
-        wasPatternPlayingRef.current = isPatternPlayingRef.current;
-        setIsMetronomePlaying(false);
-        setIsPatternPlaying(false);
-      } else {
-        // 页面重新可见时，恢复 AudioContext 并恢复之前的播放状态
-        try {
-          await resumeAudioContext();
-          // 恢复之前的播放状态
-          if (wasMetronomePlayingRef.current) {
-            setIsMetronomePlaying(true);
-          }
-          if (wasPatternPlayingRef.current) {
-            setIsPatternPlaying(true);
-          }
-        } catch (error) {
-          // 如果恢复失败，忽略错误
-          console.error("Failed to resume audio context:", error);
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  useVisibilityHandler({
+    isMetronomePlaying,
+    isPatternPlaying,
+    setIsMetronomePlaying,
+    setIsPatternPlaying,
+  });
 
   // 防误触退出：播放时阻止页面关闭
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isMetronomePlayingRef.current || isPatternPlayingRef.current) {
-        e.preventDefault();
-        e.returnValue = "";
-        return "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
+  useBeforeUnloadWarning(isMetronomePlaying, isPatternPlaying);
 
   // 快速点击body空白区域5次显示版本号
   useEffect(() => {
@@ -331,15 +279,6 @@ function App() {
       document.body.removeEventListener("pointerdown", handleInteraction);
     };
   }, []);
-
-  // 计算当前 rate 的累积倍率（根据 rateIndex）
-  const calculateCumulativeRate = (currentRateIndex: number): number => {
-    let cumulativeRate = 1;
-    for (let i = 0; i < currentRateIndex; i++) {
-      cumulativeRate *= rates[i % rates.length];
-    }
-    return cumulativeRate;
-  };
 
   // 播放时切换 pattern 的回调
   const handlePlayingPatternChange = (patternName: string) => {
@@ -441,30 +380,7 @@ function App() {
   };
 
   const handleSave = () => {
-    // 始终创建新pattern，找到下一个可用的字母（A-Z）
-    const existingLetters = savedPatterns
-      .map((p) => p.name)
-      .filter((name) => /^[A-Z]$/.test(name));
-
-    // 找到下一个可用的字母
-    let nextLetter = "A";
-    if (existingLetters.length > 0) {
-      // 找出已使用的字母，获取下一个
-      const usedCodes = existingLetters.map((l) => l.charCodeAt(0));
-      const maxCode = Math.max(...usedCodes);
-      // 如果还没超过 Z，使用下一个字母
-      if (maxCode < 90) {
-        nextLetter = String.fromCharCode(maxCode + 1);
-      } else {
-        // 如果已经到 Z，找第一个未使用的字母
-        for (let code = 65; code <= 90; code++) {
-          if (!usedCodes.includes(code)) {
-            nextLetter = String.fromCharCode(code);
-            break;
-          }
-        }
-      }
-    }
+    const nextLetter = getNextPatternName(savedPatterns);
 
     const patternToSave: Pattern = {
       ...pattern,
@@ -574,27 +490,7 @@ function App() {
       return;
     }
 
-    // 生成新的 ID 和时间戳，使用下一个可用的字母作为名称
-    const existingLetters = savedPatterns
-      .map((p) => p.name)
-      .filter((name) => /^[A-Z]$/.test(name));
-
-    let nextLetter = "A";
-    if (existingLetters.length > 0) {
-      const usedCodes = existingLetters.map((l) => l.charCodeAt(0));
-      const maxCode = Math.max(...usedCodes);
-      if (maxCode < 90) {
-        nextLetter = String.fromCharCode(maxCode + 1);
-      } else {
-        for (let code = 65; code <= 90; code++) {
-          if (!usedCodes.includes(code)) {
-            nextLetter = String.fromCharCode(code);
-            break;
-          }
-        }
-      }
-    }
-
+    const nextLetter = getNextPatternName(savedPatterns);
     const now = Date.now();
     const newPattern: Pattern = {
       ...importedPattern,
@@ -627,7 +523,9 @@ function App() {
 
   // 加载中显示加载界面
   if (isLoading) {
-    const progressPercent = Math.round((loadingProgress.loaded / loadingProgress.total) * 100);
+    const progressPercent = Math.round(
+      (loadingProgress.loaded / loadingProgress.total) * 100
+    );
     return (
       <div className="app loading">
         <div className="loading-container">
@@ -658,8 +556,8 @@ function App() {
         onTimeSignatureChange={handleMetronomeTimeSignatureChange}
         rateIndex={rateIndex}
         onRateIndexChange={setRateIndex}
-        rates={rates}
-        rateLabels={rateLabels}
+        rates={BPM_RATES}
+        rateLabels={BPM_RATE_LABELS}
       />
       <main className="app-main">
         <PatternEditor

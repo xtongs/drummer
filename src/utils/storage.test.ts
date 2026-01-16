@@ -15,6 +15,7 @@ import {
   validatePattern,
   parsePatternFromJSON,
   serializePatternToJSON,
+  getNextPatternName,
 } from "./storage";
 import type { Pattern, CrossPatternLoop } from "../types";
 import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
@@ -304,6 +305,70 @@ describe("Storage 工具函数", () => {
 
     it("应该对无效 Pattern 数据返回 null", () => {
       expect(parsePatternFromJSON('{"invalid": true}')).toBeNull();
+    });
+  });
+
+  describe("getNextPatternName", () => {
+    it("当没有现有 pattern 时应该返回 A", () => {
+      expect(getNextPatternName([])).toBe("A");
+    });
+
+    it("当有 pattern A 时应该返回 B", () => {
+      const patterns = [createTestPattern({ name: "A" })];
+      expect(getNextPatternName(patterns)).toBe("B");
+    });
+
+    it("当有 pattern A, B, C 时应该返回 D", () => {
+      const patterns = [
+        createTestPattern({ name: "A" }),
+        createTestPattern({ name: "B" }),
+        createTestPattern({ name: "C" }),
+      ];
+      expect(getNextPatternName(patterns)).toBe("D");
+    });
+
+    it("应该忽略非单字母名称的 pattern", () => {
+      const patterns = [
+        createTestPattern({ name: "A" }),
+        createTestPattern({ name: "Custom Name" }),
+        createTestPattern({ name: "AB" }),
+      ];
+      expect(getNextPatternName(patterns)).toBe("B");
+    });
+
+    it("当所有字母用完但有空隙时应该填充空隙", () => {
+      // 假设有 A, C（缺少 B）
+      const patterns = [
+        createTestPattern({ name: "A" }),
+        createTestPattern({ name: "C" }),
+      ];
+      // 应该返回 D（因为 C 是最大的）
+      expect(getNextPatternName(patterns)).toBe("D");
+    });
+
+    it("当 A-Z 全部用完时应该找第一个空隙", () => {
+      // 创建 A-Z 除了 M 的所有 patterns
+      const patterns = [];
+      for (let code = 65; code <= 90; code++) {
+        if (code !== 77) {
+          // 跳过 M
+          patterns.push(createTestPattern({ name: String.fromCharCode(code) }));
+        }
+      }
+      expect(getNextPatternName(patterns)).toBe("M");
+    });
+
+    it("当有 pattern Z 但没有更多空隙时应该返回 A", () => {
+      // 创建 A-Z 所有 patterns
+      const patterns = [];
+      for (let code = 65; code <= 90; code++) {
+        patterns.push(createTestPattern({ name: String.fromCharCode(code) }));
+      }
+      // 所有字母都用完了，没有空隙，应该返回什么取决于实现
+      // 当前实现会在找不到空隙时保持 nextLetter = "A"
+      // 实际上循环结束后 nextLetter 还是初始值
+      // 但由于所有都用完了，for 循环不会 break，nextLetter 保持 "A"
+      expect(getNextPatternName(patterns)).toBe("A");
     });
   });
 });

@@ -358,3 +358,37 @@ export function parsePatternFromJSON(jsonString: string): Pattern | null {
 export function serializePatternToJSON(pattern: Pattern): string {
   return JSON.stringify(pattern);
 }
+
+/**
+ * 获取下一个可用的 Pattern 名称（A-Z）
+ * @param existingPatterns - 现有的 patterns 列表
+ * @returns 下一个可用的字母（A-Z）
+ */
+export function getNextPatternName(existingPatterns: Pattern[]): string {
+  const existingLetters = existingPatterns
+    .map((p) => p.name)
+    .filter((name) => /^[A-Z]$/.test(name));
+
+  let nextLetter = "A";
+  if (existingLetters.length > 0) {
+    // 找出已使用的字母，获取下一个
+    const usedCodes = existingLetters.map((l) => l.charCodeAt(0));
+    const maxCode = Math.max(...usedCodes);
+    // 如果还没超过 Z，使用下一个字母
+    if (maxCode < 90) {
+      // 90 = 'Z'.charCodeAt(0)
+      nextLetter = String.fromCharCode(maxCode + 1);
+    } else {
+      // 如果已经到 Z，找第一个未使用的字母
+      for (let code = 65; code <= 90; code++) {
+        // 65 = 'A'.charCodeAt(0)
+        if (!usedCodes.includes(code)) {
+          nextLetter = String.fromCharCode(code);
+          break;
+        }
+      }
+    }
+  }
+
+  return nextLetter;
+}
