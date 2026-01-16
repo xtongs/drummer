@@ -191,15 +191,62 @@ export function PatternEditor({
     const cursorPosition = currentBeat * cellSize;
     const scrollLeft = container.scrollLeft;
     const scrollRight = scrollLeft + container.clientWidth;
-    const rightLead = cellSize * SUBDIVISIONS_PER_BEAT;
+    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4;
 
-    // 游标超出可视区域或接近右侧提前量时，滚动到让游标位于最左侧
+    // 游标超出可视区域左侧时，滚动到游标位置
     if (cursorPosition < scrollLeft) {
       doScroll(container, Math.max(0, cursorPosition));
     } else if (cursorPosition + cellSize > scrollRight - rightLead) {
-      doScroll(container, Math.max(0, cursorPosition));
+      // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
+      const [beatsPerBar] = pattern.timeSignature;
+      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+      const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
+
+      // 确定当前 pattern 在 range 中的范围
+      let rangeStartBar = 0;
+      let rangeEndBar = pattern.bars - 1;
+
+      if (crossPatternLoop) {
+        // 检查当前 pattern 是否是 range 的开始 pattern
+        const isStartPattern = isDraftMode
+          ? crossPatternLoop.startPatternName === ""
+          : crossPatternLoop.startPatternName === pattern.name;
+        // 检查当前 pattern 是否是 range 的结束 pattern
+        const isEndPattern = isDraftMode
+          ? crossPatternLoop.endPatternName === ""
+          : crossPatternLoop.endPatternName === pattern.name;
+
+        if (isStartPattern) {
+          rangeStartBar = crossPatternLoop.startBar;
+        }
+        if (isEndPattern) {
+          rangeEndBar = crossPatternLoop.endBar;
+        }
+      }
+
+      // 计算下一个小节的位置
+      let nextBarIndex: number;
+      if (currentBarIndex >= rangeEndBar) {
+        // 当前是 range 最后一个小节，回到 range 开头
+        nextBarIndex = rangeStartBar;
+      } else {
+        // 滚到下一个小节
+        nextBarIndex = currentBarIndex + 1;
+      }
+
+      const targetLeft = nextBarIndex * subdivisionsPerBar * cellSize;
+      doScroll(container, Math.max(0, targetLeft));
     }
-  }, [currentBeat, cellSize, doScroll]);
+  }, [
+    currentBeat,
+    cellSize,
+    doScroll,
+    pattern.timeSignature,
+    pattern.bars,
+    pattern.name,
+    crossPatternLoop,
+    isDraftMode,
+  ]);
 
   // 当停止播放或切换 pattern 时，重置滚动状态
   useEffect(() => {
@@ -319,8 +366,9 @@ export function PatternEditor({
         </div>
         <div className="pattern-editor-actions-right">
           {/* 保存按钮 / 导出输入框 - 仅在非草稿模式下显示 */}
-          {!isDraftMode && savedPatterns.some((p) => p.id === pattern.id) && (
-            isExportMode ? (
+          {!isDraftMode &&
+            savedPatterns.some((p) => p.id === pattern.id) &&
+            (isExportMode ? (
               <input
                 ref={exportInputRef}
                 type="text"
@@ -372,8 +420,7 @@ export function PatternEditor({
                   <polyline points="7 3 7 8 15 8" />
                 </svg>
               </button>
-            )
-          )}
+            ))}
           {savedPatterns.some((p) => p.id === pattern.id) && (
             <button
               className="action-button delete-button"
