@@ -64,19 +64,47 @@ pnpm dev
 ```
 
 Development workflow
+
+This project follows **TDD (Test-Driven Development)** methodology. See `CLAUDE.md` for detailed development guidelines.
+
+### TDD 流程 (Red-Green-Refactor)
+
+1. **Red**: 先编写测试用例，确保测试失败
+2. **Green**: 编写最少量代码使测试通过
+3. **Refactor**: 在测试保护下重构代码
+
+### 开发步骤
+
 - Develop using TypeScript with clear types and modular design.
 - Create feature branches using conventional prefixes: `feat/`, `fix/`, `chore/`.
+- **Write tests first** before implementing new features
 - Run static checks and tests before committing:
 ```bash
-npm run lint
-npm run test
+bun run lint
+bun run test
 ```
 - Include screenshots or short recordings for UI changes and ensure new logic is covered by tests where appropriate.
+
+Testing
+
+```bash
+# Run tests in watch mode (recommended during development)
+bun run test
+
+# Run tests once
+bun run test:run
+
+# Run tests with coverage report
+bun run test:coverage
+
+# Run tests in watch mode
+bun run test:watch
+```
 
 Build & deployment
 - Production build:
 ```bash
-npm run build
+bun run build
 ```
 - The build output is static and can be deployed to any static hosting platform (Vercel, Netlify, GitHub Pages, etc.).
 - Typical deployment flow: generate the production build and upload the output directory to the hosting platform or publish via CI/CD.
