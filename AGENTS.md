@@ -2,9 +2,38 @@
 
 > 本文档为 AI 助手和开发者提供项目开发指南
 
+<!-- OPENSPEC:START -->
+## ⚡ OpenSpec 规范驱动开发
+
+本项目使用 **OpenSpec** 进行规范驱动开发（SDD）。
+
+- 📋 **完整指令**: 参见 `openspec/AGENTS.md`
+- 📖 **项目上下文**: 参见 `openspec/project.md`
+- 📚 **功能规范**: 参见 `openspec/specs/`
+- 📝 **变更提案**: 参见 `openspec/changes/`
+
+### 核心原则
+
+**规范优先（Spec First）**：在写任何代码之前，必须先有明确的规范。
+
+### 开发流程
+
+```
+提案(proposal) → 设计(design) → 任务(tasks) → 实现(implement) → 验证(verify) → 归档(archive)
+```
+
+### 必须遵守
+
+1. **新功能/功能修改**：必须先在 `openspec/changes/` 创建 proposal
+2. **复杂变更**：必须有 design 文档
+3. **破坏性变更**：必须标注 **BREAKING** 并提供迁移方案
+4. **测试**：遵循 TDD，核心逻辑覆盖率 >= 80%
+
+<!-- OPENSPEC:END -->
+
 ## 项目概述
 
-Drummer 是一个基于 React + TypeScript + Vite 构建的鼓机/节拍器 PWA 应用。项目采用 TDD（测试驱动开发）方法论，确保代码质量和可维护性。
+Drummer 是一个基于 React + TypeScript + Vite 构建的鼓机/节拍器 PWA 应用。项目采用 TDD（测试驱动开发）+ SDD（规范驱动开发）方法论，确保代码质量和可维护性。
 
 ## 技术栈
 
