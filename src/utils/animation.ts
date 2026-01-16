@@ -2,9 +2,9 @@
 let currentAnimationId: number | null = null;
 
 /**
- * 取消当前正在进行的滚动动画
+ * 取消当前正在进行的滚动动画（内部使用）
  */
-export function cancelSmoothScroll(): void {
+function cancelSmoothScroll(): void {
   if (currentAnimationId !== null) {
     cancelAnimationFrame(currentAnimationId);
     currentAnimationId = null;
@@ -49,13 +49,4 @@ export function smoothScrollTo(
   }
 
   currentAnimationId = requestAnimationFrame(animate);
-}
-
-/**
- * easeOutCubic 缓动函数
- * @param t - 进度值 (0-1)
- * @returns 缓动后的值
- */
-export function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
 }

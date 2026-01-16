@@ -1,32 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { smoothScrollTo, easeOutCubic } from "./animation";
+import { smoothScrollTo } from "./animation";
 
 describe("animation", () => {
-  describe("easeOutCubic", () => {
-    it("t=0 时应该返回 0", () => {
-      expect(easeOutCubic(0)).toBe(0);
-    });
-
-    it("t=1 时应该返回 1", () => {
-      expect(easeOutCubic(1)).toBe(1);
-    });
-
-    it("t=0.5 时应该返回大于 0.5 的值（缓出效果）", () => {
-      const result = easeOutCubic(0.5);
-      expect(result).toBeGreaterThan(0.5);
-      expect(result).toBeLessThan(1);
-    });
-
-    it("应该是单调递增的", () => {
-      let prev = 0;
-      for (let t = 0; t <= 1; t += 0.1) {
-        const current = easeOutCubic(t);
-        expect(current).toBeGreaterThanOrEqual(prev);
-        prev = current;
-      }
-    });
-  });
-
   describe("smoothScrollTo", () => {
     let mockElement: {
       scrollLeft: number;

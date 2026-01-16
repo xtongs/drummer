@@ -8,7 +8,6 @@ import {
   MAX_BPM,
   SUBDIVISIONS_PER_BEAT,
   APP_MAX_WIDTH,
-  GRID_CELL_SIZE,
   DRUM_NOTATION,
   THEME_COLOR,
   BPM_RATES,
@@ -82,11 +81,6 @@ describe("Constants", () => {
     it("APP_MAX_WIDTH 应该是合理的像素值", () => {
       expect(APP_MAX_WIDTH).toBeGreaterThan(0);
       expect(APP_MAX_WIDTH).toBeLessThanOrEqual(1200);
-    });
-
-    it("GRID_CELL_SIZE 应该是合理的像素值", () => {
-      expect(GRID_CELL_SIZE).toBeGreaterThan(0);
-      expect(GRID_CELL_SIZE).toBeLessThanOrEqual(100);
     });
   });
 

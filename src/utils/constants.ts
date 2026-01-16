@@ -27,11 +27,6 @@ export const SUBDIVISIONS_PER_BEAT = 4;
 // 应用容器最大宽度（与 CSS 变量 --app-max-width 保持一致）
 export const APP_MAX_WIDTH = 700;
 
-// 网格单元格基准大小（像素）
-// 实际使用动态计算的值，参见 useGridCellSize hook
-// 以 393px 宽度下 cellSize = 23px 为基准，最大容器宽度见 APP_MAX_WIDTH
-export const GRID_CELL_SIZE = 23;
-
 // 鼓谱符号映射
 // 位置说明：五线谱从上到下5条线，中间线（第3条）为0
 // line: -2=第1条线, -1=第2条线, 0=第3条线, 1=第4条线, 2=第5条线
@@ -56,7 +51,7 @@ export const DRUM_NOTATION: Record<
   Kick: { position: "below", symbol: "●", line: 2.5 }, // 第五线下 实心O（往下挪一半间距）
 };
 
-// 主题颜色（与 CSS 变量 --theme-color 保持一致）
+// 主题颜色（与 CSS 变量 --theme-color 保持一致，用于 PWA manifest）
 export const THEME_COLOR = "#282a36";
 
 // BPM Rate 变速相关常量
