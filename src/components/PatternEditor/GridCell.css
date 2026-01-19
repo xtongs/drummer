@@ -6,23 +6,22 @@
   padding: var(--spacing-xs);
   background-color: var(--color-bg);
   cursor: pointer;
-  position: relative;
+  position: absolute;
   border-radius: 0 !important;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   box-sizing: border-box;
-  /* 触摸优化：禁用双击缩放延迟 */
   touch-action: manipulation;
-  /* 禁用文本选择 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  /* 禁用触摸高亮和默认行为 */
   -webkit-touch-callout: none;
   -webkit-user-drag: none;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  top: 0;
 }
 
 /* 默认暗绿色背景（通过伪元素实现） */

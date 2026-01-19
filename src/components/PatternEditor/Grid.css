@@ -55,7 +55,6 @@
   min-height: var(--grid-cell-size);
   max-height: var(--grid-cell-size);
   box-sizing: border-box;
-  justify-content: space-between;
 }
 
 .grid-row:last-child {

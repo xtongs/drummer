@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import {
   Renderer,
   Stave,
@@ -265,8 +265,57 @@ export function VexFlowDrumNotation({
   const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
   const totalWidth = totalSubdivisions * cellWidth;
 
-  // 每个小节的宽度 = beatsPerBar * SUBDIVISIONS_PER_BEAT * cellWidth
   const staveWidth = beatsPerBar * SUBDIVISIONS_PER_BEAT * cellWidth;
+
+  const [visibleBars, setVisibleBars] = useState<number[]>([]);
+  const BUFFER_BARS = 1;
+
+  const calculateVisibleBars = useCallback(() => {
+    if (!_scrollContainerRef || !_scrollContainerRef.current || !containerRef.current) return;
+
+    const scrollContainer = _scrollContainerRef.current;
+    const container = containerRef.current;
+
+    const scrollRect = scrollContainer.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    const visibleLeft = scrollRect.left - containerRect.left;
+    const visibleRight = visibleLeft + scrollRect.width;
+
+    const startBar = Math.max(0, Math.floor(visibleLeft / staveWidth));
+    const endBar = Math.min(pattern.bars - 1, Math.ceil(visibleRight / staveWidth));
+
+    const barsToRender: number[] = [];
+    const bufferStart = Math.max(0, startBar - BUFFER_BARS);
+    const bufferEnd = Math.min(pattern.bars - 1, endBar + BUFFER_BARS);
+
+    for (let i = bufferStart; i <= bufferEnd; i++) {
+      barsToRender.push(i);
+    }
+
+    setVisibleBars(barsToRender);
+  }, [_scrollContainerRef, staveWidth, pattern.bars]);
+
+  useEffect(() => {
+    calculateVisibleBars();
+
+    const scrollContainer = _scrollContainerRef?.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      requestAnimationFrame(calculateVisibleBars);
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", calculateVisibleBars);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", calculateVisibleBars);
+    };
+  }, [_scrollContainerRef, calculateVisibleBars]);
+
+  const visibleBarsSet = useMemo(() => new Set(visibleBars), [visibleBars]);
 
   const calculateSubdivision = useCallback(
     (clientX: number): number => {
@@ -320,16 +369,15 @@ export function VexFlowDrumNotation({
 
     container.innerHTML = "";
 
-    // 创建 VexFlow 渲染器（使用 VexFlow 默认样式，不设置自定义颜色）
     const renderer = new Renderer(container, Renderer.Backends.SVG);
     renderer.resize(totalWidth, SVG_HEIGHT);
     const context = renderer.getContext();
 
-    // 为每个小节创建谱表
     for (let bar = 0; bar < pattern.bars; bar++) {
+      if (!visibleBarsSet.has(bar)) continue;
+
       const staveX = bar * staveWidth;
 
-      // 创建谱表
       const stave = new Stave(staveX, STAFF_Y, staveWidth);
       stave.setContext(context);
       stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
@@ -562,6 +610,7 @@ export function VexFlowDrumNotation({
     beatsPerBar,
     totalSubdivisions,
     staveWidth,
+    visibleBarsSet,
   ]);
 
   return (

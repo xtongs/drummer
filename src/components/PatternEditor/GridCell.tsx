@@ -19,7 +19,8 @@ interface GridCellProps {
   onDoubleClick?: () => void;
   isCurrentBeat?: boolean;
   drumType?: DrumType;
-  subdivisionIndex?: number; // 用于计算交替背景色
+  subdivisionIndex?: number;
+  style?: React.CSSProperties;
 }
 
 const LONG_PRESS_DURATION = 300; // 长按阈值（毫秒）
@@ -34,6 +35,7 @@ export function GridCell({
   isCurrentBeat,
   drumType,
   subdivisionIndex = 0,
+  style,
 }: GridCellProps) {
   // 防止重复触发
   const lastTriggerTimeRef = useRef<number>(0);
@@ -207,6 +209,7 @@ export function GridCell({
         } ${isAlternateBeat ? "alt-beat" : ""
         } ${isPressing ? "pressing" : ""
         }`}
+      style={style}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
