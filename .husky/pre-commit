@@ -6,11 +6,19 @@ set -e
 echo "🔍 Running type check..."
 npm run typecheck || { echo "❌ Type check failed! Commit aborted."; exit 1; }
 
-echo "🔨 Running build..."
-npm run build || { echo "❌ Build failed! Commit aborted."; exit 1; }
+CHANGED_FILES="$(git diff --cached --name-only --diff-filter=ACMR)"
 
-# 将 build 产生的 dist 文件添加到暂存区
-echo "📦 Adding dist files..."
-git add dist/
+# 仅当 staged 改动命中“构建输入文件”时才执行 build + 更新 dist
+# - 这样可以避免仅修改文档/规范时，由于 __BUILD_TIME__ 注入导致 dist 产物无意义变更
+if printf "%s\n" "$CHANGED_FILES" | grep -Eq '^(src/|public/|index\.html$|vite\.config\.ts$|tsconfig\.json$|package\.json$|bun\.lock$|package-lock\.json$)'; then
+  echo "🔨 Running build (build inputs changed)..."
+  npm run build || { echo "❌ Build failed! Commit aborted."; exit 1; }
+
+  # 将 build 产生的 dist 文件添加到暂存区
+  echo "📦 Adding dist files..."
+  git add dist/
+else
+  echo "🟡 No build inputs changed in staged files. Skipping build/dist update."
+fi
 
 echo "✅ All checks passed!"
