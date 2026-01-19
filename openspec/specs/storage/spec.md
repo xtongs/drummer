@@ -65,14 +65,14 @@ Storage 模块负责管理 Drummer 应用的本地数据持久化，使用 local
 - **GIVEN** 用户调整了节拍器 BPM
 - **WHEN** 调用 saveMetronomeBPM
 - **THEN** BPM 值保存到独立 key
-- **AND** 仅保存有效范围内的值 (20-300)
+- **AND** 当前实现不在保存时做范围校验（范围校验在加载/使用时进行）
 
 #### Scenario: 加载节拍器 BPM
 
 - **GIVEN** 应用启动
 - **WHEN** 调用 loadMetronomeBPM
 - **THEN** 返回已保存的 BPM 值
-- **OR** 返回 null（如未设置或无效）
+- **OR** 返回 null（如未设置或无效；有效范围为 20-300）
 
 #### Scenario: 保存跨 Pattern 循环
 

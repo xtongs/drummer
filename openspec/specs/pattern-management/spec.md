@@ -17,8 +17,8 @@ Pattern（节奏型）管理是 Drummer 的核心功能，负责节奏型的创�
 - **THEN** 创建一个包含默认配置的 Pattern：
   - BPM: 120
   - 拍号: 4/4
-  - 小节数: 2
-  - 鼓组: [kick, snare, hi-hat-closed, hi-hat-open, crash, ride, tom1, tom2, tom3]
+  - 小节数: 1
+  - 鼓组（从上到下的谱面顺序）: ["Crash 1", "Crash 2", "Hi-Hat Open", "Hi-Hat Closed", "Ride", "Tom 1", "Tom 2", "Snare", "Tom 3", "Kick"]
   - 网格: 全部为 CELL_OFF
 
 ### Requirement: Pattern 编辑
@@ -28,7 +28,7 @@ Pattern（节奏型）管理是 Drummer 的核心功能，负责节奏型的创�
 #### Scenario: 修改 BPM
 
 - **GIVEN** 已加载一个 Pattern
-- **WHEN** 用户调整 BPM 值（范围 30-300）
+- **WHEN** 用户调整 BPM 值（UI 可调范围 40-200；导入/存储校验范围 20-300）
 - **THEN** Pattern 的 BPM 更新
 - **AND** 播放速度实时响应变化
 
@@ -104,8 +104,8 @@ Pattern（节奏型）管理是 Drummer 的核心功能，负责节奏型的创�
 
 | 属性             | 最小值 | 最大值 | 默认值     |
 | ---------------- | ------ | ------ | ---------- |
-| BPM              | 30     | 300    | 120        |
-| 小节数           | 1      | 16     | 2          |
+| BPM              | 40（UI）/ 20（校验） | 200（UI）/ 300（校验） | 120        |
+| 小节数           | 1      | 未限制（当前实现未强制上限） | 1          |
 | Pattern 名称长度 | 1      | 50     | "Untitled" |
 
 ## 错误处理

@@ -53,20 +53,14 @@ Metronome（节拍器）是 Drummer 的核心播放引擎，负责按照指定 B
 
 ### Requirement: 节拍器音效
 
-系统 SHALL 提供可选的节拍器点击声。
+系统 SHALL 在节拍器运行时播放点击声（click）。
 
-#### Scenario: 启用节拍器
+#### Scenario: 点击声播放
 
-- **GIVEN** 节拍器开关为开启状态
+- **GIVEN** 节拍器正在运行
 - **WHEN** 每个节拍到达时
-- **THEN** 播放节拍器音效
+- **THEN** 播放节拍器点击声
 - **AND** 重拍（第一拍）使用不同音效/音量
-
-#### Scenario: 禁用节拍器
-
-- **GIVEN** 节拍器开关为关闭状态
-- **WHEN** 播放时
-- **THEN** 只播放鼓点音效，无节拍器音效
 
 ### Requirement: BPM 变速快捷切换（rate next/prev）
 
@@ -86,24 +80,13 @@ Metronome（节拍器）是 Drummer 的核心播放引擎，负责按照指定 B
 - **THEN** 系统将 `rateIndex` 视为向前回退一个 step（prev，支持 wrap）
 - **AND** BPM 显示值 SHALL 随累积倍率变化而更新
 
-### Requirement: 预备拍
-
-系统 SHALL 支持播放前的预备拍。
-
-#### Scenario: 带预备拍播放
-
-- **GIVEN** 预备拍功能已启用
-- **WHEN** 用户点击播放
-- **THEN** 先播放一小节节拍器预备拍
-- **AND** 预备拍结束后开始播放 Pattern
-
 ### Requirement: 时间精度
 
 系统 SHALL 保证高精度的时间调度。
 
 #### Scenario: 精确播放
 
-- **GIVEN** 任意 BPM 设置（30-300）
+- **GIVEN** 任意 BPM 设置（UI 可调范围 40-200；导入/存储校验范围 20-300）
 - **WHEN** 播放时
 - **THEN** 每个音符的触发时间误差 < 10ms
 - **AND** 使用 Web Audio API 的精确调度而非 setTimeout
@@ -128,7 +111,6 @@ type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface MetronomeState {
   state: PlaybackState;
   currentBeat: number;
-  isMetronomeEnabled: boolean;
-  isCountInEnabled: boolean;
+  currentSubdivision: number;
 }
 ```

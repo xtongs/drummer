@@ -62,10 +62,10 @@ Loop Range（循环范围）功能允许用户设置播放的循环区间，支�
 
 #### Scenario: 增加小节
 
-- **GIVEN** 循环范围设置为当前 Pattern
+- **GIVEN** 循环范围（CrossPatternLoop）的结束位置在当前 Pattern 且为单 Pattern 循环（startPatternName == endPatternName）
 - **WHEN** 用户增加小节数
-- **THEN** 如果是当前 Pattern 的单 Pattern 循环
-- **AND** 终点自动扩展到新增小节
+- **THEN** 循环终点 SHOULD 自动扩展到新的最后小节
+- **AND** 若为跨 Pattern 循环（startPatternName != endPatternName），系统 SHALL NOT 自动扩展终点（保持用户设置）
 
 #### Scenario: 减少小节
 

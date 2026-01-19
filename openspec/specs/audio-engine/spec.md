@@ -59,7 +59,7 @@ Audio Engine 负责管理所有音频资源的加载、缓存和播放，是 Dru
 - **WHEN** 播放音符
 - **THEN** 按力度等级调整音量：
   - CELL_NORMAL: 100%
-  - CELL_GHOST: 40%
+  - CELL_GHOST: 30%
 
 ### Requirement: 音频上下文管理
 
@@ -93,9 +93,9 @@ Audio Engine 负责管理所有音频资源的加载、缓存和播放，是 Dru
 |--------|------|------|
 | kick | kick.mp3 | 底鼓 |
 | snare | snare.mp3 | 军鼓 |
-| hi-hat-closed | hi-hat-closed.mp3 | 闭合镲 |
-| hi-hat-open | hi-hat-open.mp3 | 开放镲 |
-| crash | crash.mp3 | 碎音镲 |
+| hiHatClosed | hi-hat-closed.mp3 | 闭合镲 |
+| hiHatOpen | hi-hat-open.mp3 | 开放镲 |
+| crash1 | crash.mp3 | 碎音镲 1 |
 | crash2 | crash2.mp3 | 碎音镲 2 |
 | ride | ride.mp3 | 叮叮镲 |
 | tom1 | tom1.mp3 | 高音桶鼓 |
@@ -106,12 +106,7 @@ Audio Engine 负责管理所有音频资源的加载、缓存和播放，是 Dru
 ## 技术约束
 
 ### AudioContext 配置
-```typescript
-const audioContext = new AudioContext({
-  sampleRate: 44100,
-  latencyHint: 'interactive'
-});
-```
+当前实现使用浏览器默认的 `AudioContext` 配置，并在用户首次交互后恢复/初始化（以适配浏览器自动播放策略）。
 
 ### 缓存策略
 - 使用 IndexedDB 持久化音频 buffer
