@@ -41,7 +41,7 @@ function getFixedX(
   cellWidth: number,
   barStartSub: number,
   is32nd: boolean,
-  restDuration?: 4 | 8 | 16
+  restDuration?: 4 | 8 | 16,
 ): number {
   const localSub = subdivision - barStartSub;
 
@@ -100,7 +100,7 @@ function createStaveNote(
   event: NoteEvent,
   isLowerVoice: boolean,
   clef: string,
-  durationToken: VexflowDurationToken
+  durationToken: VexflowDurationToken,
 ): StaveNote {
   const allKeys: string[] = [];
 
@@ -127,7 +127,7 @@ function createStaveNote(
  */
 function createRestNote(
   durationToken: VexflowDurationToken,
-  isLowerVoice: boolean
+  isLowerVoice: boolean,
 ): StaveNote {
   const durationStr = `${durationToken.base}r`;
   // 休止符的 key 位置：上声部用 c/5，下声部用 f/4
@@ -158,11 +158,11 @@ interface NoteWithMeta {
 function buildBarTickables(
   events: NoteEvent[],
   totalSubdivisionsInBar: number,
-  isLowerVoice: boolean
+  isLowerVoice: boolean,
 ): NoteWithMeta[] {
   const timeline = buildBarTimeline(events, totalSubdivisionsInBar, {
     includeFullBarRestWhenEmpty: true,
-    omitTailRests: true,
+    omitTailRests: false,
     maxSpanBarFraction: 0.25,
   });
 
@@ -173,7 +173,7 @@ function buildBarTickables(
           item.event,
           isLowerVoice,
           "percussion",
-          item.durationToken
+          item.durationToken,
         ),
         event: item.event,
         isRest: false,
@@ -227,7 +227,7 @@ export function VexFlowDrumNotation({
       const x = clientX - rect.left;
       return Math.floor(x / cellWidth);
     },
-    [cellWidth]
+    [cellWidth],
   );
 
   const handleDoubleClick = useCallback(
@@ -236,7 +236,7 @@ export function VexFlowDrumNotation({
       const subdivision = calculateSubdivision(event.clientX);
       onDoubleClick(subdivision);
     },
-    [onDoubleClick, calculateSubdivision]
+    [onDoubleClick, calculateSubdivision],
   );
 
   const handleTouchStart = useCallback(
@@ -262,7 +262,7 @@ export function VexFlowDrumNotation({
 
       lastTouchRef.current = { time: currentTime, x };
     },
-    [onDoubleClick, calculateSubdivision]
+    [onDoubleClick, calculateSubdivision],
   );
 
   useEffect(() => {
@@ -293,10 +293,10 @@ export function VexFlowDrumNotation({
       const barEndSub = (bar + 1) * beatsPerBar * SUBDIVISIONS_PER_BEAT;
 
       const barUpperEvents = upperVoice.filter(
-        (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub
+        (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub,
       );
       const barLowerEvents = lowerVoice.filter(
-        (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub
+        (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub,
       );
 
       // 当前小节的 subdivision 数量
@@ -309,7 +309,7 @@ export function VexFlowDrumNotation({
           subdivision: e.subdivision - barStartSub, // 转为小节内相对位置
         })),
         barSubdivisions,
-        false
+        false,
       ).map((item) => ({
         ...item,
         event: {
@@ -325,7 +325,7 @@ export function VexFlowDrumNotation({
           subdivision: e.subdivision - barStartSub,
         })),
         barSubdivisions,
-        true
+        true,
       ).map((item) => ({
         ...item,
         event: {
@@ -370,16 +370,18 @@ export function VexFlowDrumNotation({
         // 目标绝对位置 = staveX + targetX
         // 注意：VexFlow 格式化后可能已带有基础 xShift/布局偏移（且会随屏宽变化）。
         // 这里必须在“已有 xShift”基础上叠加 delta，而不是直接覆盖为 delta，否则会导致不同屏宽下偏移不一致。
+        const restBeatShiftX = (SUBDIVISIONS_PER_BEAT / 4) * cellWidth;
         for (const noteObj of allNoteObjs) {
           const { note, event, isRest, startUnits32InBar, durationUnits32 } =
             noteObj;
 
           let targetX: number;
           if (isRest && startUnits32InBar !== undefined && durationUnits32) {
-            // 休止符使用自身跨度中心点定位（以 32 分单位换算成 16 分 cell）
+            // 休止符使用自身跨度中心点定位（以 32 分单位换算成 16 分 cell）并整体左移一个 beat
             const centerUnits32 = startUnits32InBar + durationUnits32 / 2;
             const centerSub = centerUnits32 / 2;
-            targetX = centerSub * cellWidth + cellWidth / 2 - cellWidth / 4;
+            targetX = centerSub * cellWidth - (cellWidth / 4) * 1.2;
+            restBeatShiftX;
           } else {
             targetX =
               getFixedX(
@@ -387,7 +389,7 @@ export function VexFlowDrumNotation({
                 event.subPosition,
                 cellWidth,
                 barStartSub,
-                event.is32nd
+                event.is32nd,
               ) -
               cellWidth / 4;
           }
@@ -423,7 +425,7 @@ export function VexFlowDrumNotation({
                 item.event.subPosition;
             const idx = Math.min(
               3,
-              Math.max(0, Math.floor(startUnits32 / quarterUnits32))
+              Math.max(0, Math.floor(startUnits32 / quarterUnits32)),
             );
             groups[idx]!.push(item.note);
           }
@@ -460,7 +462,7 @@ export function VexFlowDrumNotation({
       if (svg) {
         const rect = document.createElementNS(
           "http://www.w3.org/2000/svg",
-          "rect"
+          "rect",
         );
         rect.setAttribute("x", String(currentBeat * cellWidth));
         rect.setAttribute("y", "0");
