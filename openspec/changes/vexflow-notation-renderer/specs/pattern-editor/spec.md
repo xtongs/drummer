@@ -11,21 +11,22 @@
 #### Drum Kit Mapping（从上到下计数）
 
 说明：
+
 - **五线谱严格为 5 线**，从上到下为 Line1..Line5；其间的 4 个间为 Space1..Space4。
 - **上加一线（Ledger +1）不作为完整谱线绘制**：仅在需要时，在音符符头背后绘制一段短的上加一线。
 
-| DrumType | Staff Position | Notehead | Extra Mark |
-|---|---|---|---|
-| Crash1 | Ledger+1 **上方**（Ledger+1 上方的间） | **○ 内带 X** | 无 |
-| Crash2 | Ledger+1 **线上** | **○ 内带 X** | 无 |
-| HiHat (closed) | Ledger+1 与 Line1 之间的 **上+1间** | **X** | 无 |
-| HiHat (open) | 同 HiHat (closed) | **X** | **符头上方加小 “o”** |
-| Ride | Line1 线上 | **X** | 无 |
-| Tom1 | Space1 | 实心椭圆（普通音符符头） | 无 |
-| Tom2 | Line2 线上 | 实心椭圆（普通音符符头） | 无 |
-| Snare | Space2（从上数第二间） | 实心椭圆（普通音符符头） | 无 |
-| Tom3 | Space3（从上数第三间） | 实心椭圆（普通音符符头） | 无 |
-| Kick | Space4 | 实心椭圆（普通音符符头） | 无 |
+| DrumType       | Staff Position                         | Notehead                 | Extra Mark           |
+| -------------- | -------------------------------------- | ------------------------ | -------------------- |
+| Crash1         | Ledger+1 **上方**（Ledger+1 上方的间） | **○ 内带 X**             | 无                   |
+| Crash2         | Ledger+1 **线上**                      | **○ 内带 X**             | 无                   |
+| HiHat (closed) | Ledger+1 与 Line1 之间的 **上+1 间**   | **X**                    | 无                   |
+| HiHat (open)   | 同 HiHat (closed)                      | **X**                    | **符头上方加小 “o”** |
+| Ride           | Line1 线上                             | **X**                    | 无                   |
+| Tom1           | Space1                                 | 实心椭圆（普通音符符头） | 无                   |
+| Tom2           | Line2 线上                             | 实心椭圆（普通音符符头） | 无                   |
+| Snare          | Space2（从上数第二间）                 | 实心椭圆（普通音符符头） | 无                   |
+| Tom3           | Space3（从上数第三间）                 | 实心椭圆（普通音符符头） | 无                   |
+| Kick           | Space4                                 | 实心椭圆（普通音符符头） | 无                   |
 
 #### Scenario: 上加一线（短线）绘制
 
@@ -37,8 +38,57 @@
 #### Scenario: 镲片符头与实心符头尺寸协调
 
 - **GIVEN** 鼓谱使用 VexFlow 渲染器
-- **WHEN** 同一谱面同时存在镲片类（X / ○内X）与鼓类（实心椭圆）符头
+- **WHEN** 同一谱面同时存在镲片类（X / ○ 内 X）与鼓类（实心椭圆）符头
 - **THEN** 系统 SHOULD 使两类符头在视觉尺寸上协调（不显著过大或过小）
+
+### Implementation Notes: VexFlow 落地约束（避免不可实现/歧义）
+
+本小节用于将“鼓谱语义需求”落地为 VexFlow 可实现的技术约束；当 VexFlow 能力与期望符号存在差异时，本小节定义允许的实现方式与降级策略。
+
+#### Note: VexFlow 的核心抽象（与本需求相关）
+
+- VexFlow 支持多声部对齐：通过多个 `Voice` + `Formatter.joinVoices(...).format(...)` 共享 tick context（用于上下声部 x 对齐）。
+- VexFlow 支持符杠：可对一组音符创建 `Beam`（可自动生成，也可手动分组）。
+- VexFlow 休止符的垂直位置受“rest 的 key/line”影响（实现上需要一个固定的“居中 rest 位置”选择）。
+- VexFlow 会在音符超出谱线时绘制短辅助线（符合本规范对上加一线的要求：需要时才画短线，而非完整第六线）。
+
+#### Requirement: VexFlow key/line 的确定性映射
+
+系统 SHALL 为本规范中的 `Staff Position`（Line/Space/Ledger）建立一个**确定性的** VexFlow 映射，使每个 `DrumType` 的符头最终落在表格指定线位。
+
+- 实现 MAY 通过以下任一方式达成（实现任选其一，但结果必须一致）：
+  - **方式 A**：为每个 `DrumType` 选择一组固定的 VexFlow `keys` 字符串，使其在 percussion clef 下落在指定线位
+  - **方式 B**：在创建 `StaveNote` 后，覆盖/校正每个 key 的 staff line（例如通过 per-key 的 line 属性或等价机制），从而不依赖具体 pitch 名称
+
+#### Requirement: Crash 的 “○ 内 X” 符头降级策略
+
+由于 “○ 内 X” 可能依赖字体/字形支持，系统 SHALL 采用以下策略确保可实现性：
+
+- 优先（SHALL）：当 VexFlow 字体提供“circled-x notehead”字形时，使用该字形渲染 Crash1/Crash2
+- 否则（SHALL）：使用 “X 符头 + 圆形叠加” 的组合绘制来近似 “○ 内 X”
+- 若以上两者均不可稳定实现（SHALL）：Crash1/Crash2 MAY 降级为普通 “X” 符头（仍保持线位正确）
+
+#### Requirement: Upper Voice 同时多鼓件的混合符头（X + 实心椭圆）
+
+当同一 subdivision 内 Upper Voice 同时存在镲片类（X）与鼓类（实心椭圆）时，系统 SHALL 保持两类符头在同一时间点对齐，并允许采用以下实现方式：
+
+- 优先（SHALL）：若 VexFlow 支持同一 chord 内对不同 key 使用不同符头字形，则使用单一 chord 堆叠实现
+- 否则（SHALL）：使用 **overlay** 实现：在同一 tick/time 位置叠加多个 `StaveNote`（例如一个只包含镲片类符头、一个只包含鼓类符头），并确保：
+  - 视觉上仍呈现“同一时刻多符头堆叠”
+  - 不出现重复的符干/符杠（需要隐藏/共享 stem/beam）
+
+#### Requirement: 与网格 subdivision 的水平对齐（固定栅格）
+
+由于本产品鼓谱与网格共享 subdivision 栅格，系统 SHALL 使用“固定栅格”的水平排版规则：
+
+- 每个 subdivision 对应一个固定宽度区间，其中心点为该 subdivision 的 note 对齐基准
+- 32 分拆分（FIRST/SECOND）在该 subdivision 区间内以 1/2 + 1/2 均分
+- 实现 SHALL NOT 依赖“按时值比例自动分配间距”的默认排版来满足本对齐要求（实现需要显式控制每个 tick 的 x 坐标，或使用等价的手动排版策略）
+
+#### Requirement: 简化休止符（rests）的可实现细节
+
+- 系统 SHALL 仅在“整拍或更长连续空白”时生成 rest tickables（短空隙可省略）
+- rest 的垂直位置 SHALL 选择一个固定“居中位置”（实现时通过 rest 的 key/line 或等价配置实现），避免贴近最上/最下线
 
 ### Requirement: CellState 到记谱语义的映射（含 32 分与倚音）
 
@@ -171,6 +221,28 @@
 - **WHEN** 用户在 UI 中切换鼓谱渲染方式（VexFlow / Legacy）
 - **THEN** 鼓谱立即使用新的渲染方式重新绘制
 - **AND** 用户选择在刷新页面后仍然保持
+- **AND** 渲染器选择 SHALL 为全局设置（不随单个 Pattern 单独保存）
+- **AND** 系统 SHALL 将该选择持久化到 localStorage，key 为 `drummer-notation-renderer`
+
+#### Scenario: VexFlow 渲染异常时静默回退
+
+- **GIVEN** 当前选择的渲染器为 VexFlow
+- **WHEN** VexFlow 渲染过程发生异常导致鼓谱无法完成绘制
+- **THEN** 系统 SHALL 自动回退到 Legacy 渲染器以保证鼓谱区域可用
+- **AND** 该回退 SHALL 为静默回退（不强制弹出提示）
+
+#### Scenario: 切换控件的最小 UI 约束
+
+- **GIVEN** Pattern Editor 已渲染且包含鼓谱区域
+- **WHEN** 用户需要切换鼓谱渲染方式
+- **THEN** 系统 SHALL 在 `pattern-editor-actions-right` 区域提供一个可点击的切换控件
+- **AND** 该控件 SHALL 位于 `pattern-editor-actions-right` 内部的最左侧
+- **AND** 该控件 SHALL 为“音符 SVG 图标”的 button 按钮（不使用文字标签）
+- **AND** 默认样式 SHOULD 与 `pattern-tab` 一致
+- **AND** 当渲染器为 VexFlow 时，该按钮 SHALL 处于 active 状态，背景色为 primary
+- **AND** 用户点击该按钮时：
+  - 若当前为 Legacy，系统 SHALL 切换为 VexFlow 渲染
+  - 若当前为 VexFlow，系统 SHALL 切换回 Legacy 渲染
 
 #### Scenario: 实时同步
 

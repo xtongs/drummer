@@ -9,7 +9,8 @@
 - 引入一套新的 notation 渲染实现：基于 VexFlow（优先 SVG 渲染目标）
 - 保留现有自绘 SVG 渲染实现作为 Legacy 渲染器
 - 在 UI 提供 **VexFlow / Legacy** 两种渲染方式的切换入口
-- 将用户的渲染方式选择持久化到本地存储（localStorage）
+- 将用户的渲染方式选择持久化到本地存储（localStorage，全局设置）
+- 在 VexFlow 渲染器下实现符杠连接（beaming）与简化休止符（rests）（按 spec diff）
 - **非 BREAKING**：默认行为保持与当前版本一致（在确认 VexFlow 版稳定前）
 
 ## Impact
@@ -20,12 +21,14 @@
   - `src/components/PatternEditor/PatternEditor.tsx`
   - `src/utils/storage.ts`（或新增 settings 存储工具）
   - 测试文件：相关 `*.test.tsx` / `*.test.ts`
+- 影响的数据/配置:
+  - localStorage: `drummer-notation-renderer`（值域：`"legacy" | "vexflow"`，默认：`"legacy"`；非法值回退默认）
 
 ## Risks
 
-- VexFlow 渲染性能（每次网格编辑触发重绘）
 - 触摸交互（双击/双触）需要保持与 Legacy 一致，避免影响 `seekTo(subdivision)`
-- VexFlow 与自定义音符状态（ghost/grace/32 分拆分）之间的映射需要明确约束
+- VexFlow 与自定义音符状态（ghost/grace/32 分拆分）之间的映射需要明确约束（以 spec diff 为准）
+- 第三方库渲染异常导致 notation 区域不可用的风险（需具备可用性兜底）
 
 ## Decision
 
