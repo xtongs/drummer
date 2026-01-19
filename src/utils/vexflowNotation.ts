@@ -23,7 +23,7 @@ export const DRUM_TO_VEXFLOW: Record<
 > = {
   "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
   "Crash 2": { keys: ["a/5/x"], isLowerVoice: false },
-  "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false }, // TODO：Hi-Hat Open 需要显示X带一个o
+  "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false },
   "Hi-Hat Closed": { keys: ["g/5/x"], isLowerVoice: false },
   Ride: { keys: ["f/5/x"], isLowerVoice: false },
   "Tom 1": { keys: ["e/5"], isLowerVoice: false },
@@ -142,18 +142,18 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
 
 export type BarTimelineItem =
   | {
-      kind: "note";
-      event: VexflowNoteEvent;
-      startUnits32InBar: number;
-      durationToken: VexflowDurationToken;
-      durationUnits32: number;
-    }
+    kind: "note";
+    event: VexflowNoteEvent;
+    startUnits32InBar: number;
+    durationToken: VexflowDurationToken;
+    durationUnits32: number;
+  }
   | {
-      kind: "rest";
-      startUnits32InBar: number;
-      durationToken: VexflowDurationToken;
-      durationUnits32: number;
-    };
+    kind: "rest";
+    startUnits32InBar: number;
+    durationToken: VexflowDurationToken;
+    durationUnits32: number;
+  };
 
 export interface BuildBarTimelineOptions {
   /**

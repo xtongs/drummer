@@ -7,14 +7,13 @@ import {
   Formatter,
   Beam,
   Dot,
-  GraceNote,
-  GraceNoteGroup,
-  TickContext,
+  Annotation,
   type StaveNoteStruct,
 } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
+import type { DrumType } from "../../types";
 import "./DrumNotation.css";
 import {
   DRUM_TO_VEXFLOW,
@@ -136,7 +135,38 @@ function createStaveNote(
     }
   }
 
+  addHiHatOpenAnnotation(note, event.drums.map((d) => d.drum));
+  addGraceNoteAnnotation(note, event.graceDrums);
+
   return note;
+}
+
+function addHiHatOpenAnnotation(note: StaveNote, drums: DrumType[]) {
+  if (!drums.includes("Hi-Hat Open")) {
+    return;
+  }
+
+  const annotation = new Annotation("o");
+  annotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
+  annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
+  annotation.setFont("Consolas", 10, "normal");
+  annotation.setXShift(5);
+  annotation.setYShift(40);
+  note.addModifier(annotation, 0);
+}
+
+function addGraceNoteAnnotation(note: StaveNote, graceDrums?: Array<{ drum: DrumType }>) {
+  if (!graceDrums || graceDrums.length === 0) {
+    return;
+  }
+
+  const annotation = new Annotation("♪");
+  annotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
+  annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
+  annotation.setFont("Consolas", 20, "normal");
+  annotation.setXShift(10);
+  annotation.setYShift(42);
+  note.addModifier(annotation, 0);
 }
 
 /**
@@ -423,37 +453,6 @@ export function VexFlowDrumNotation({
           note.setXShift(getExistingXShift(note) + delta);
         }
 
-        // 创建前倚音（acciaccatura / grace notes）
-        // 前倚音始终带斜线，固定显示在主音符前 5px 位置
-        // TODO: 位置不对需调整
-        const GRACE_NOTE_SPACING = 5; // 装饰音与主音符的固定距离
-        for (const noteObj of allNoteObjs) {
-          if (!noteObj.event.graceDrums || noteObj.event.graceDrums.length === 0)
-            continue;
-
-          const graceNotes = noteObj.event.graceDrums.map(({ drum }) => {
-            const mapping = DRUM_TO_VEXFLOW[drum];
-            const graceNote = new GraceNote({
-              keys: mapping.keys,
-              duration: "16",
-              slash: true, // 前倚音带斜线
-              stemDirection: mapping.isLowerVoice ? -1 : 1,
-            });
-            // GraceNote 需要 TickContext 才能正确绘制
-            const tickContext = new TickContext();
-            graceNote.setTickContext(tickContext);
-            tickContext.preFormat();
-            return graceNote;
-          });
-
-          const group = new GraceNoteGroup(graceNotes, false);
-          // 设置装饰音组与主音符的固定间距
-          // 负值使装饰音向左偏移，确保在主音符前固定 5px 位置
-          group.setXShift(-GRACE_NOTE_SPACING);
-          // 必须通过 addModifier 添加到父音符，这样 VexFlow 才会设置正确的 index
-          noteObj.note.addModifier(group, 0);
-        }
-
         // 格式化后再创建符杠（flatBeams 保持水平，包含休止符）
         // 只对可被 beam 的音符创建 beam（八分音符及更短的音符，包括休止符）
         const isBeamable = (note: StaveNote) => {
@@ -473,7 +472,7 @@ export function VexFlowDrumNotation({
             const startUnits32 =
               item.startUnits32InBar ??
               (item.event.subdivision - barStartSub) * 2 +
-                item.event.subPosition;
+              item.event.subPosition;
             const idx = Math.min(
               3,
               Math.max(0, Math.floor(startUnits32 / quarterUnits32)),
