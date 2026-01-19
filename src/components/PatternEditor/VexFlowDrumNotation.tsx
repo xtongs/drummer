@@ -43,7 +43,6 @@ const DRUM_TO_VEXFLOW: Record<
 // 谱面常量
 const SVG_HEIGHT = 108;
 // VexFlow Stave 五线高度约 40px (5线 x 10px间距)
-// VexFlow Stave 的 y 参数有一个内部偏移（约 24.5px）
 // 为了让五线谱顶线在 y = 34 的位置（居中）：STAFF_Y = 34 - 24.5 ≈ 10
 const STAVE_HEIGHT = 40;
 const STAVE_INTERNAL_OFFSET = 40; // VexFlow 内部偏移
@@ -166,6 +165,33 @@ function groupEventsByBeat(events: NoteEvent[]): NoteEvent[][] {
         return a.subPosition - b.subPosition;
       })
     );
+}
+
+/**
+ * 计算音符的固定 x 坐标（与 grid cell 对齐）
+ */
+function getFixedX(
+  subdivision: number,
+  subPosition: 0 | 1,
+  cellWidth: number,
+  barStartSub: number,
+  is32nd: boolean
+): number {
+  const localSub = subdivision - barStartSub;
+  const baseX = localSub * cellWidth + cellWidth / 2;
+
+  // 非 32 分音符居中
+  if (!is32nd) {
+    return baseX;
+  }
+
+  // 32 分音符在 cell 内偏移
+  const offset = cellWidth * 0.22;
+  if (subPosition === 0) {
+    return baseX - offset;
+  } else {
+    return baseX + offset;
+  }
 }
 
 /**
@@ -295,38 +321,39 @@ export function VexFlowDrumNotation({
         (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub
       );
 
-      // 创建上声部音符
-      const upperNotes: StaveNote[] = [];
+      // 创建上声部音符（记录事件信息用于后续设置 x 坐标）
+      const upperNotes: { note: StaveNote; event: NoteEvent }[] = [];
       const upperBeatGroups = groupEventsByBeat(barUpperEvents);
 
       for (const beatEvents of upperBeatGroups) {
         for (const event of beatEvents) {
           const note = createStaveNote(event, false, "percussion");
-          upperNotes.push(note);
+          upperNotes.push({ note, event });
         }
       }
 
       // 创建下声部音符
-      const lowerNotes: StaveNote[] = [];
+      const lowerNotes: { note: StaveNote; event: NoteEvent }[] = [];
       const lowerBeatGroups = groupEventsByBeat(barLowerEvents);
 
       for (const beatEvents of lowerBeatGroups) {
         for (const event of beatEvents) {
           const note = createStaveNote(event, true, "percussion");
-          lowerNotes.push(note);
+          lowerNotes.push({ note, event });
         }
       }
 
       // 如果有音符，创建 Voice 并绘制
       if (upperNotes.length > 0 || lowerNotes.length > 0) {
         const voices: Voice[] = [];
+        const allNoteObjs = [...upperNotes, ...lowerNotes];
 
         if (upperNotes.length > 0) {
           const upperVoiceObj = new Voice({
             numBeats: beatsPerBar,
             beatValue: 4,
           }).setStrict(false);
-          upperVoiceObj.addTickables(upperNotes);
+          upperVoiceObj.addTickables(upperNotes.map((n) => n.note));
           voices.push(upperVoiceObj);
         }
 
@@ -335,7 +362,7 @@ export function VexFlowDrumNotation({
             numBeats: beatsPerBar,
             beatValue: 4,
           }).setStrict(false);
-          lowerVoiceObj.addTickables(lowerNotes);
+          lowerVoiceObj.addTickables(lowerNotes.map((n) => n.note));
           voices.push(lowerVoiceObj);
         }
 
@@ -344,20 +371,35 @@ export function VexFlowDrumNotation({
           new Formatter().joinVoices(voices).format(voices, staveWidth - 20);
         }
 
+        // 格式化后手动设置每个音符的 x 坐标（与 grid cell 对齐）
+        for (const { note, event } of allNoteObjs) {
+          const targetX = getFixedX(
+            event.subdivision,
+            event.subPosition,
+            cellWidth,
+            barStartSub,
+            event.is32nd
+          );
+          // 获取 VexFlow 计算的 x 坐标，计算需要的偏移
+          const currentX = note.getAbsoluteX();
+          const xShift = targetX + staveX - currentX;
+          note.setXShift(xShift);
+        }
+
         // 格式化后再创建符杠
-        // 上声部：符干向上（stem_direction: 1）
-        // 下声部：符干向下（stem_direction: -1）
         const allBeams: Beam[] = [];
         if (upperNotes.length > 0) {
-          const beams = Beam.generateBeams(upperNotes, {
-            stemDirection: 1, // 向上
-          });
+          const beams = Beam.generateBeams(
+            upperNotes.map((n) => n.note),
+            { stemDirection: 1 }
+          );
           allBeams.push(...beams);
         }
         if (lowerNotes.length > 0) {
-          const beams = Beam.generateBeams(lowerNotes, {
-            stemDirection: -1, // 向下
-          });
+          const beams = Beam.generateBeams(
+            lowerNotes.map((n) => n.note),
+            { stemDirection: -1 }
+          );
           allBeams.push(...beams);
         }
 
