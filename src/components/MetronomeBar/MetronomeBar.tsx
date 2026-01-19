@@ -4,6 +4,7 @@ import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
 import { useMetronome } from "../../hooks/useMetronome";
 import { useLongPress } from "../../hooks/useLongPress";
+import { calculateCumulativeRate } from "../../utils/constants";
 import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
@@ -33,16 +34,18 @@ export function MetronomeBar({
   rates,
   rateLabels,
 }: MetronomeBarProps) {
-
   // 查找当前拍号在列表中的索引
-  const commonTimeSignatures = useMemo((): [number, number][] => [
-    [4, 4], // 4/4拍
-    [3, 4], // 3/4拍
-    [2, 4], // 2/4拍
-    [6, 8], // 6/8拍
-    [5, 4], // 5/4拍
-    [7, 8], // 7/8拍
-  ], []);
+  const commonTimeSignatures = useMemo(
+    (): [number, number][] => [
+      [4, 4], // 4/4拍
+      [3, 4], // 3/4拍
+      [2, 4], // 2/4拍
+      [6, 8], // 6/8拍
+      [5, 4], // 5/4拍
+      [7, 8], // 7/8拍
+    ],
+    []
+  );
 
   const getCurrentTimeSignatureIndex = useCallback(() => {
     const index = commonTimeSignatures.findIndex(
@@ -127,11 +130,24 @@ export function MetronomeBar({
     shouldStop: () => bpm >= max,
   });
 
-  // 快速根据速率设置BPM
-  const handleBPMClick = () => {
-    const newBPM = bpm * rates[rateIndex % rates.length];
-    onRateIndexChange(rateIndex + 1);
+  const applyRateIndex = (nextRateIndex: number) => {
+    if (!rates.length) return;
+    const currentCumulativeRate = calculateCumulativeRate(rateIndex, rates);
+    const nextCumulativeRate = calculateCumulativeRate(nextRateIndex, rates);
+    const baseBPM = bpm / currentCumulativeRate;
+    const newBPM = baseBPM * nextCumulativeRate;
+    onRateIndexChange(nextRateIndex);
     onBPMChange(newBPM, false);
+  };
+
+  // 快速根据速率设置 BPM：左侧 next，右侧 prev
+  const handleBPMClickNext = () => {
+    applyRateIndex(rateIndex + 1);
+  };
+
+  const handleBPMClickPrev = () => {
+    if (!rates.length) return;
+    applyRateIndex(rateIndex + rates.length - 1);
   };
 
   return (
@@ -166,7 +182,16 @@ export function MetronomeBar({
           </button>
           <div className="bpm-display">
             <span className="bpm-value">
-              <span className="bpm-value-clickable" onClick={handleBPMClick}></span>
+              <span
+                className="bpm-value-clickable bpm-value-clickable-left"
+                onClick={handleBPMClickNext}
+                aria-label="BPM rate next"
+              ></span>
+              <span
+                className="bpm-value-clickable bpm-value-clickable-right"
+                onClick={handleBPMClickPrev}
+                aria-label="BPM rate prev"
+              ></span>
               {Math.round(bpm)}
             </span>
             {rateLabels[rateIndex % rateLabels.length] && (

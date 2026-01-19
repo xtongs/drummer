@@ -105,13 +105,20 @@
 
 .bpm-value-clickable {
   position: absolute;
-  left: 0;
-  right: 0;
+  width: 50%;
   height: 50%;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
   z-index: 1;
+}
+
+.bpm-value-clickable-left {
+  left: 0;
+}
+
+.bpm-value-clickable-right {
+  right: 0;
 }
 
 .bpm-rate-label {

@@ -68,6 +68,24 @@ Metronome（节拍器）是 Drummer 的核心播放引擎，负责按照指定 B
 - **WHEN** 播放时
 - **THEN** 只播放鼓点音效，无节拍器音效
 
+### Requirement: BPM 变速快捷切换（rate next/prev）
+
+系统 SHALL 支持通过点击 BPM 数字区域快速切换变速倍率。
+
+#### Scenario: 左侧点击切换到下一个倍率（next）
+
+- **GIVEN** 当前存在变速倍率集合 `rates`，并以 `rateIndex` 表示累积倍率状态
+- **WHEN** 用户点击 BPM 数字区域的左半部分
+- **THEN** 系统将 `rateIndex` 视为向后推进一个 step（next）
+- **AND** BPM 显示值 SHALL 随累积倍率变化而更新
+
+#### Scenario: 右侧点击切换到上一个倍率（prev）
+
+- **GIVEN** 当前存在变速倍率集合 `rates`，并以 `rateIndex` 表示累积倍率状态
+- **WHEN** 用户点击 BPM 数字区域的右半部分
+- **THEN** 系统将 `rateIndex` 视为向前回退一个 step（prev，支持 wrap）
+- **AND** BPM 显示值 SHALL 随累积倍率变化而更新
+
 ### Requirement: 预备拍
 
 系统 SHALL 支持播放前的预备拍。
