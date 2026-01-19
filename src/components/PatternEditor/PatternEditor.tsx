@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from "react";
-import { DrumNotation } from "./DrumNotation";
+import { useRef, useEffect, useCallback, useState } from "react";
+import { DrumNotation, RENDERER_CHANGE_EVENT } from "./DrumNotation";
 import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
@@ -10,7 +10,12 @@ import { useSingleLongPress } from "../../hooks/useSingleLongPress";
 import { useExportMode } from "../../hooks/useExportMode";
 import { usePlaybackAutoScroll } from "../../hooks/usePlaybackAutoScroll";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
-import { serializePatternToJSON } from "../../utils/storage";
+import {
+  serializePatternToJSON,
+  getNotationRenderer,
+  setNotationRenderer,
+  type NotationRenderer,
+} from "../../utils/storage";
 import "./PatternEditor.css";
 
 interface PatternEditorProps {
@@ -67,6 +72,21 @@ export function PatternEditor({
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
   const cellSize = useGridCellSize(); // 动态计算单元格大小
+
+  // 渲染器切换状态
+  const [notationRenderer, setNotationRendererState] = useState<NotationRenderer>(() =>
+    getNotationRenderer()
+  );
+
+  // 切换渲染器
+  const handleToggleRenderer = useCallback(() => {
+    const newRenderer: NotationRenderer =
+      notationRenderer === "legacy" ? "vexflow" : "legacy";
+    setNotationRenderer(newRenderer);
+    setNotationRendererState(newRenderer);
+    // 派发事件通知 DrumNotation 组件
+    window.dispatchEvent(new CustomEvent(RENDERER_CHANGE_EVENT));
+  }, [notationRenderer]);
 
   // 播放时自动滚动
   const { doScroll } = usePlaybackAutoScroll({
@@ -227,6 +247,39 @@ export function PatternEditor({
           />
         </div>
         <div className="pattern-editor-actions-right">
+          {/* 渲染器切换按钮 */}
+          <button
+            className={`action-button renderer-toggle-button ${
+              notationRenderer === "vexflow" ? "active" : ""
+            }`}
+            onClick={handleToggleRenderer}
+            aria-label={
+              notationRenderer === "vexflow"
+                ? "Switch to Legacy Renderer"
+                : "Switch to VexFlow Renderer"
+            }
+            title={
+              notationRenderer === "vexflow"
+                ? "Using VexFlow (click to switch to Legacy)"
+                : "Using Legacy (click to switch to VexFlow)"
+            }
+          >
+            {/* 音符图标 */}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </button>
           {/* 保存按钮 / 导出输入框 - 仅在非草稿模式下显示 */}
           {!isDraftMode &&
             savedPatterns.some((p) => p.id === pattern.id) &&

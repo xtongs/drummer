@@ -17,6 +17,17 @@ import {
 const STORAGE_KEY = "drummer-app-data";
 const METRONOME_BPM_KEY = "drummer-metronome-bpm";
 const CROSS_PATTERN_LOOP_KEY = "drummer-cross-pattern-loop";
+const NOTATION_RENDERER_KEY = "drummer-notation-renderer";
+
+/**
+ * 渲染器类型
+ * - "legacy": 使用自绘 SVG 实现
+ * - "vexflow": 使用 VexFlow 渲染
+ */
+export type NotationRenderer = "legacy" | "vexflow";
+
+const DEFAULT_NOTATION_RENDERER: NotationRenderer = "legacy";
+const VALID_RENDERERS = new Set<NotationRenderer>(["legacy", "vexflow"]);
 
 /**
  * 迁移旧版 boolean grid 到新版 CellState grid
@@ -391,4 +402,32 @@ export function getNextPatternName(existingPatterns: Pattern[]): string {
   }
 
   return nextLetter;
+}
+
+/**
+ * 获取 Notation 渲染器设置
+ * @returns 渲染器类型，默认为 "legacy"
+ */
+export function getNotationRenderer(): NotationRenderer {
+  try {
+    const value = localStorage.getItem(NOTATION_RENDERER_KEY);
+    if (value && VALID_RENDERERS.has(value as NotationRenderer)) {
+      return value as NotationRenderer;
+    }
+  } catch (error) {
+    console.error("Failed to get notation renderer:", error);
+  }
+  return DEFAULT_NOTATION_RENDERER;
+}
+
+/**
+ * 设置 Notation 渲染器
+ * @param renderer - 渲染器类型
+ */
+export function setNotationRenderer(renderer: NotationRenderer): void {
+  try {
+    localStorage.setItem(NOTATION_RENDERER_KEY, renderer);
+  } catch (error) {
+    console.error("Failed to set notation renderer:", error);
+  }
 }

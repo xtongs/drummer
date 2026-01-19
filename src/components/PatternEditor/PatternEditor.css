@@ -132,5 +132,18 @@
   box-shadow: none;
 }
 
+/* 渲染器切换按钮 */
+.renderer-toggle-button {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.renderer-toggle-button.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
 @media (max-width: 768px) {
 }

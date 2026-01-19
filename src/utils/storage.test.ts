@@ -16,6 +16,8 @@ import {
   parsePatternFromJSON,
   serializePatternToJSON,
   getNextPatternName,
+  getNotationRenderer,
+  setNotationRenderer,
 } from "./storage";
 import type { Pattern, CrossPatternLoop } from "../types";
 import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
@@ -369,6 +371,45 @@ describe("Storage 工具函数", () => {
       // 实际上循环结束后 nextLetter 还是初始值
       // 但由于所有都用完了，for 循环不会 break，nextLetter 保持 "A"
       expect(getNextPatternName(patterns)).toBe("A");
+    });
+  });
+
+  describe("getNotationRenderer / setNotationRenderer", () => {
+    it("默认值应该为 'legacy'", () => {
+      expect(getNotationRenderer()).toBe("legacy");
+    });
+
+    it("应该正确保存和获取 'vexflow'", () => {
+      setNotationRenderer("vexflow");
+
+      expect(getNotationRenderer()).toBe("vexflow");
+    });
+
+    it("应该正确保存和获取 'legacy'", () => {
+      setNotationRenderer("vexflow");
+      setNotationRenderer("legacy");
+
+      expect(getNotationRenderer()).toBe("legacy");
+    });
+
+    it("非法值应该回退到默认值 'legacy'", () => {
+      localStorage.setItem("drummer-notation-renderer", "invalid-value");
+
+      expect(getNotationRenderer()).toBe("legacy");
+    });
+
+    it("空字符串应该回退到默认值 'legacy'", () => {
+      localStorage.setItem("drummer-notation-renderer", "");
+
+      expect(getNotationRenderer()).toBe("legacy");
+    });
+
+    it("set 后 get 返回一致", () => {
+      setNotationRenderer("vexflow");
+      expect(getNotationRenderer()).toBe("vexflow");
+
+      setNotationRenderer("legacy");
+      expect(getNotationRenderer()).toBe("legacy");
     });
   });
 });
