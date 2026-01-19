@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import type { Pattern } from "../types";
-import { CELL_OFF, CELL_NORMAL, CELL_DOUBLE_32, CELL_FIRST_32 } from "../types";
+import {
+  CELL_OFF,
+  CELL_NORMAL,
+  CELL_DOUBLE_32,
+  CELL_FIRST_32,
+  CELL_GHOST,
+  CELL_GRACE,
+} from "../types";
 import {
   patternToVexflowNoteEvents,
   buildBarTimeline,
@@ -43,12 +50,12 @@ describe("vexflowNotation utils", () => {
       });
 
       const { upperVoice, lowerVoice } = patternToVexflowNoteEvents(pattern);
-      expect(lowerVoice.some((e) => e.drums.some((d) => d.drum === "Kick"))).toBe(
-        true
-      );
-      expect(upperVoice.some((e) => e.drums.some((d) => d.drum === "Snare"))).toBe(
-        true
-      );
+      expect(
+        lowerVoice.some((e) => e.drums.some((d) => d.drum === "Kick")),
+      ).toBe(true);
+      expect(
+        upperVoice.some((e) => e.drums.some((d) => d.drum === "Snare")),
+      ).toBe(true);
     });
 
     it("CELL_DOUBLE_32 应该在同一 subdivision 生成两个 subPosition 事件", () => {
@@ -74,6 +81,36 @@ describe("vexflowNotation utils", () => {
       const eventsAt0 = upperVoice.filter((e) => e.subdivision === 0);
       expect(eventsAt0.map((e) => e.subPosition)).toEqual([0]);
     });
+
+    it("CELL_GHOST 应该生成 kind=ghost 的事件", () => {
+      const pattern = createTestPattern({
+        bars: 1,
+        drums: ["Snare"],
+        grid: [[CELL_GHOST, CELL_OFF, CELL_OFF, CELL_OFF]],
+      });
+
+      const { upperVoice } = patternToVexflowNoteEvents(pattern);
+      expect(upperVoice).toEqual([
+        expect.objectContaining({
+          subdivision: 0,
+          kind: "ghost",
+        }),
+      ]);
+    });
+
+    it("CELL_GRACE 应该附加 graceDrums 在主音符上", () => {
+      const pattern = createTestPattern({
+        bars: 1,
+        drums: ["Snare"],
+        grid: [[CELL_GRACE, CELL_OFF, CELL_OFF, CELL_OFF]],
+      });
+
+      const { upperVoice } = patternToVexflowNoteEvents(pattern);
+      const mainNote = upperVoice.find((e) => e.kind === "normal");
+      expect(mainNote?.graceDrums).toEqual([
+        { drum: "Snare", cellState: CELL_GRACE },
+      ]);
+    });
   });
 
   describe("buildBarTimeline", () => {
@@ -97,9 +134,10 @@ describe("vexflowNotation utils", () => {
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
         ],
-        16
+        16,
       );
       // 只有一个音符，不应自动补到小节末尾的 rests
       expect(timeline.filter((i) => i.kind === "rest")).toHaveLength(0);
@@ -115,15 +153,17 @@ describe("vexflowNotation utils", () => {
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
           {
             subdivision: 4, // 4 个 16 分 => 8 units32
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
         ],
-        16
+        16,
       );
 
       const rests = timeline.filter((i) => i.kind === "rest");
@@ -148,22 +188,27 @@ describe("vexflowNotation utils", () => {
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
           {
             subdivision: 8, // 8 个 16 分 => 16 units32（2 beats）
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
         ],
-        16
+        16,
       );
 
       const notes = timeline.filter((i) => i.kind === "note");
       const rests = timeline.filter((i) => i.kind === "rest");
 
       expect(notes).toHaveLength(2);
-      expect(notes[0]).toMatchObject({ startUnits32InBar: 0, durationUnits32: 8 });
+      expect(notes[0]).toMatchObject({
+        startUnits32InBar: 0,
+        durationUnits32: 8,
+      });
       // 8..16 的间隔需要一个四分休止符
       expect(rests).toEqual([
         {
@@ -186,15 +231,17 @@ describe("vexflowNotation utils", () => {
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
           {
             subdivision: 12, // 12*2=24 units32 (3 beats)
             subPosition: 0,
             drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
             is32nd: false,
+            kind: "normal",
           },
         ],
-        16
+        16,
       );
 
       const rests = timeline.filter((i) => i.kind === "rest");
@@ -209,4 +256,3 @@ describe("vexflowNotation utils", () => {
     });
   });
 });
-

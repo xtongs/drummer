@@ -7,6 +7,9 @@ import {
   Formatter,
   Beam,
   Dot,
+  GraceNote,
+  GraceNoteGroup,
+  TickContext,
   type StaveNoteStruct,
 } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
@@ -103,10 +106,12 @@ function createStaveNote(
   durationToken: VexflowDurationToken,
 ): StaveNote {
   const allKeys: string[] = [];
+  let hasXNoteHead: boolean | undefined;
 
   for (const { drum } of event.drums) {
     const mapping = DRUM_TO_VEXFLOW[drum];
     allKeys.push(...mapping.keys);
+    hasXNoteHead = mapping.keys.some((key) => key.includes("x"));
   }
 
   const noteStruct: StaveNoteStruct = {
@@ -118,6 +123,19 @@ function createStaveNote(
 
   const note = new StaveNote(noteStruct);
   if (durationToken.dots === 1) addDotToAllSafe(note);
+
+  // 鬼音标记：在 format 后、draw 前处理符头缩放
+  if (event.kind === "ghost") {
+    (note as unknown as { _isGhost: boolean })._isGhost = true;
+  }
+
+  if (hasXNoteHead && !isLowerVoice) {
+    const stem = note.getStem();
+    if (stem) {
+      stem.setOptions({ stemUpYOffset: 4 });
+    }
+  }
+
   return note;
 }
 
@@ -188,6 +206,7 @@ function buildBarTickables(
       subPosition: (startUnits32 % 2) as 0 | 1,
       drums: [],
       is32nd: startUnits32 % 2 === 1,
+      kind: "normal",
     };
     return {
       note: createRestNote(item.durationToken, isLowerVoice),
@@ -283,6 +302,7 @@ export function VexFlowDrumNotation({
       // 创建谱表
       const stave = new Stave(staveX, STAFF_Y, staveWidth);
       stave.setContext(context);
+      stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
       stave.draw();
 
       // 获取该小节的音符事件
@@ -403,6 +423,37 @@ export function VexFlowDrumNotation({
           note.setXShift(getExistingXShift(note) + delta);
         }
 
+        // 创建前倚音（acciaccatura / grace notes）
+        // 前倚音始终带斜线，固定显示在主音符前 5px 位置
+        // TODO: 位置不对需调整
+        const GRACE_NOTE_SPACING = 5; // 装饰音与主音符的固定距离
+        for (const noteObj of allNoteObjs) {
+          if (!noteObj.event.graceDrums || noteObj.event.graceDrums.length === 0)
+            continue;
+
+          const graceNotes = noteObj.event.graceDrums.map(({ drum }) => {
+            const mapping = DRUM_TO_VEXFLOW[drum];
+            const graceNote = new GraceNote({
+              keys: mapping.keys,
+              duration: "16",
+              slash: true, // 前倚音带斜线
+              stemDirection: mapping.isLowerVoice ? -1 : 1,
+            });
+            // GraceNote 需要 TickContext 才能正确绘制
+            const tickContext = new TickContext();
+            graceNote.setTickContext(tickContext);
+            tickContext.preFormat();
+            return graceNote;
+          });
+
+          const group = new GraceNoteGroup(graceNotes, false);
+          // 设置装饰音组与主音符的固定间距
+          // 负值使装饰音向左偏移，确保在主音符前固定 5px 位置
+          group.setXShift(-GRACE_NOTE_SPACING);
+          // 必须通过 addModifier 添加到父音符，这样 VexFlow 才会设置正确的 index
+          noteObj.note.addModifier(group, 0);
+        }
+
         // 格式化后再创建符杠（flatBeams 保持水平，包含休止符）
         // 只对可被 beam 的音符创建 beam（八分音符及更短的音符，包括休止符）
         const isBeamable = (note: StaveNote) => {
@@ -448,11 +499,41 @@ export function VexFlowDrumNotation({
           allBeams.push(...beams);
         }
 
-        // 绘制 Voice
+        // 绘制 Voice（GraceNoteGroup 通过 addModifier 添加，会自动绘制）
         voices.forEach((voice) => voice.draw(context, stave));
 
         // 绘制符杠
         allBeams.forEach((beam) => beam.setContext(context).draw());
+
+        // 处理鬼音符头缩放（在 draw 之后通过 DOM 操作）
+        for (const noteObj of allNoteObjs) {
+          const note = noteObj.note as unknown as {
+            _isGhost?: boolean;
+            noteHeads?: Array<{
+              el?: SVGElement;
+              getSVGElement?: () => SVGElement;
+            }>;
+          };
+          if (note._isGhost && note.noteHeads) {
+            for (const head of note.noteHeads) {
+              // 获取符头的 SVG 元素
+              const svgEl = head.getSVGElement?.() ?? head.el;
+              if (svgEl) {
+                // 获取符头的 bounding box 中心点作为 transform-origin
+                const bbox = (svgEl as SVGGraphicsElement).getBBox?.();
+                if (bbox) {
+                  const cx = bbox.x + bbox.width / 2;
+                  const cy = bbox.y + bbox.height / 2;
+                  svgEl.setAttribute(
+                    "transform",
+                    `translate(${cx}, ${cy}) scale(0.75) translate(${-cx + (noteObj.event.drums[0].drum === "Kick" ? -2 : 2)}, ${-cy})`,
+                  );
+                }
+              }
+            }
+          }
+        }
+
       }
     }
 
@@ -470,6 +551,7 @@ export function VexFlowDrumNotation({
         rect.setAttribute("height", String(SVG_HEIGHT));
         rect.setAttribute("fill", "#fbbf24");
         rect.setAttribute("opacity", "0.3");
+        rect.setAttribute("stroke", "transparent");
         svg.insertBefore(rect, svg.firstChild);
       }
     }
@@ -484,16 +566,18 @@ export function VexFlowDrumNotation({
   ]);
 
   return (
-    <div
-      className="drum-notation-container vexflow-renderer"
-      ref={containerRef}
-      onDoubleClick={handleDoubleClick}
-      onTouchStart={handleTouchStart}
-      style={{
-        width: totalWidth,
-        height: SVG_HEIGHT,
-        backgroundColor: "#ffffff",
-      }}
-    />
+    <>
+      <div
+        className="drum-notation-container vexflow-renderer"
+        ref={containerRef}
+        onDoubleClick={handleDoubleClick}
+        onTouchStart={handleTouchStart}
+        style={{
+          width: totalWidth,
+          height: SVG_HEIGHT,
+          backgroundColor: "#ffffff",
+        }}
+      />
+    </>
   );
 }

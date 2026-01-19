@@ -4,6 +4,8 @@ import {
   CELL_DOUBLE_32,
   CELL_FIRST_32,
   CELL_SECOND_32,
+  CELL_GHOST,
+  CELL_GRACE,
 } from "../types";
 import { SUBDIVISIONS_PER_BEAT } from "./constants";
 import {
@@ -19,17 +21,19 @@ export const DRUM_TO_VEXFLOW: Record<
     isLowerVoice: boolean;
   }
 > = {
-  "Crash 1": { keys: ["b/5"], isLowerVoice: false },
-  "Crash 2": { keys: ["a/5"], isLowerVoice: false },
-  "Hi-Hat Open": { keys: ["g/5"], isLowerVoice: false },
-  "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
-  Ride: { keys: ["f/5"], isLowerVoice: false },
+  "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
+  "Crash 2": { keys: ["a/5/x"], isLowerVoice: false },
+  "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false }, // TODO：Hi-Hat Open 需要显示X带一个o
+  "Hi-Hat Closed": { keys: ["g/5/x"], isLowerVoice: false },
+  Ride: { keys: ["f/5/x"], isLowerVoice: false },
   "Tom 1": { keys: ["e/5"], isLowerVoice: false },
   "Tom 2": { keys: ["d/5"], isLowerVoice: false },
   Snare: { keys: ["c/5"], isLowerVoice: false },
   "Tom 3": { keys: ["a/4"], isLowerVoice: false },
   Kick: { keys: ["f/4"], isLowerVoice: true },
 };
+
+export type VexflowNoteKind = "normal" | "ghost";
 
 export interface VexflowNoteEvent {
   subdivision: number;
@@ -39,6 +43,8 @@ export interface VexflowNoteEvent {
     cellState: CellState;
   }[];
   is32nd: boolean;
+  kind: VexflowNoteKind;
+  graceDrums?: { drum: DrumType; cellState: CellState }[];
 }
 
 /**
@@ -55,10 +61,12 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
   const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
 
   for (let sub = 0; sub < totalSubdivisions; sub++) {
-    const upperDrumsPos0: { drum: DrumType; cellState: CellState }[] = [];
-    const upperDrumsPos1: { drum: DrumType; cellState: CellState }[] = [];
-    const lowerDrumsPos0: { drum: DrumType; cellState: CellState }[] = [];
-    const lowerDrumsPos1: { drum: DrumType; cellState: CellState }[] = [];
+    const createSlots = () => ({
+      0: { normal: [] as { drum: DrumType; cellState: CellState }[], ghost: [] as { drum: DrumType; cellState: CellState }[], grace: [] as { drum: DrumType; cellState: CellState }[] },
+      1: { normal: [] as { drum: DrumType; cellState: CellState }[], ghost: [] as { drum: DrumType; cellState: CellState }[], grace: [] as { drum: DrumType; cellState: CellState }[] },
+    });
+    const upperSlots = createSlots();
+    const lowerSlots = createSlots();
     let has32ndUpper = false;
     let has32ndLower = false;
 
@@ -66,60 +74,67 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
       const cellState = pattern.grid[drumIndex]?.[sub] ?? CELL_OFF;
       if (cellState === CELL_OFF) return;
 
-      const isLower = DRUM_TO_VEXFLOW[drum].isLowerVoice;
-      const targetPos0 = isLower ? lowerDrumsPos0 : upperDrumsPos0;
-      const targetPos1 = isLower ? lowerDrumsPos1 : upperDrumsPos1;
+      const slots = DRUM_TO_VEXFLOW[drum].isLowerVoice ? lowerSlots : upperSlots;
+      const push = (mode: "normal" | "ghost" | "grace", subPosition: 0 | 1) => {
+        slots[subPosition][mode].push({ drum, cellState });
+      };
 
       if (cellState === CELL_DOUBLE_32) {
-        targetPos0.push({ drum, cellState });
-        targetPos1.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
+        push("normal", 0);
+        push("normal", 1);
+        if (DRUM_TO_VEXFLOW[drum].isLowerVoice) has32ndLower = true;
         else has32ndUpper = true;
       } else if (cellState === CELL_FIRST_32) {
-        targetPos0.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
+        push("normal", 0);
+        if (DRUM_TO_VEXFLOW[drum].isLowerVoice) has32ndLower = true;
         else has32ndUpper = true;
       } else if (cellState === CELL_SECOND_32) {
-        targetPos1.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
+        push("normal", 1);
+        if (DRUM_TO_VEXFLOW[drum].isLowerVoice) has32ndLower = true;
         else has32ndUpper = true;
+      } else if (cellState === CELL_GRACE) {
+        push("normal", 0);
+        push("grace", 0);
+      } else if (cellState === CELL_GHOST) {
+        push("ghost", 0);
       } else {
-        targetPos0.push({ drum, cellState });
+        push("normal", 0);
       }
     });
 
-    if (upperDrumsPos0.length > 0) {
-      upperEvents.push({
-        subdivision: sub,
-        subPosition: 0,
-        drums: upperDrumsPos0,
-        is32nd: has32ndUpper,
-      });
-    }
-    if (upperDrumsPos1.length > 0) {
-      upperEvents.push({
-        subdivision: sub,
-        subPosition: 1,
-        drums: upperDrumsPos1,
-        is32nd: true,
-      });
-    }
-    if (lowerDrumsPos0.length > 0) {
-      lowerEvents.push({
-        subdivision: sub,
-        subPosition: 0,
-        drums: lowerDrumsPos0,
-        is32nd: has32ndLower,
-      });
-    }
-    if (lowerDrumsPos1.length > 0) {
-      lowerEvents.push({
-        subdivision: sub,
-        subPosition: 1,
-        drums: lowerDrumsPos1,
-        is32nd: true,
-      });
-    }
+    const emitEvents = (
+      collection: VexflowNoteEvent[],
+      slots: typeof upperSlots,
+      subPosition: 0 | 1,
+      is32nd: boolean,
+    ) => {
+      const slot = slots[subPosition];
+      if (slot.normal.length > 0) {
+        collection.push({
+          subdivision: sub,
+          subPosition,
+          drums: slot.normal,
+          is32nd,
+          kind: "normal",
+          graceDrums: slot.grace.length > 0 ? [...slot.grace] : undefined,
+        });
+      }
+      if (slot.ghost.length > 0) {
+        collection.push({
+          subdivision: sub,
+          subPosition,
+          drums: slot.ghost,
+          is32nd,
+          kind: "ghost",
+        });
+      }
+    };
+
+    emitEvents(upperEvents, upperSlots, 0, has32ndUpper);
+    emitEvents(upperEvents, upperSlots, 1, true);
+    emitEvents(lowerEvents, lowerSlots, 0, has32ndLower);
+    emitEvents(lowerEvents, lowerSlots, 1, true);
+
   }
 
   return { upperVoice: upperEvents, lowerVoice: lowerEvents };
@@ -170,9 +185,10 @@ export interface BuildBarTimelineOptions {
 export function buildBarTimeline(
   events: VexflowNoteEvent[],
   totalSubdivisionsInBar: number,
-  options: BuildBarTimelineOptions = {}
+  options: BuildBarTimelineOptions = {},
 ): BarTimelineItem[] {
-  const includeFullBarRestWhenEmpty = options.includeFullBarRestWhenEmpty ?? true;
+  const includeFullBarRestWhenEmpty =
+    options.includeFullBarRestWhenEmpty ?? true;
   const omitTailRests = options.omitTailRests ?? true;
   const maxSpanBarFraction = options.maxSpanBarFraction ?? 0.25;
 
@@ -282,4 +298,3 @@ export function buildBarTimeline(
 
   return result;
 }
-
