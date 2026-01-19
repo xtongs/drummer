@@ -6,178 +6,56 @@ import {
   Voice,
   Formatter,
   Beam,
+  Dot,
   type StaveNoteStruct,
 } from "vexflow";
-import type { Pattern, DrumType, CellState } from "../../types";
-import {
-  CELL_OFF,
-  CELL_DOUBLE_32,
-  CELL_FIRST_32,
-  CELL_SECOND_32,
-} from "../../types";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
 import "./DrumNotation.css";
-
-// VexFlow 标准鼓谱 key 映射
-const DRUM_TO_VEXFLOW: Record<
-  DrumType,
-  {
-    keys: string[];
-    isLowerVoice: boolean;
-  }
-> = {
-  "Crash 1": { keys: ["b/5"], isLowerVoice: false },
-  "Crash 2": { keys: ["a/5"], isLowerVoice: false },
-  "Hi-Hat Open": { keys: ["g/5"], isLowerVoice: false },
-  "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
-  Ride: { keys: ["f/5"], isLowerVoice: false },
-  "Tom 1": { keys: ["e/5"], isLowerVoice: false },
-  "Tom 2": { keys: ["d/5"], isLowerVoice: false },
-  Snare: { keys: ["c/5"], isLowerVoice: false },
-  "Tom 3": { keys: ["a/4"], isLowerVoice: false },
-  Kick: { keys: ["f/4"], isLowerVoice: true },
-};
+import {
+  DRUM_TO_VEXFLOW,
+  patternToVexflowNoteEvents,
+  buildBarTimeline,
+  type VexflowNoteEvent,
+} from "../../utils/vexflowNotation";
+import type { VexflowDurationToken } from "../../utils/vexflowDurations";
 
 // 谱面常量
-const SVG_HEIGHT = 108;
+const SVG_HEIGHT = 130;
 // VexFlow Stave 五线高度约 40px (5线 x 10px间距)
 // 为了让五线谱顶线在 y = 34 的位置（居中）：STAFF_Y = 34 - 24.5 ≈ 10
 const STAVE_HEIGHT = 40;
-const STAVE_INTERNAL_OFFSET = 40; // VexFlow 内部偏移
+const STAVE_INTERNAL_OFFSET = 35; // VexFlow 内部偏移
 const STAFF_Y = (SVG_HEIGHT - STAVE_HEIGHT) / 2 - STAVE_INTERNAL_OFFSET;
 
-interface NoteEvent {
-  subdivision: number;
-  subPosition: 0 | 1;
-  drums: {
-    drum: DrumType;
-    cellState: CellState;
-  }[];
-  is32nd: boolean;
-}
-
-/**
- * 将 Pattern grid 转换为音符事件列表
- */
-function patternToNoteEvents(pattern: Pattern): {
-  upperVoice: NoteEvent[];
-  lowerVoice: NoteEvent[];
-} {
-  const upperEvents: NoteEvent[] = [];
-  const lowerEvents: NoteEvent[] = [];
-
-  const [beatsPerBar] = pattern.timeSignature;
-  const totalSubdivisions = pattern.bars * beatsPerBar * SUBDIVISIONS_PER_BEAT;
-
-  for (let sub = 0; sub < totalSubdivisions; sub++) {
-    const upperDrumsPos0: { drum: DrumType; cellState: CellState }[] = [];
-    const upperDrumsPos1: { drum: DrumType; cellState: CellState }[] = [];
-    const lowerDrumsPos0: { drum: DrumType; cellState: CellState }[] = [];
-    const lowerDrumsPos1: { drum: DrumType; cellState: CellState }[] = [];
-    let has32ndUpper = false;
-    let has32ndLower = false;
-
-    pattern.drums.forEach((drum, drumIndex) => {
-      const cellState = pattern.grid[drumIndex]?.[sub] ?? CELL_OFF;
-      if (cellState === CELL_OFF) return;
-
-      const isLower = DRUM_TO_VEXFLOW[drum].isLowerVoice;
-      const targetPos0 = isLower ? lowerDrumsPos0 : upperDrumsPos0;
-      const targetPos1 = isLower ? lowerDrumsPos1 : upperDrumsPos1;
-
-      if (cellState === CELL_DOUBLE_32) {
-        targetPos0.push({ drum, cellState });
-        targetPos1.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
-        else has32ndUpper = true;
-      } else if (cellState === CELL_FIRST_32) {
-        targetPos0.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
-        else has32ndUpper = true;
-      } else if (cellState === CELL_SECOND_32) {
-        targetPos1.push({ drum, cellState });
-        if (isLower) has32ndLower = true;
-        else has32ndUpper = true;
-      } else {
-        targetPos0.push({ drum, cellState });
-      }
-    });
-
-    if (upperDrumsPos0.length > 0) {
-      upperEvents.push({
-        subdivision: sub,
-        subPosition: 0,
-        drums: upperDrumsPos0,
-        is32nd: has32ndUpper,
-      });
-    }
-    if (upperDrumsPos1.length > 0) {
-      upperEvents.push({
-        subdivision: sub,
-        subPosition: 1,
-        drums: upperDrumsPos1,
-        is32nd: true,
-      });
-    }
-    if (lowerDrumsPos0.length > 0) {
-      lowerEvents.push({
-        subdivision: sub,
-        subPosition: 0,
-        drums: lowerDrumsPos0,
-        is32nd: has32ndLower,
-      });
-    }
-    if (lowerDrumsPos1.length > 0) {
-      lowerEvents.push({
-        subdivision: sub,
-        subPosition: 1,
-        drums: lowerDrumsPos1,
-        is32nd: true,
-      });
-    }
-  }
-
-  return { upperVoice: upperEvents, lowerVoice: lowerEvents };
-}
-
-/**
- * 按 beat 分组事件
- */
-function groupEventsByBeat(events: NoteEvent[]): NoteEvent[][] {
-  const groups: Map<number, NoteEvent[]> = new Map();
-
-  for (const event of events) {
-    const beatIndex = Math.floor(event.subdivision / SUBDIVISIONS_PER_BEAT);
-    if (!groups.has(beatIndex)) {
-      groups.set(beatIndex, []);
-    }
-    groups.get(beatIndex)!.push(event);
-  }
-
-  return Array.from(groups.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([, evts]) =>
-      evts.sort((a, b) => {
-        if (a.subdivision !== b.subdivision)
-          return a.subdivision - b.subdivision;
-        return a.subPosition - b.subPosition;
-      })
-    );
-}
+type NoteEvent = VexflowNoteEvent;
 
 /**
  * 计算音符的固定 x 坐标（与 grid cell 对齐）
+ * @param restDuration - 休止符时值（4/8/16），用于计算休止符的中心位置
  */
 function getFixedX(
   subdivision: number,
   subPosition: 0 | 1,
   cellWidth: number,
   barStartSub: number,
-  is32nd: boolean
+  is32nd: boolean,
+  restDuration?: 4 | 8 | 16
 ): number {
   const localSub = subdivision - barStartSub;
+
+  // 休止符需要根据时值放在正确的中心位置
+  if (restDuration) {
+    if (restDuration === 4) {
+      // 四分休止符占 4 个 cell，放在中心 (localSub + 1.5)
+      return (localSub + 1.5) * cellWidth + cellWidth / 2;
+    } else if (restDuration === 8) {
+      // 八分休止符占 2 个 cell，放在中心 (localSub + 0.5)
+      return (localSub + 0.5) * cellWidth + cellWidth / 2;
+    }
+  }
+
   const baseX = localSub * cellWidth + cellWidth / 2;
 
   // 非 32 分音符居中
@@ -194,13 +72,35 @@ function getFixedX(
   }
 }
 
+function getExistingXShift(note: StaveNote): number {
+  const anyNote = note as unknown as {
+    getXShift?: () => number;
+    x_shift?: number;
+  };
+  if (typeof anyNote.getXShift === "function") return anyNote.getXShift();
+  if (typeof anyNote.x_shift === "number") return anyNote.x_shift;
+  return 0;
+}
+
+function addDotToAllSafe(note: StaveNote) {
+  // VexFlow v5：官方方式为 Dot.buildAndAttach
+  // 这里用 safe wrapper 主要是避免未来版本 API 变更导致运行时崩溃
+  const anyDot = Dot as unknown as {
+    buildAndAttach?: (notes: unknown[], options?: { all?: boolean }) => void;
+  };
+  if (typeof anyDot.buildAndAttach === "function") {
+    anyDot.buildAndAttach([note], { all: true });
+  }
+}
+
 /**
  * 创建 VexFlow StaveNote
  */
 function createStaveNote(
   event: NoteEvent,
   isLowerVoice: boolean,
-  clef: string
+  clef: string,
+  durationToken: VexflowDurationToken
 ): StaveNote {
   const allKeys: string[] = [];
 
@@ -209,16 +109,94 @@ function createStaveNote(
     allKeys.push(...mapping.keys);
   }
 
-  const duration = event.is32nd ? "32" : "16";
-
   const noteStruct: StaveNoteStruct = {
     keys: allKeys,
-    duration: duration,
+    duration: String(durationToken.base),
     clef: clef,
     stemDirection: isLowerVoice ? -1 : 1,
   };
 
-  return new StaveNote(noteStruct);
+  const note = new StaveNote(noteStruct);
+  if (durationToken.dots === 1) addDotToAllSafe(note);
+  return note;
+}
+
+/**
+ * 创建休止符
+ * @param duration - 时值：4（四分）、8（八分）、16（十六分）、32（三十二分）
+ */
+function createRestNote(
+  durationToken: VexflowDurationToken,
+  isLowerVoice: boolean
+): StaveNote {
+  const durationStr = `${durationToken.base}r`;
+  // 休止符的 key 位置：上声部用 c/5，下声部用 f/4
+  const keys = isLowerVoice ? ["f/4"] : ["c/5"];
+
+  const note = new StaveNote({
+    keys,
+    duration: durationStr,
+    clef: "percussion",
+    stemDirection: isLowerVoice ? -1 : 1,
+  });
+  if (durationToken.dots === 1) addDotToAllSafe(note);
+  return note;
+}
+
+interface NoteWithMeta {
+  note: StaveNote;
+  event: NoteEvent;
+  isRest: boolean;
+  /**
+   * 休止符：以 32 分为单位的起点与长度，用于 x 对齐（取中心点）
+   * 音符：用于对齐起点（取 event/subPosition）
+   */
+  startUnits32InBar?: number;
+  durationUnits32?: number;
+}
+
+function buildBarTickables(
+  events: NoteEvent[],
+  totalSubdivisionsInBar: number,
+  isLowerVoice: boolean
+): NoteWithMeta[] {
+  const timeline = buildBarTimeline(events, totalSubdivisionsInBar, {
+    includeFullBarRestWhenEmpty: true,
+    omitTailRests: true,
+    maxSpanBarFraction: 0.25,
+  });
+
+  return timeline.map((item) => {
+    if (item.kind === "note") {
+      return {
+        note: createStaveNote(
+          item.event,
+          isLowerVoice,
+          "percussion",
+          item.durationToken
+        ),
+        event: item.event,
+        isRest: false,
+        startUnits32InBar: item.startUnits32InBar,
+        durationUnits32: item.durationUnits32,
+      };
+    }
+
+    const startUnits32 = item.startUnits32InBar;
+    const restEvent: NoteEvent = {
+      subdivision: Math.floor(startUnits32 / 2),
+      subPosition: (startUnits32 % 2) as 0 | 1,
+      drums: [],
+      is32nd: startUnits32 % 2 === 1,
+    };
+    return {
+      note: createRestNote(item.durationToken, isLowerVoice),
+      event: restEvent,
+      isRest: true,
+      startUnits32InBar: item.startUnits32InBar,
+      durationUnits32: item.durationUnits32,
+    };
+  });
 }
 
 export function VexFlowDrumNotation({
@@ -302,13 +280,13 @@ export function VexFlowDrumNotation({
     for (let bar = 0; bar < pattern.bars; bar++) {
       const staveX = bar * staveWidth;
 
-      // 创建谱表（不显示谱号）
+      // 创建谱表
       const stave = new Stave(staveX, STAFF_Y, staveWidth);
       stave.setContext(context);
       stave.draw();
 
       // 获取该小节的音符事件
-      const { upperVoice, lowerVoice } = patternToNoteEvents(pattern);
+      const { upperVoice, lowerVoice } = patternToVexflowNoteEvents(pattern);
 
       // 筛选出当前小节的事件
       const barStartSub = bar * beatsPerBar * SUBDIVISIONS_PER_BEAT;
@@ -321,27 +299,43 @@ export function VexFlowDrumNotation({
         (e) => e.subdivision >= barStartSub && e.subdivision < barEndSub
       );
 
-      // 创建上声部音符（记录事件信息用于后续设置 x 坐标）
-      const upperNotes: { note: StaveNote; event: NoteEvent }[] = [];
-      const upperBeatGroups = groupEventsByBeat(barUpperEvents);
+      // 当前小节的 subdivision 数量
+      const barSubdivisions = beatsPerBar * SUBDIVISIONS_PER_BEAT;
 
-      for (const beatEvents of upperBeatGroups) {
-        for (const event of beatEvents) {
-          const note = createStaveNote(event, false, "percussion");
-          upperNotes.push({ note, event });
-        }
-      }
+      // 创建上声部音符（包含休止符）
+      const upperNotesWithRests = buildBarTickables(
+        barUpperEvents.map((e) => ({
+          ...e,
+          subdivision: e.subdivision - barStartSub, // 转为小节内相对位置
+        })),
+        barSubdivisions,
+        false
+      ).map((item) => ({
+        ...item,
+        event: {
+          ...item.event,
+          subdivision: item.event.subdivision + barStartSub, // 转回全局位置
+        },
+      }));
 
-      // 创建下声部音符
-      const lowerNotes: { note: StaveNote; event: NoteEvent }[] = [];
-      const lowerBeatGroups = groupEventsByBeat(barLowerEvents);
+      // 创建下声部音符（包含休止符）
+      const lowerNotesWithRests = buildBarTickables(
+        barLowerEvents.map((e) => ({
+          ...e,
+          subdivision: e.subdivision - barStartSub,
+        })),
+        barSubdivisions,
+        true
+      ).map((item) => ({
+        ...item,
+        event: {
+          ...item.event,
+          subdivision: item.event.subdivision + barStartSub,
+        },
+      }));
 
-      for (const beatEvents of lowerBeatGroups) {
-        for (const event of beatEvents) {
-          const note = createStaveNote(event, true, "percussion");
-          lowerNotes.push({ note, event });
-        }
-      }
+      const upperNotes = upperNotesWithRests;
+      const lowerNotes = lowerNotesWithRests;
 
       // 如果有音符，创建 Voice 并绘制
       if (upperNotes.length > 0 || lowerNotes.length > 0) {
@@ -372,34 +366,83 @@ export function VexFlowDrumNotation({
         }
 
         // 格式化后手动设置每个音符的 x 坐标（与 grid cell 对齐）
-        for (const { note, event } of allNoteObjs) {
-          const targetX = getFixedX(
-            event.subdivision,
-            event.subPosition,
-            cellWidth,
-            barStartSub,
-            event.is32nd
-          );
-          // 获取 VexFlow 计算的 x 坐标，计算需要的偏移
-          const currentX = note.getAbsoluteX();
-          const xShift = targetX + staveX - currentX;
-          note.setXShift(xShift);
+        // targetX 是音符在小节内的相对位置（从 0 开始）
+        // 目标绝对位置 = staveX + targetX
+        // 注意：VexFlow 格式化后可能已带有基础 xShift/布局偏移（且会随屏宽变化）。
+        // 这里必须在“已有 xShift”基础上叠加 delta，而不是直接覆盖为 delta，否则会导致不同屏宽下偏移不一致。
+        for (const noteObj of allNoteObjs) {
+          const { note, event, isRest, startUnits32InBar, durationUnits32 } =
+            noteObj;
+
+          let targetX: number;
+          if (isRest && startUnits32InBar !== undefined && durationUnits32) {
+            // 休止符使用自身跨度中心点定位（以 32 分单位换算成 16 分 cell）
+            const centerUnits32 = startUnits32InBar + durationUnits32 / 2;
+            const centerSub = centerUnits32 / 2;
+            targetX = centerSub * cellWidth + cellWidth / 2 - cellWidth / 4;
+          } else {
+            targetX =
+              getFixedX(
+                event.subdivision,
+                event.subPosition,
+                cellWidth,
+                barStartSub,
+                event.is32nd
+              ) -
+              cellWidth / 4;
+          }
+
+          // 确保绝对坐标计算基于当前 stave
+          note.setStave(stave);
+
+          const desiredAbsX = stave.getX() + targetX;
+          const currentAbsX = note.getAbsoluteX();
+          const delta = desiredAbsX - currentAbsX;
+          note.setXShift(getExistingXShift(note) + delta);
         }
 
-        // 格式化后再创建符杠
+        // 格式化后再创建符杠（flatBeams 保持水平，包含休止符）
+        // 只对可被 beam 的音符创建 beam（八分音符及更短的音符，包括休止符）
+        const isBeamable = (note: StaveNote) => {
+          const raw = note.getDuration(); // e.g. "8", "8r", "16", "16r"
+          const numeric = Number.parseInt(raw.replace("r", ""), 10);
+          if (!Number.isFinite(numeric)) return false;
+          return numeric >= 8;
+        };
+
+        const groupByQuarterBar = (items: NoteWithMeta[]) => {
+          const barUnits32 = barSubdivisions * 2;
+          const quarterUnits32 = Math.max(1, Math.floor(barUnits32 / 4));
+          const groups: StaveNote[][] = [[], [], [], []];
+
+          for (const item of items) {
+            if (!isBeamable(item.note)) continue;
+            const startUnits32 =
+              item.startUnits32InBar ??
+              (item.event.subdivision - barStartSub) * 2 +
+                item.event.subPosition;
+            const idx = Math.min(
+              3,
+              Math.max(0, Math.floor(startUnits32 / quarterUnits32))
+            );
+            groups[idx]!.push(item.note);
+          }
+          return groups.filter((g) => g.length > 0);
+        };
+
         const allBeams: Beam[] = [];
-        if (upperNotes.length > 0) {
-          const beams = Beam.generateBeams(
-            upperNotes.map((n) => n.note),
-            { stemDirection: 1 }
-          );
+        for (const group of groupByQuarterBar(upperNotes)) {
+          const beams = Beam.generateBeams(group, {
+            stemDirection: 1,
+            flatBeams: true,
+          });
           allBeams.push(...beams);
         }
-        if (lowerNotes.length > 0) {
-          const beams = Beam.generateBeams(
-            lowerNotes.map((n) => n.note),
-            { stemDirection: -1 }
-          );
+        for (const group of groupByQuarterBar(lowerNotes)) {
+          const beams = Beam.generateBeams(group, {
+            stemDirection: -1,
+            flatBeams: true,
+          });
           allBeams.push(...beams);
         }
 

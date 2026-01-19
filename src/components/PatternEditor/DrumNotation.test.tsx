@@ -23,9 +23,7 @@ function createTestPattern(overrides: Partial<Pattern> = {}): Pattern {
     bpm: 120,
     timeSignature: [4, 4] as [number, number],
     bars: 1,
-    grid: [
-      [CELL_NORMAL, CELL_OFF, CELL_OFF, CELL_OFF],
-    ],
+    grid: [[CELL_NORMAL, CELL_OFF, CELL_OFF, CELL_OFF]],
     drums: ["Kick"],
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -100,7 +98,8 @@ describe("DrumNotation 组件", () => {
       const onDoubleClick = vi.fn();
 
       // 需要 mock getBoundingClientRect
-      const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+      const originalGetBoundingClientRect =
+        Element.prototype.getBoundingClientRect;
       Element.prototype.getBoundingClientRect = vi.fn().mockReturnValue({
         left: 0,
         top: 0,
