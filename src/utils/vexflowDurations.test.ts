@@ -48,10 +48,11 @@ describe("vexflowDurations", () => {
       ]);
     });
 
-    it("应该优先使用附点以减少碎片（例如 7 = 6 + 1）", () => {
+    it("应该不使用附点休止符（例如 7 = 4 + 2 + 1）", () => {
       const tokens = splitGapIntoDurationTokens(7);
       expect(tokens).toEqual([
-        { base: 8, dots: 1, units32: 6 },
+        { base: 8, dots: 0, units32: 4 },
+        { base: 16, dots: 0, units32: 2 },
         { base: 32, dots: 0, units32: 1 },
       ]);
     });

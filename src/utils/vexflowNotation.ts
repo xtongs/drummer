@@ -157,8 +157,8 @@ export type BarTimelineItem =
 
 export interface BuildBarTimelineOptions {
   /**
-   * 小节完全空白时是否生成“整小节休止符”。
-   * 默认 true（避免谱面空白）。
+   * 小节完全空白时是否生成"整小节休止符"。
+   * 默认 false（留白）。
    */
   includeFullBarRestWhenEmpty?: boolean;
   /**
@@ -188,7 +188,7 @@ export function buildBarTimeline(
   options: BuildBarTimelineOptions = {},
 ): BarTimelineItem[] {
   const includeFullBarRestWhenEmpty =
-    options.includeFullBarRestWhenEmpty ?? true;
+    options.includeFullBarRestWhenEmpty ?? false;
   const omitTailRests = options.omitTailRests ?? true;
   const maxSpanBarFraction = options.maxSpanBarFraction ?? 0.25;
 

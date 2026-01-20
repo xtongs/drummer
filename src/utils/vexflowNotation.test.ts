@@ -114,14 +114,41 @@ describe("vexflowNotation utils", () => {
   });
 
   describe("buildBarTimeline", () => {
-    it("小节完全空白时默认应生成整小节休止符（4/4 => 1r）", () => {
+    it("小节完全空白时默认不生成休止符（留白）", () => {
       const timeline = buildBarTimeline([], 16);
+      // 默认不生成休止符，直接留白
+      expect(timeline).toEqual([]);
+    });
+
+    it("当设置 includeFullBarRestWhenEmpty=true 时，空小节应生成休止符", () => {
+      const timeline = buildBarTimeline([], 16, {
+        includeFullBarRestWhenEmpty: true,
+      });
+      // 由于尽量不使用二分休止符和全休止符，4/4 小节应分解为 4 个四分休止符
       expect(timeline).toEqual([
         {
           kind: "rest",
           startUnits32InBar: 0,
-          durationToken: { base: 1, dots: 0, units32: 32 },
-          durationUnits32: 32,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
+        },
+        {
+          kind: "rest",
+          startUnits32InBar: 8,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
+        },
+        {
+          kind: "rest",
+          startUnits32InBar: 16,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
+        },
+        {
+          kind: "rest",
+          startUnits32InBar: 24,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
         },
       ]);
     });
@@ -220,10 +247,10 @@ describe("vexflowNotation utils", () => {
       ]);
     });
 
-    it("休止符允许跨 1/4 小节边界（例如 2 beats gap => 二分休止符）", () => {
+    it("休止符尽量不使用附点和二分休止符（2 beats gap => 两个四分休止符）", () => {
       // note at 0 => 最多 1 beat (8 units32)
       // next note at 3 beats (24 units32)
-      // gap from 8..24 = 16 units32，跨过 1/4 边界(16)，休止符应允许用二分(16)
+      // gap from 8..24 = 16 units32，应分解为两个四分休止符，而不是一个二分休止符
       const timeline = buildBarTimeline(
         [
           {
@@ -249,8 +276,14 @@ describe("vexflowNotation utils", () => {
         {
           kind: "rest",
           startUnits32InBar: 8,
-          durationToken: { base: 2, dots: 0, units32: 16 },
-          durationUnits32: 16,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
+        },
+        {
+          kind: "rest",
+          startUnits32InBar: 16,
+          durationToken: { base: 4, dots: 0, units32: 8 },
+          durationUnits32: 8,
         },
       ]);
     });

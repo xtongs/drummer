@@ -4,8 +4,10 @@ import {
   getFixedX,
   isBeamable,
   groupByQuarterBar,
+  buildBarTickables,
   type NoteWithMeta,
 } from "./vexflowRenderer";
+import { CELL_NORMAL } from "../types";
 
 // Mock VexFlow
 const mockStaveNote = {
@@ -222,6 +224,32 @@ describe("vexflowRenderer utils", () => {
       const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
 
       expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("buildBarTickables", () => {
+    const totalSubdivisionsInBar = 16; // 4/4 拍，一小节 16 个 16 分音符
+
+    it("当没有音符时，应该返回空数组（不显示休止符）", () => {
+      const result = buildBarTickables([], totalSubdivisionsInBar, false);
+      expect(result).toEqual([]);
+    });
+
+    it("当有音符时，应该正常构建 tickables", () => {
+      const events = [
+        {
+          subdivision: 0,
+          subPosition: 0 as const,
+          drums: [{ drum: "Snare" as const, cellState: CELL_NORMAL }],
+          is32nd: false,
+          kind: "normal" as const,
+        },
+      ];
+      const result = buildBarTickables(events, totalSubdivisionsInBar, false);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toMatchObject({
+        isRest: false,
+      });
     });
   });
 });

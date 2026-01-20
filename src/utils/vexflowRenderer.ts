@@ -196,6 +196,12 @@ export function buildBarTickables(
     maxSpanBarFraction: 0.25,
   });
 
+  // 如果所有项目都是休止符，返回空数组（不显示）
+  const hasNote = timeline.some((item) => item.kind === "note");
+  if (!hasNote) {
+    return [];
+  }
+
   return timeline.map((item) => {
     if (item.kind === "note") {
       return {

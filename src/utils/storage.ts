@@ -27,7 +27,7 @@ const NOTATION_RENDERER_KEY = "drummer-notation-renderer";
 export type NotationRenderer = "legacy" | "vexflow";
 
 const DEFAULT_NOTATION_RENDERER: NotationRenderer = "vexflow";
-const VALID_RENDERERS = new Set<NotationRenderer>(["legacy", "vexflow"]);
+// const VALID_RENDERERS = new Set<NotationRenderer>(["legacy", "vexflow"]);
 
 /**
  * 迁移旧版 boolean grid 到新版 CellState grid
@@ -59,7 +59,7 @@ function migrateGrid(grid: (boolean | CellState | number)[][]): CellState[][] {
       }
       // 其它未知类型降级为关闭
       return CELL_OFF;
-    })
+    }),
   );
 }
 
@@ -409,14 +409,14 @@ export function getNextPatternName(existingPatterns: Pattern[]): string {
  * @returns 渲染器类型，默认为 "vexflow"
  */
 export function getNotationRenderer(): NotationRenderer {
-  try {
-    const value = localStorage.getItem(NOTATION_RENDERER_KEY);
-    if (value && VALID_RENDERERS.has(value as NotationRenderer)) {
-      return value as NotationRenderer;
-    }
-  } catch (error) {
-    console.error("Failed to get notation renderer:", error);
-  }
+  // try {
+  //   const value = localStorage.getItem(NOTATION_RENDERER_KEY);
+  //   if (value && VALID_RENDERERS.has(value as NotationRenderer)) {
+  //     return value as NotationRenderer;
+  //   }
+  // } catch (error) {
+  //   console.error("Failed to get notation renderer:", error);
+  // }
   return DEFAULT_NOTATION_RENDERER;
 }
 
