@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback, useState } from "react";
-import { DrumNotation, RENDERER_CHANGE_EVENT } from "./DrumNotation";
+import { useRef, useEffect, useCallback /* 临时注释: useState, NotationRenderer */ } from "react";
+import { DrumNotation /* 临时注释: RENDERER_CHANGE_EVENT */ } from "./DrumNotation";
 import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
@@ -12,9 +12,7 @@ import { usePlaybackAutoScroll } from "../../hooks/usePlaybackAutoScroll";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import {
   serializePatternToJSON,
-  getNotationRenderer,
-  setNotationRenderer,
-  type NotationRenderer,
+  /* 临时注释: getNotationRenderer, setNotationRenderer, type NotationRenderer, */
 } from "../../utils/storage";
 import "./PatternEditor.css";
 
@@ -74,19 +72,20 @@ export function PatternEditor({
   const cellSize = useGridCellSize(); // 动态计算单元格大小
 
   // 渲染器切换状态
-  const [notationRenderer, setNotationRendererState] = useState<NotationRenderer>(() =>
-    getNotationRenderer()
-  );
-
-  // 切换渲染器
-  const handleToggleRenderer = useCallback(() => {
-    const newRenderer: NotationRenderer =
-      notationRenderer === "legacy" ? "vexflow" : "legacy";
-    setNotationRenderer(newRenderer);
-    setNotationRendererState(newRenderer);
-    // 派发事件通知 DrumNotation 组件
-    window.dispatchEvent(new CustomEvent(RENDERER_CHANGE_EVENT));
-  }, [notationRenderer]);
+  // 临时注释: 固定为 vexflow，不再读取 localstorage，不再使用 useState
+  // const [notationRenderer, setNotationRendererState] = useState<NotationRenderer>(() =>
+  //   getNotationRenderer()
+  // );
+  // const [notationRenderer] = useState<NotationRenderer>("vexflow");
+  // notationRenderer 用于将来恢复切换功能时使用
+  // const handleToggleRenderer = useCallback(() => {
+  //   const newRenderer: NotationRenderer =
+  //     notationRenderer === "legacy" ? "vexflow" : "legacy";
+  //   setNotationRendererState(newRenderer);
+  //   setNotationRendererState(newRenderer);
+  //   // 派发事件通知 DrumNotation 组件
+  //   window.dispatchEvent(new CustomEvent(RENDERER_CHANGE_EVENT));
+  // }, [notationRenderer]);
 
   // 播放时自动滚动
   const { doScroll } = usePlaybackAutoScroll({
@@ -247,8 +246,8 @@ export function PatternEditor({
           />
         </div>
         <div className="pattern-editor-actions-right">
-          {/* 渲染器切换按钮 */}
-          <button
+          {/* 临时注释: 隐藏渲染器切换按钮，固定使用 vexflow */}
+          {/* <button
             className={`action-button renderer-toggle-button ${
               notationRenderer === "vexflow" ? "active" : ""
             }`}
@@ -264,7 +263,7 @@ export function PatternEditor({
                 : "Using Legacy (click to switch to VexFlow)"
             }
           >
-            {/* 音符图标 */}
+            音符图标
             <svg
               width="14"
               height="14"
@@ -279,7 +278,7 @@ export function PatternEditor({
               <circle cx="6" cy="18" r="3" />
               <circle cx="18" cy="16" r="3" />
             </svg>
-          </button>
+          </button> */}
           {/* 保存按钮 / 导出输入框 - 仅在非草稿模式下显示 */}
           {!isDraftMode &&
             savedPatterns.some((p) => p.id === pattern.id) &&

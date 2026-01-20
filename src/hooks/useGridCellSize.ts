@@ -3,7 +3,7 @@ import { APP_MAX_WIDTH } from "../utils/constants";
 
 // 基准常量
 const BASE_WIDTH = 393; // 基准屏幕宽度
-const BASE_CELL_SIZE = 23; // 基准单元格大小
+const BASE_CELL_SIZE = 23.0625; // 基准单元格大小 (369/16=23.0625，确保1小节=369px)
 const MAX_WIDTH = APP_MAX_WIDTH; // 最大容器宽度（从 constants 导入）
 const APP_PADDING = 24; // .app 的左右 padding 总和 (12px * 2)
 const MIN_VIEWPORT_WIDTH = 375; // 最小视口宽度，小于此宽度不再缩放

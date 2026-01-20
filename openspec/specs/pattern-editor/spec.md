@@ -34,16 +34,13 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 
 ### Requirement: 鼓谱显示
 
-系统 SHALL 显示五线谱格式的鼓谱，并允许用户选择渲染器实现。
+系统 SHALL 使用 VexFlow 渲染器显示五线谱格式的鼓谱。
 
-#### Scenario: 渲染器切换
+#### Note: 渲染器固定
 
-- **GIVEN** 鼓谱区域已渲染
-- **WHEN** 用户在 UI 中切换鼓谱渲染方式（VexFlow / Legacy）
-- **THEN** 鼓谱立即使用新的渲染方式重新绘制
-- **AND** 用户选择在刷新页面后仍然保持
-- **AND** 渲染器选择 SHALL 为全局设置（不随单个 Pattern 单独保存）
-- **AND** 系统 SHALL 将该选择持久化到 localStorage，key 为 `drummer-notation-renderer`
+- 系统 SHALL 始终使用 VexFlow 渲染器，不再提供渲染器切换选项
+- 渲染器选择不再从 localStorage 读取
+- Legacy 渲染器代码保留但不再使用
 
 #### Scenario: VexFlow 渲染异常时静默回退
 
@@ -52,26 +49,12 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 系统 SHALL 自动回退到 Legacy 渲染器以保证鼓谱区域可用
 - **AND** 该回退 SHALL 为静默回退（不强制弹出提示）
 
-#### Scenario: 切换控件的最小 UI 约束
-
-- **GIVEN** Pattern Editor 已渲染且包含鼓谱区域
-- **WHEN** 用户需要切换鼓谱渲染方式
-- **THEN** 系统 SHALL 在 `pattern-editor-actions-right` 区域提供一个可点击的切换控件
-- **AND** 该控件 SHALL 位于 `pattern-editor-actions-right` 内部的最左侧
-- **AND** 该控件 SHALL 为"音符 SVG 图标"的 button 按钮（不使用文字标签）
-- **AND** 默认样式 SHOULD 与 `pattern-tab` 一致
-- **AND** 当渲染器为 VexFlow 时，该按钮 SHALL 处于 active 状态，背景色为 primary
-- **AND** 用户点击该按钮时：
-  - 若当前为 Legacy，系统 SHALL 切换为 VexFlow 渲染
-  - 若当前为 VexFlow，系统 SHALL 切换回 Legacy 渲染
-
 #### Scenario: 实时同步
 
 - **GIVEN** Pattern 网格有内容
 - **WHEN** 用户编辑网格
 - **THEN** 鼓谱实时更新显示
-- **AND** 当选择 VexFlow 渲染器时，系统 SHALL 使用 VexFlow 原生 API 渲染标准鼓谱
-- **AND** 当选择 Legacy 渲染器时，系统 MAY 使用自绘 SVG 实现
+- **AND** 系统 SHALL 使用 VexFlow 原生 API 渲染标准鼓谱
 
 #### Scenario: 鼓谱符头样式（常见鼓谱）
 
@@ -82,8 +65,8 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 #### Scenario: 鼓谱颜色一致性
 
 - **GIVEN** 鼓谱区域已渲染
-- **WHEN** 使用 Legacy 或 VexFlow 渲染器绘制五线谱与音符
-- **THEN** 五线谱线条与音符颜色 SHALL 与 Legacy 绘制一致（使用同一套主题色变量）
+- **WHEN** 使用 VexFlow 渲染器绘制五线谱与音符
+- **THEN** 五线谱线条与音符颜色 SHALL 遵循统一的主题色方案
 
 #### Scenario: 符杠连接规则
 
@@ -93,25 +76,24 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **AND** 上声部符杠使用 `stemDirection: 1`
 - **AND** 下声部符杠使用 `stemDirection: -1`
 
-#### Scenario: 五线谱位置与六线谱偏移
+#### Scenario: 五线谱位置
 
-- **GIVEN** 当前版本使用 Legacy 自绘 SVG 鼓谱
+- **GIVEN** 鼓谱区域已渲染
 - **WHEN** 渲染谱线背景
 - **THEN** 系统使用"六线谱"视觉（最上方线等价于上加一线）
 
-#### Scenario: 垂直布局一致（切换无跳变）
+#### Scenario: 垂直布局
 
-- **GIVEN** 用户在 Legacy 与 VexFlow 之间切换渲染器
-- **WHEN** 渲染器切换发生
-- **THEN** 鼓谱区域的整体高度 SHALL 与 Legacy 一致（108px）
+- **GIVEN** 鼓谱区域已渲染
+- **WHEN** 渲染完成
+- **THEN** 鼓谱区域的整体高度 SHALL 为 108px
 - **AND** 五线谱在鼓谱区域内 SHOULD 垂直居中
-- **AND** 切换时不出现高度变化或明显跳动
 
 #### Scenario: 音符水平位置与网格对齐
 
 - **GIVEN** 鼓谱区域与下方网格区域共享相同的 subdivision 栅格
 - **WHEN** 渲染任意 subdivision 上的音符
-- **THEN** 音符的水平位置 SHALL 与对应网格单元格的中心对齐（如 Legacy 的绘制方式）
+- **THEN** 音符的水平位置 SHALL 与对应网格单元格的中心对齐
 
 #### Scenario: 播放位置指示
 
