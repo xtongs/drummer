@@ -79,7 +79,6 @@
 
   /* 应用容器尺寸 */
   --app-max-width: 700px;
-  --app-min-width: 375px; /* 最小视口宽度，小于此宽度 grid cell 不再缩放 */
 
   /* 网格单元格大小（动态计算）
    * 基准：393px 视口宽度下 cellSize = 23px
@@ -90,17 +89,15 @@
    *   最大单元格：(var(--app-max-width) - var(--spacing-md) * 2) * 23 / 369
    * real-size 与 cell-size 比例：20 / 23
    *   最大 real-size：(var(--app-max-width) - var(--spacing-md) * 2) * 20 / 369
-   * 使用 clamp() 限制最小值，当视口宽度小于 --app-min-width 时保持基准大小
+   * 使用 clamp() 限制最小值 23px，当视口宽度小于 375px 时保持基准大小
    */
-  --grid-cell-min-size: calc(23px * var(--app-min-width) / 393);
-  --grid-cell-real-min-size: calc(20px * var(--app-min-width) / 393);
   --grid-cell-size: clamp(
-    var(--grid-cell-min-size),
+    23px,
     5.852vw,
     calc((var(--app-max-width) - var(--spacing-md) * 2) * 23 / 369)
   );
   --grid-cell-real-size: clamp(
-    var(--grid-cell-real-min-size),
+    20px,
     5.09vw,
     calc((var(--app-max-width) - var(--spacing-md) * 2) * 20 / 369)
   );

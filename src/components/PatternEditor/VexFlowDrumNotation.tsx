@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import { Renderer, Stave, Voice, Formatter, Beam } from "vexflow";
+import { Renderer, Stave, Voice, Formatter, Beam, Barline } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
@@ -161,6 +161,10 @@ export function VexFlowDrumNotation({
       const stave = new Stave(staveX, STAFF_Y, staveWidth);
       stave.setContext(context);
       stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
+      // 最后一个小节使用 END 类型的结束竖线（双竖线加粗）
+      if (bar === pattern.bars - 1) {
+        stave.setEndBarType(Barline.type.END);
+      }
       stave.draw();
 
       // 获取该小节的音符事件
@@ -336,12 +340,21 @@ export function VexFlowDrumNotation({
       }
     }
 
-    // 修改所有小节的五条横线为灰色
+    // 修改所有小节的五条横线和竖线为灰色
     const svg = container.querySelector("svg");
     if (svg) {
       const staveGroups = svg.querySelectorAll(".vf-stave");
       staveGroups.forEach((staveGroup) => {
         staveGroup.setAttribute("stroke", "#aaa");
+      });
+      // 修改竖线颜色
+      const staveBarlines = svg.querySelectorAll(".vf-stavebarline");
+      staveBarlines.forEach((barline) => {
+        const rects = barline.querySelectorAll("rect");
+        rects.forEach((rect) => {
+          rect.setAttribute("stroke", "transparent");
+          rect.setAttribute("fill", "#333");
+        });
       });
     }
 
