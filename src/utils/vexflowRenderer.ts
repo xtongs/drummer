@@ -1,5 +1,9 @@
 import { StaveNote, Dot, Annotation, type StaveNoteStruct } from "vexflow";
-import { DRUM_TO_VEXFLOW, type VexflowNoteEvent, buildBarTimeline } from "./vexflowNotation";
+import {
+  DRUM_TO_VEXFLOW,
+  type VexflowNoteEvent,
+  buildBarTimeline,
+} from "./vexflowNotation";
 import type { VexflowDurationToken } from "./vexflowDurations";
 import type { DrumType } from "../types";
 
@@ -74,17 +78,20 @@ export function getFixedX(
 /**
  * 添加 Hi-Hat Open 标注
  */
-export function addHiHatOpenAnnotation(note: StaveNote, drums: DrumType[]): void {
+export function addHiHatOpenAnnotation(
+  note: StaveNote,
+  drums: DrumType[],
+): void {
   if (!drums.includes("Hi-Hat Open")) {
     return;
   }
 
-  const annotation = new Annotation("o");
+  const annotation = new Annotation("○");
   annotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
   annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
-  annotation.setFont("Consolas", 10, "normal");
-  annotation.setXShift(5);
-  annotation.setYShift(40);
+  annotation.setFont("", 5, 900);
+  annotation.setXShift(-11);
+  annotation.setYShift(32);
   note.addModifier(annotation, 0);
 }
 
@@ -102,9 +109,9 @@ export function addGraceNoteAnnotation(
   const annotation = new Annotation("♪");
   annotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
   annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
-  annotation.setFont("Consolas", 20, "normal");
+  annotation.setFont("", 15, "normal");
   annotation.setXShift(10);
-  annotation.setYShift(42);
+  annotation.setYShift(43);
   note.addModifier(annotation, 0);
 }
 
@@ -146,7 +153,10 @@ export function createStaveNote(
     }
   }
 
-  addHiHatOpenAnnotation(note, event.drums.map((d) => d.drum));
+  addHiHatOpenAnnotation(
+    note,
+    event.drums.map((d) => d.drum),
+  );
   addGraceNoteAnnotation(note, event.graceDrums);
 
   return note;
@@ -240,9 +250,11 @@ export function groupByQuarterBar(
     if (!isBeamable(item.note)) continue;
     const startUnits32 =
       item.startUnits32InBar ??
-      (item.event.subdivision - barStartSub) * 2 +
-      item.event.subPosition;
-    const idx = Math.min(3, Math.max(0, Math.floor(startUnits32 / quarterUnits32)));
+      (item.event.subdivision - barStartSub) * 2 + item.event.subPosition;
+    const idx = Math.min(
+      3,
+      Math.max(0, Math.floor(startUnits32 / quarterUnits32)),
+    );
     groups[idx]!.push(item.note);
   }
   return groups.filter((g) => g.length > 0);

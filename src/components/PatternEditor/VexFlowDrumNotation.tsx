@@ -1,18 +1,10 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import {
-  Renderer,
-  Stave,
-  Voice,
-  Formatter,
-  Beam,
-} from "vexflow";
+import { Renderer, Stave, Voice, Formatter, Beam } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
 import "./DrumNotation.css";
-import {
-  patternToVexflowNoteEvents,
-} from "../../utils/vexflowNotation";
+import { patternToVexflowNoteEvents } from "../../utils/vexflowNotation";
 import {
   getFixedX,
   getExistingXShift,
@@ -51,7 +43,12 @@ export function VexFlowDrumNotation({
   const BUFFER_BARS = 1;
 
   const calculateVisibleBars = useCallback(() => {
-    if (!_scrollContainerRef || !_scrollContainerRef.current || !containerRef.current) return;
+    if (
+      !_scrollContainerRef ||
+      !_scrollContainerRef.current ||
+      !containerRef.current
+    )
+      return;
 
     const scrollContainer = _scrollContainerRef.current;
     const container = containerRef.current;
@@ -63,7 +60,10 @@ export function VexFlowDrumNotation({
     const visibleRight = visibleLeft + scrollRect.width;
 
     const startBar = Math.max(0, Math.floor(visibleLeft / staveWidth));
-    const endBar = Math.min(pattern.bars - 1, Math.ceil(visibleRight / staveWidth));
+    const endBar = Math.min(
+      pattern.bars - 1,
+      Math.ceil(visibleRight / staveWidth),
+    );
 
     const barsToRender: number[] = [];
     const bufferStart = Math.max(0, startBar - BUFFER_BARS);
@@ -163,15 +163,6 @@ export function VexFlowDrumNotation({
       stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
       stave.draw();
 
-      // 修改五线谱五条横线为灰色
-      const svg = container.querySelector("svg");
-      if (svg) {
-        const staveGroup = svg.querySelector(".vf-stave");
-        if (staveGroup) {
-          staveGroup.setAttribute("stroke", "#9ca3af");
-        }
-      }
-
       // 获取该小节的音符事件
       const { upperVoice, lowerVoice } = patternToVexflowNoteEvents(pattern);
 
@@ -254,11 +245,16 @@ export function VexFlowDrumNotation({
 
         // 格式化后手动设置每个音符的 x 坐标
         for (const noteObj of allNoteObjs) {
-          const { note, event, isRest, startUnits32InBar, durationUnits32 } = noteObj;
+          const { note, event, isRest, startUnits32InBar, durationUnits32 } =
+            noteObj;
 
           let targetX: number;
           if (isRest && startUnits32InBar !== undefined && durationUnits32) {
-            targetX = getRestTargetX(startUnits32InBar, durationUnits32, cellWidth);
+            targetX = getRestTargetX(
+              startUnits32InBar,
+              durationUnits32,
+              cellWidth,
+            );
           } else {
             targetX =
               getFixedX(
@@ -282,14 +278,22 @@ export function VexFlowDrumNotation({
 
         // 创建符杠
         const allBeams: Beam[] = [];
-        for (const group of groupByQuarterBar(upperNotes, barStartSub, barSubdivisions)) {
+        for (const group of groupByQuarterBar(
+          upperNotes,
+          barStartSub,
+          barSubdivisions,
+        )) {
           const beams = Beam.generateBeams(group, {
             stemDirection: 1,
             flatBeams: true,
           });
           allBeams.push(...beams);
         }
-        for (const group of groupByQuarterBar(lowerNotes, barStartSub, barSubdivisions)) {
+        for (const group of groupByQuarterBar(
+          lowerNotes,
+          barStartSub,
+          barSubdivisions,
+        )) {
           const beams = Beam.generateBeams(group, {
             stemDirection: -1,
             flatBeams: true,
@@ -332,11 +336,23 @@ export function VexFlowDrumNotation({
       }
     }
 
+    // 修改所有小节的五条横线为灰色
+    const svg = container.querySelector("svg");
+    if (svg) {
+      const staveGroups = svg.querySelectorAll(".vf-stave");
+      staveGroups.forEach((staveGroup) => {
+        staveGroup.setAttribute("stroke", "#aaa");
+      });
+    }
+
     // 绘制当前播放位置高亮
     if (currentBeat !== undefined && currentBeat >= 0) {
       const svg = container.querySelector("svg");
       if (svg) {
-        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        const rect = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect",
+        );
         rect.setAttribute("x", String(currentBeat * cellWidth));
         rect.setAttribute("y", "0");
         rect.setAttribute("width", String(cellWidth));
