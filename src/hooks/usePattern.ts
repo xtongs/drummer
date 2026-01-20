@@ -8,6 +8,7 @@ import {
   CELL_DOUBLE_32,
   CELL_FIRST_32,
   CELL_SECOND_32,
+  DRUM_FEATURE_CONFIG,
 } from "../types";
 import {
   DEFAULT_BPM,
@@ -90,15 +91,20 @@ export function usePattern(initialPattern: Pattern) {
         return prev;
       }
 
+      const drumType = prev.drums[drumIndex];
+      const config = DRUM_FEATURE_CONFIG[drumType];
+
       const newGrid = prev.grid.map((row, i) => {
         if (i === drumIndex) {
           const newRow = [...row];
           // 循环切换：正常 -> 鬼音 -> 倚音 -> 正常
           let nextState: typeof currentState;
           if (currentState === CELL_NORMAL) {
-            nextState = CELL_GHOST;
+            // 只有支持鬼音时才能切换到鬼音
+            nextState = config.allowGhost ? CELL_GHOST : CELL_NORMAL;
           } else if (currentState === CELL_GHOST) {
-            nextState = CELL_GRACE;
+            // 只有支持倚音时才能切换到倚音，否则回到正常
+            nextState = config.allowGrace ? CELL_GRACE : CELL_NORMAL;
           } else {
             // CELL_GRACE -> CELL_NORMAL
             nextState = CELL_NORMAL;
@@ -122,6 +128,30 @@ export function usePattern(initialPattern: Pattern) {
     (drumIndex: number, beatIndex: number) => {
       setPattern((prev) => {
         const currentState = prev.grid[drumIndex]?.[beatIndex];
+        const drumType = prev.drums[drumIndex];
+        const config = DRUM_FEATURE_CONFIG[drumType];
+
+        // 如果鼓件不支持32分音符，则不允许切换
+        if (!config.allowThirtySecond) {
+          // 如果当前未激活，激活为正常音符
+          if (currentState === CELL_OFF) {
+            const newGrid = prev.grid.map((row, i) => {
+              if (i === drumIndex) {
+                const newRow = [...row];
+                newRow[beatIndex] = CELL_NORMAL;
+                return newRow;
+              }
+              return row;
+            });
+            return {
+              ...prev,
+              grid: newGrid,
+              updatedAt: Date.now(),
+            };
+          }
+          // 已激活时不做任何改变
+          return prev;
+        }
 
         let nextState: CellState;
         if (

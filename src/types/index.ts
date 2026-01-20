@@ -11,6 +11,36 @@ export type DrumType =
   | "Tom 3" // 三嗵鼓（低音）
   | "Kick"; // 底鼓
 
+/**
+ * 鼓件特性配置
+ * 定义哪些鼓件支持哪些音符特性
+ */
+export interface DrumFeatureConfig {
+  /** 是否支持鬼音 */
+  allowGhost: boolean;
+  /** 是否支持倚音 */
+  allowGrace: boolean;
+  /** 是否支持32分音符 */
+  allowThirtySecond: boolean;
+}
+
+/**
+ * 默认鼓件特性配置
+ * 每种鼓件支持的音符特性
+ */
+export const DRUM_FEATURE_CONFIG: Record<DrumType, DrumFeatureConfig> = {
+  "Crash 1": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Crash 2": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Hi-Hat Open": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Hi-Hat Closed": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  Ride: { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Tom 1": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Tom 2": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  Snare: { allowGhost: true, allowGrace: true, allowThirtySecond: true }, // 只有军鼓支持倚音
+  "Tom 3": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  Kick: { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+};
+
 // 拍号类型
 export type TimeSignature = [number, number]; // [beatsPerBar, noteValue]
 
