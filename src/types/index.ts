@@ -29,16 +29,16 @@ export interface DrumFeatureConfig {
  * 每种鼓件支持的音符特性
  */
 export const DRUM_FEATURE_CONFIG: Record<DrumType, DrumFeatureConfig> = {
-  "Crash 1": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  "Crash 2": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  "Hi-Hat Open": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  "Hi-Hat Closed": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  Ride: { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  "Tom 1": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  "Tom 2": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Crash 1": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Crash 2": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Hi-Hat Open": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Hi-Hat Closed": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  Ride: { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Tom 1": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Tom 2": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
   Snare: { allowGhost: true, allowGrace: true, allowThirtySecond: true }, // 只有军鼓支持倚音
-  "Tom 3": { allowGhost: true, allowGrace: false, allowThirtySecond: false },
-  Kick: { allowGhost: true, allowGrace: false, allowThirtySecond: false },
+  "Tom 3": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  Kick: { allowGhost: true, allowGrace: false, allowThirtySecond: true },
 };
 
 // 拍号类型
