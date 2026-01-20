@@ -1,8 +1,9 @@
-import { useRef, useLayoutEffect, useCallback, useState, useMemo } from "react";
+import { useRef } from "react";
 import { GridCell } from "./GridCell";
 import type { Pattern } from "../../types";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
+import { useVisibleRange } from "../../hooks/useVisibleRange";
 import "./Grid.css";
 
 interface GridProps {
@@ -29,73 +30,16 @@ export function Grid({
   const totalSubdivisions = pattern.grid[0]?.length || 0;
   const totalWidth = totalSubdivisions * cellSize;
 
-  const [visibleSubdivisions, setVisibleSubdivisions] = useState<{
-    start: number;
-    end: number;
-  }>({ start: 0, end: totalSubdivisions });
-
   const BUFFER_SUBDIVISIONS = SUBDIVISIONS_PER_BEAT * 2;
 
-  const calculateVisibleSubdivisions = useCallback(() => {
-    if (!_scrollContainerRef?.current) {
-      setVisibleSubdivisions({ start: 0, end: totalSubdivisions });
-      return;
-    }
-
-    if (!gridContentRef.current) {
-      setVisibleSubdivisions({ start: 0, end: totalSubdivisions });
-      return;
-    }
-
-    const scrollContainer = _scrollContainerRef.current;
-    const gridContent = gridContentRef.current;
-
-    const scrollRect = scrollContainer.getBoundingClientRect();
-    const contentRect = gridContent.getBoundingClientRect();
-
-    const visibleLeft = scrollRect.left - contentRect.left;
-    const visibleRight = visibleLeft + scrollRect.width;
-
-    const startSubdivision = Math.max(
-      0,
-      Math.floor(visibleLeft / cellSize) - BUFFER_SUBDIVISIONS,
-    );
-    const endSubdivision = Math.min(
-      pattern.grid[0]?.length || 0,
-      Math.ceil(visibleRight / cellSize) + BUFFER_SUBDIVISIONS,
-    );
-
-    setVisibleSubdivisions({ start: startSubdivision, end: endSubdivision });
-  }, [_scrollContainerRef, cellSize, pattern.grid, totalWidth]);
-
-  useLayoutEffect(() => {
-    calculateVisibleSubdivisions();
-
-    const scrollContainer = _scrollContainerRef?.current;
-    if (!scrollContainer) return;
-
-    const handleScroll = () => {
-      requestAnimationFrame(calculateVisibleSubdivisions);
-    };
-
-    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", calculateVisibleSubdivisions);
-
-    return () => {
-      scrollContainer.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", calculateVisibleSubdivisions);
-    };
-  }, [_scrollContainerRef, calculateVisibleSubdivisions]);
-
-  const visibleSubdivisionsSet = useMemo(
-    () =>
-      new Set(
-        Array.from(
-          { length: visibleSubdivisions.end - visibleSubdivisions.start },
-          (_, i) => visibleSubdivisions.start + i,
-        ),
-      ),
-    [visibleSubdivisions],
+  const { visibleSet } = useVisibleRange(
+    _scrollContainerRef,
+    gridContentRef,
+    {
+      itemSize: cellSize,
+      totalItems: totalSubdivisions,
+      bufferItems: BUFFER_SUBDIVISIONS,
+    },
   );
 
   return (
@@ -145,7 +89,7 @@ export function Grid({
                   style={{ width: `${totalWidth}px` }}
                 >
                   {row.map((cellState, subdivisionIndex) => {
-                    if (!visibleSubdivisionsSet.has(subdivisionIndex)) {
+                    if (!visibleSet.has(subdivisionIndex)) {
                       return null;
                     }
 

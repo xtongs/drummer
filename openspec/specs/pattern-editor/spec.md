@@ -285,6 +285,26 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 自动滚动使播放位置保持可见
 - **AND** 滚动平滑，不影响用户体验
 
+### Requirement: 性能优化（Lazy Loading）
+
+系统 SHALL 使用 lazy loading 优化长 Pattern 的渲染性能。
+
+#### Scenario: 视口外内容不渲染
+
+- **GIVEN** Pattern 包含多个小节（超出视口宽度）
+- **WHEN** 用户滚动到特定区域
+- **THEN** 系统只渲染视口可见区域及缓冲区内的内容
+- **AND** 视口外的小节/单元格不创建 DOM 节点
+- **AND** 滚动时动态更新可见区域
+
+#### Scenario: 鼓谱 Lazy Loading
+
+- **GIVEN** 鼓谱区域已渲染
+- **WHEN** 视口内显示部分小节
+- **THEN** VexFlow 只渲染可见小节及缓冲区的小节
+- **AND** 缓冲区大小建议为 1-2 个小节
+- **AND** 滚动后自动重新计算并渲染新可见区域
+
 ### Requirement: Pattern 标签页
 
 系统 SHALL 显示已保存的 Pattern 标签页。

@@ -76,13 +76,17 @@ export function useSingleLongPress(options: UseSingleLongPressOptions) {
     if (!element) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // 阻止默认行为，防止 iOS 上的滚动和长按弹出菜单
-      e.preventDefault();
+      // 只有在事件可取消时才阻止默认行为（避免滚动时警告）
+      if (e.cancelable) {
+        e.preventDefault();
+      }
       startPress();
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      e.preventDefault();
+      if (e.cancelable) {
+        e.preventDefault();
+      }
       handlePressEnd();
     };
 

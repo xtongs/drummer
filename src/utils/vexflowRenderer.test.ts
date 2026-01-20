@@ -1,0 +1,227 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  getExistingXShift,
+  getFixedX,
+  isBeamable,
+  groupByQuarterBar,
+  type NoteWithMeta,
+} from "./vexflowRenderer";
+
+// Mock VexFlow
+const mockStaveNote = {
+  getXShift: vi.fn(),
+  x_shift: undefined as number | undefined,
+  getDuration: vi.fn(),
+  getStem: vi.fn(() => ({ setOptions: vi.fn() })),
+  addModifier: vi.fn(),
+};
+
+vi.mock("vexflow", () => ({
+  StaveNote: vi.fn().mockImplementation(() => mockStaveNote),
+  Dot: { buildAndAttach: vi.fn() },
+  Annotation: {
+    VerticalJustify: { TOP: 1 },
+    HorizontalJustify: { CENTER_STEM: 2 },
+  },
+}));
+
+// Mock DRUM_TO_VEXFLOW
+vi.mock("./vexflowNotation", () => ({
+  DRUM_TO_VEXFLOW: {
+    "Kick": { keys: ["f/4"], isLowerVoice: true },
+    "Snare": { keys: ["c/5"], isLowerVoice: false },
+    "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false },
+    "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
+    "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
+  },
+}));
+
+describe("vexflowRenderer utils", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("getExistingXShift", () => {
+    it("应该返回 getXShift() 的值", () => {
+      mockStaveNote.getXShift.mockReturnValue(10);
+      const result = getExistingXShift(mockStaveNote as unknown as import("vexflow").StaveNote);
+      expect(result).toBe(10);
+    });
+
+    it("当 getXShift() 未定义时返回 0", () => {
+      mockStaveNote.getXShift.mockReturnValue(undefined);
+      const result = getExistingXShift(mockStaveNote as unknown as import("vexflow").StaveNote);
+      expect(result).toBe(0);
+    });
+  });
+
+  describe("getFixedX", () => {
+    const cellWidth = 50;
+    const barStartSub = 0;
+
+    it("应该计算普通音符的中心位置", () => {
+      const result = getFixedX(4, 0, cellWidth, barStartSub, false);
+      expect(result).toBe(225); // (4 * 50) + 50/2 = 225
+    });
+
+    it("应该对 32 分音符应用偏移 (subPosition=0)", () => {
+      const offset = cellWidth * 0.22; // 11
+      const baseX = 4 * cellWidth + cellWidth / 2; // 225
+      const result = getFixedX(4, 0, cellWidth, barStartSub, true);
+      expect(result).toBe(baseX - offset);
+    });
+
+    it("应该对 32 分音符应用偏移 (subPosition=1)", () => {
+      const offset = cellWidth * 0.22; // 11
+      const baseX = 4 * cellWidth + cellWidth / 2; // 225
+      const result = getFixedX(4, 1, cellWidth, barStartSub, true);
+      expect(result).toBe(baseX + offset);
+    });
+
+    it("应该计算四分休止符的中心位置", () => {
+      const result = getFixedX(0, 0, cellWidth, barStartSub, false, 4);
+      expect(result).toBe(100); // (0 + 1.5) * 50 + 50/2 = 100
+    });
+
+    it("应该计算八分休止符的中心位置", () => {
+      const result = getFixedX(2, 0, cellWidth, barStartSub, false, 8);
+      expect(result).toBe(150); // (2 + 0.5) * 50 + 50/2 = 150
+    });
+
+    it("应该处理 barStartSub 不为 0 的情况", () => {
+      const result = getFixedX(20, 0, cellWidth, 16, false);
+      // localSub = 20 - 16 = 4
+      expect(result).toBe(225);
+    });
+  });
+
+  describe("isBeamable", () => {
+    it("八分音符应该可以用符杠连接", () => {
+      mockStaveNote.getDuration.mockReturnValue("8");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+    });
+
+    it("十六分音符应该可以用符杠连接", () => {
+      mockStaveNote.getDuration.mockReturnValue("16");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+    });
+
+    it("四分音符不应该用符杠连接", () => {
+      mockStaveNote.getDuration.mockReturnValue("4");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+    });
+
+    it("二分音符不应该用符杠连接", () => {
+      mockStaveNote.getDuration.mockReturnValue("2");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+    });
+
+    it("八分休止符应该可以用符杠连接", () => {
+      mockStaveNote.getDuration.mockReturnValue("8r");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+    });
+
+    it("无效的 duration 应该返回 false", () => {
+      mockStaveNote.getDuration.mockReturnValue("invalid");
+      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+    });
+  });
+
+  describe("groupByQuarterBar", () => {
+    const barStartSub = 0;
+    const barSubdivisions = 16; // 4/4 拍，一小节 16 个 16 分音符
+
+    const createMockItem = (
+      startUnits32InBar: number,
+    ): NoteWithMeta => ({
+      note: mockStaveNote as unknown as import("vexflow").StaveNote,
+      event: {
+        subdivision: Math.floor(startUnits32InBar / 2),
+        subPosition: (startUnits32InBar % 2) as 0 | 1,
+        drums: [],
+        is32nd: startUnits32InBar % 2 === 1,
+        kind: "normal" as const,
+      },
+      isRest: false,
+      startUnits32InBar,
+      durationUnits32: 4,
+    });
+
+    beforeEach(() => {
+      mockStaveNote.getDuration.mockReturnValue("8");
+    });
+
+    it("应该将音符按 1/4 小节分组", () => {
+      const items = [
+        createMockItem(0),
+        createMockItem(2),
+        createMockItem(10),
+        createMockItem(18),
+        createMockItem(26),
+      ];
+
+      const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
+
+      expect(result).toHaveLength(4);
+      expect(result[0]).toHaveLength(2);
+      expect(result[1]).toHaveLength(1);
+      expect(result[2]).toHaveLength(1);
+      expect(result[3]).toHaveLength(1);
+    });
+
+    it("应该过滤不可符杠连接的音符", () => {
+      const items: NoteWithMeta[] = [
+        createMockItem(0),
+        {
+          ...createMockItem(4),
+          note: { ...mockStaveNote, getDuration: () => "4" } as unknown as import("vexflow").StaveNote,
+        },
+      ];
+
+      const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveLength(1);
+    });
+
+    it("应该处理空数组", () => {
+      const result = groupByQuarterBar([], barStartSub, barSubdivisions);
+      expect(result).toEqual([]);
+    });
+
+    it("应该处理所有音符在同一 1/4 小节的情况", () => {
+      const items = [
+        createMockItem(0),
+        createMockItem(2),
+        createMockItem(4),
+        createMockItem(6),
+      ];
+
+      const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveLength(4);
+    });
+
+    it("应该使用 event 中的位置信息当 startUnits32InBar 未定义时", () => {
+      const items: NoteWithMeta[] = [
+        {
+          note: mockStaveNote as unknown as import("vexflow").StaveNote,
+          event: {
+            subdivision: 2,
+            subPosition: 0 as 0 | 1,
+            drums: [],
+            is32nd: false,
+            kind: "normal" as const,
+          },
+          isRest: false,
+          durationUnits32: 4,
+        },
+      ];
+
+      const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
+
+      expect(result).toHaveLength(1);
+    });
+  });
+});
