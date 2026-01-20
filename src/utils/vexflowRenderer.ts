@@ -267,6 +267,88 @@ export function groupByQuarterBar(
 }
 
 /**
+ * 检查音符列表中是否包含十六分音符或更短的音符
+ */
+export function hasSixteenthOrShorter(items: NoteWithMeta[]): boolean {
+  for (const item of items) {
+    if (item.isRest) continue;
+    const duration = item.note.getDuration();
+    const numeric = Number.parseInt(duration.replace(/[rd]/g, ""), 10);
+    // 16 表示十六分音符，更大的数字表示更短的音符
+    if (numeric >= 16) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 按半小节检查是否有十六分音符
+ * @param items 音符列表
+ * @param barSubdivisions 小节内的细分数量（16 = 4/4拍）
+ * @returns [前半小节是否有十六分, 后半小节是否有十六分]
+ */
+export function hasSixteenthByHalfBar(
+  items: NoteWithMeta[],
+  barSubdivisions: number,
+): [boolean, boolean] {
+  const barUnits32 = barSubdivisions * 2;
+  const halfUnits32 = Math.floor(barUnits32 / 2);
+
+  let firstHalfHasSixteenth = false;
+  let secondHalfHasSixteenth = false;
+
+  for (const item of items) {
+    if (item.isRest) continue;
+
+    const duration = item.note.getDuration();
+    const numeric = Number.parseInt(duration.replace(/[rd]/g, ""), 10);
+
+    if (numeric >= 16) {
+      const startUnits32 =
+        item.startUnits32InBar ??
+        item.event.subdivision * 2 + item.event.subPosition;
+
+      if (startUnits32 < halfUnits32) {
+        firstHalfHasSixteenth = true;
+      } else {
+        secondHalfHasSixteenth = true;
+      }
+    }
+  }
+
+  return [firstHalfHasSixteenth, secondHalfHasSixteenth];
+}
+
+/**
+ * 将音符按半小节分组
+ */
+export function splitNotesByHalfBar(
+  items: NoteWithMeta[],
+  barSubdivisions: number,
+): [NoteWithMeta[], NoteWithMeta[]] {
+  const barUnits32 = barSubdivisions * 2;
+  const halfUnits32 = Math.floor(barUnits32 / 2);
+
+  const firstHalf: NoteWithMeta[] = [];
+  const secondHalf: NoteWithMeta[] = [];
+
+  for (const item of items) {
+    const startUnits32 =
+      item.startUnits32InBar ??
+      item.event.subdivision * 2 + item.event.subPosition;
+
+    if (startUnits32 < halfUnits32) {
+      firstHalf.push(item);
+    } else {
+      secondHalf.push(item);
+    }
+  }
+
+  return [firstHalf, secondHalf];
+}
+
+/**
  * 计算休止符的目标 X 坐标
  */
 export function getRestTargetX(

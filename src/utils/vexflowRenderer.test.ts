@@ -4,6 +4,7 @@ import {
   getFixedX,
   isBeamable,
   groupByQuarterBar,
+  hasSixteenthOrShorter,
   buildBarTickables,
   type NoteWithMeta,
 } from "./vexflowRenderer";
@@ -224,6 +225,89 @@ describe("vexflowRenderer utils", () => {
       const result = groupByQuarterBar(items, barStartSub, barSubdivisions);
 
       expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("hasSixteenthOrShorter", () => {
+    const createMockItem = (
+      duration: string,
+      isRest: boolean = false,
+    ): NoteWithMeta => ({
+      note: { ...mockStaveNote, getDuration: () => duration } as unknown as import("vexflow").StaveNote,
+      event: {
+        subdivision: 0,
+        subPosition: 0 as 0 | 1,
+        drums: [],
+        is32nd: false,
+        kind: "normal" as const,
+      },
+      isRest,
+      durationUnits32: 4,
+    });
+
+    it("当有十六分音符时应该返回 true", () => {
+      const items = [
+        createMockItem("8"),
+        createMockItem("8"),
+        createMockItem("16"),  // 十六分音符
+        createMockItem("8"),
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(true);
+    });
+
+    it("当有三十二分音符时应该返回 true", () => {
+      const items = [
+        createMockItem("8"),
+        createMockItem("32"),  // 三十二分音符
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(true);
+    });
+
+    it("当只有八分音符时应该返回 false", () => {
+      const items = [
+        createMockItem("8"),
+        createMockItem("8"),
+        createMockItem("8"),
+        createMockItem("8"),
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(false);
+    });
+
+    it("当只有四分音符时应该返回 false", () => {
+      const items = [
+        createMockItem("4"),
+        createMockItem("4"),
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(false);
+    });
+
+    it("应该忽略休止符", () => {
+      const items = [
+        createMockItem("8"),
+        createMockItem("16r", true),  // 十六分休止符应该被忽略
+        createMockItem("8"),
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(false);
+    });
+
+    it("应该处理空数组", () => {
+      expect(hasSixteenthOrShorter([])).toBe(false);
+    });
+
+    it("当有混合音符包含十六分音符时应该返回 true", () => {
+      const items = [
+        createMockItem("4"),
+        createMockItem("8"),
+        createMockItem("16"),  // 有一个十六分音符
+        createMockItem("8"),
+      ];
+
+      expect(hasSixteenthOrShorter(items)).toBe(true);
     });
   });
 

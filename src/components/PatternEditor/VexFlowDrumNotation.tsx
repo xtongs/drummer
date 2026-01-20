@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import { Renderer, Stave, Voice, Formatter, Beam, Barline } from "vexflow";
+import { Renderer, Stave, Voice, Formatter, Beam, Barline, Fraction } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
@@ -9,7 +9,8 @@ import {
   getFixedX,
   getExistingXShift,
   buildBarTickables,
-  groupByQuarterBar,
+  hasSixteenthByHalfBar,
+  splitNotesByHalfBar,
   getRestTargetX,
   type NoteWithMeta,
 } from "../../utils/vexflowRenderer";
@@ -281,27 +282,63 @@ export function VexFlowDrumNotation({
 
         // 创建符杠
         const allBeams: Beam[] = [];
-        for (const group of groupByQuarterBar(
-          upperNotes,
-          barStartSub,
-          barSubdivisions,
-        )) {
-          const beams = Beam.generateBeams(group, {
-            stemDirection: 1,
-            flatBeams: true,
+
+        // 为每个声部生成符杠
+        const beamGroups = [
+          { notes: upperNotes, stemDirection: 1 },
+          { notes: lowerNotes, stemDirection: -1 },
+        ];
+
+        for (const { notes, stemDirection } of beamGroups) {
+          // 提取可符杠连接的音符
+          const beamableNotes = notes.filter((item) => {
+            const duration = item.note.getDuration();
+            const numeric = Number.parseInt(duration.replace(/[rd]/g, ""), 10);
+            return Number.isFinite(numeric) && numeric >= 8;
           });
-          allBeams.push(...beams);
-        }
-        for (const group of groupByQuarterBar(
-          lowerNotes,
-          barStartSub,
-          barSubdivisions,
-        )) {
-          const beams = Beam.generateBeams(group, {
-            stemDirection: -1,
-            flatBeams: true,
-          });
-          allBeams.push(...beams);
+
+          if (beamableNotes.length === 0) continue;
+
+          // 按半小节检查是否有十六分音符
+          const [firstHalfHasSixteenth, secondHalfHasSixteenth] =
+            hasSixteenthByHalfBar(beamableNotes, barSubdivisions);
+
+          // 按半小节分组音符
+          const [firstHalfNotes, secondHalfNotes] =
+            splitNotesByHalfBar(beamableNotes, barSubdivisions);
+
+          // 为每半小节分别生成符杠
+          const halfBarGroups = [
+            {
+              notes: firstHalfNotes,
+              hasSixteenth: firstHalfHasSixteenth,
+            },
+            {
+              notes: secondHalfNotes,
+              hasSixteenth: secondHalfHasSixteenth,
+            },
+          ];
+
+          for (const { notes: halfNotes, hasSixteenth } of halfBarGroups) {
+            if (halfNotes.length === 0) continue;
+
+            // 使用 groups 参数控制分组：
+            // - 有十六分音符: [new Fraction(1, 4)] 每拍分组
+            // - 无十六分音符: [new Fraction(1, 2)] 每两拍分组（半小节内）
+            const groups = hasSixteenth
+              ? [new Fraction(1, 4)] // 每拍分组
+              : [new Fraction(1, 2)]; // 半小节内每两拍分组（即整个半小节1个符杠）
+
+            const beams = Beam.generateBeams(
+              halfNotes.map((n) => n.note),
+              {
+                stemDirection,
+                flatBeams: true,
+                groups,
+              },
+            );
+            allBeams.push(...beams);
+          }
         }
 
         // 绘制 Voice
