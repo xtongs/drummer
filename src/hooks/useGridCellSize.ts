@@ -6,14 +6,20 @@ const BASE_WIDTH = 393; // 基准屏幕宽度
 const BASE_CELL_SIZE = 23; // 基准单元格大小
 const MAX_WIDTH = APP_MAX_WIDTH; // 最大容器宽度（从 constants 导入）
 const APP_PADDING = 24; // .app 的左右 padding 总和 (12px * 2)
+const MIN_VIEWPORT_WIDTH = 375; // 最小视口宽度，小于此宽度不再缩放
 
 /**
  * 根据屏幕宽度动态计算网格单元格大小
  * 以 393px 宽度下 cellSize = 23px 为基准
+ * 当视口宽度小于 375px 时保持基准大小不再缩放
  */
 export function useGridCellSize(): number {
   const calculateCellSize = useCallback(() => {
     const viewportWidth = window.innerWidth;
+    // 当视口宽度小于最小宽度时，保持基准 cellSize 不再缩放
+    if (viewportWidth < MIN_VIEWPORT_WIDTH) {
+      return BASE_CELL_SIZE;
+    }
     // 容器宽度不超过最大宽度，并减去左右 padding
     const containerWidth = Math.min(viewportWidth, MAX_WIDTH) - APP_PADDING;
     // 按比例计算单元格大小（BASE_WIDTH 也需要减去 padding）
@@ -39,6 +45,10 @@ export function useGridCellSize(): number {
  */
 export function getGridCellSize(): number {
   const viewportWidth = window.innerWidth;
+  // 当视口宽度小于最小宽度时，保持基准 cellSize 不再缩放
+  if (viewportWidth < MIN_VIEWPORT_WIDTH) {
+    return BASE_CELL_SIZE;
+  }
   const containerWidth = Math.min(viewportWidth, MAX_WIDTH) - APP_PADDING;
   return (containerWidth * BASE_CELL_SIZE) / (BASE_WIDTH - APP_PADDING);
 }

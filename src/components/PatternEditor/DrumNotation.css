@@ -2,7 +2,6 @@
   width: max-content;
   min-width: 100%;
   border: none;
-  border-radius: var(--border-radius-sm);
   background: transparent;
   backdrop-filter: none;
   flex-shrink: 0;
