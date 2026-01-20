@@ -166,10 +166,10 @@ export function VexFlowDrumNotation({
       // 修改五线谱五条横线为灰色
       const svg = container.querySelector("svg");
       if (svg) {
-        const lines = svg.querySelectorAll(".vf-stave line");
-        lines.forEach((line) => {
-          line.setAttribute("stroke", "#9ca3af");
-        });
+        const staveGroup = svg.querySelector(".vf-stave");
+        if (staveGroup) {
+          staveGroup.setAttribute("stroke", "#9ca3af");
+        }
       }
 
       // 获取该小节的音符事件
