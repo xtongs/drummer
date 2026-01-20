@@ -163,6 +163,15 @@ export function VexFlowDrumNotation({
       stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
       stave.draw();
 
+      // 修改五线谱五条横线为灰色
+      const svg = container.querySelector("svg");
+      if (svg) {
+        const lines = svg.querySelectorAll(".vf-stave line");
+        lines.forEach((line) => {
+          line.setAttribute("stroke", "#9ca3af");
+        });
+      }
+
       // 获取该小节的音符事件
       const { upperVoice, lowerVoice } = patternToVexflowNoteEvents(pattern);
 
