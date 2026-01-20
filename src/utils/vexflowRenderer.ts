@@ -91,7 +91,7 @@ export function addHiHatOpenAnnotation(
   annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
   annotation.setFont("", 5, 900);
   annotation.setXShift(-11);
-  annotation.setYShift(32);
+  annotation.setYShift(36);
   note.addModifier(annotation, 0);
 }
 

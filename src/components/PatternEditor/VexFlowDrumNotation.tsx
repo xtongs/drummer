@@ -160,7 +160,6 @@ export function VexFlowDrumNotation({
 
       const stave = new Stave(staveX, STAFF_Y, staveWidth);
       stave.setContext(context);
-      stave.setDefaultLedgerLineStyle({ lineWidth: 1, strokeStyle: "#000000" });
       // 最后一个小节使用 END 类型的结束竖线（双竖线加粗）
       if (bar === pattern.bars - 1) {
         stave.setEndBarType(Barline.type.END);

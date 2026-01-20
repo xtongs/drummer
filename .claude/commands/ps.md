@@ -1,11 +1,11 @@
-# cp
+# ps
 
 将本地所有改动加入暂存区，然后提交并 push。
 
 ## 使用方式
 
-- `/cp`（推荐：自动生成 commit message）
-- `/cp <commit message>`（可选：手动指定 message，会跳过自动生成）
+- `/ps`（推荐：自动生成 commit message）
+- `/ps <commit message>`（可选：手动指定 message，会跳过自动生成）
 
 ## 执行步骤
 
