@@ -4,26 +4,22 @@ Drummer is a modern, lightweight, browser-first drum machine and practice tool. 
 
 ---
 
-Table of contents
-- Introduction
-- Key features
-- Tech stack
-- Quick start
-- Development workflow
-- Build & deployment
-- Project structure
-- Contributing
-- PR checklist
-- Roadmap
-- License & acknowledgements
-- Contact
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Development Workflow](#development-workflow)
+- [Testing](#testing)
+- [Build & Deployment](#build--deployment)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-Introduction
-Drummer provides stable and predictable beat scheduling, persistent pattern management, multi-channel drum tracks, and a responsive UI. The design goals are low-latency playback, tight timing accuracy, and a developer-friendly TypeScript codebase.
+## Key Features
 
-Key features
 - Grid/sequencer-based editor with a visual playhead
 - Precise tempo (BPM), swing and bar-length controls
 - Multiple drum channels (kick, snare, hi-hat, toms, percussion)
@@ -32,130 +28,130 @@ Key features
 - Responsive, keyboard-accessible and accessibility-minded interactions
 - Low-latency scheduling suitable for practice and live performance
 
-Tech stack
-This repository is a frontend web application with the following composition:
-- TypeScript: core logic and components (~83%)
-- CSS: styling and responsive layout (~13%)
-- HTML: entry page and templates (~2%)
-- Other assets (audio samples, images, config) (~1%
+## Tech Stack
 
-Quick start
+- TypeScript - core logic and components
+- React 18 - UI framework
+- Vite - build tool
+- Vitest + React Testing Library - testing framework
+- Web Audio API - audio engine
+- Vite PWA - PWA support
 
-Prerequisites
-- Node.js (LTS recommended, e.g., Node 16 or newer)
-- npm, yarn, or pnpm
+## Quick Start
 
-Local development
+### Prerequisites
+
+- Node.js 18+ (or use [bun](https://bun.sh))
+- bun, npm, yarn, or pnpm
+
+### Local Development
+
 ```bash
 git clone https://github.com/xtongs/drummer.git
 cd drummer
 
+# using bun (recommended)
+bun install
+bun run dev
+
 # using npm
 npm install
 npm run dev
-
-# using yarn
-yarn
-yarn dev
-
-# using pnpm
-pnpm install
-pnpm dev
 ```
 
-Development workflow
+## Development Workflow
 
-This project follows **TDD (Test-Driven Development)** methodology. See `CLAUDE.md` for detailed development guidelines.
+This project follows **TDD (Test-Driven Development)** and **SDD (Spec-Driven Development)** methodologies. See [`.claude/CLAUDE.md`](.claude/CLAUDE.md) for detailed development guidelines.
 
-### TDD 流程 (Red-Green-Refactor)
+### TDD Process (Red-Green-Refactor)
 
-1. **Red**: 先编写测试用例，确保测试失败
-2. **Green**: 编写最少量代码使测试通过
-3. **Refactor**: 在测试保护下重构代码
+1. **Red**: Write failing tests first
+2. **Green**: Write minimal code to make tests pass
+3. **Refactor**: Refactor code with test coverage
 
-### 开发步骤
+### SDD Process
 
-- Develop using TypeScript with clear types and modular design.
-- Create feature branches using conventional prefixes: `feat/`, `fix/`, `chore/`.
-- **Write tests first** before implementing new features
-- Run static checks and tests before committing:
+Follow the spec-driven development workflow:
+
+```
+proposal → design → tasks → implement → verify → archive
+```
+
+See [openspec/AGENTS.md](openspec/AGENTS.md) for complete guidelines.
+
+### Development Steps
+
+- Create feature branches: `feat/`, `fix/`, `refactor/`
+- **Write tests first** before implementing features
+- Run checks before committing:
 ```bash
 bun run lint
+bun run typecheck
 bun run test
 ```
-- Include screenshots or short recordings for UI changes and ensure new logic is covered by tests where appropriate.
 
-Testing
+## Testing
 
 ```bash
-# Run tests in watch mode (recommended during development)
+# Run all tests
 bun run test
 
 # Run tests once
 bun run test:run
 
-# Run tests with coverage report
-bun run test:coverage
-
 # Run tests in watch mode
 bun run test:watch
+
+# Run tests with coverage report
+bun run test:coverage
 ```
 
-Build & deployment
-- Production build:
+### Coverage Requirements
+
+- Core business logic (hooks, utils): >= 80%
+- UI components may have lower requirements
+
+## Build & Deployment
+
 ```bash
+# Production build
 bun run build
-```
-- The build output is static and can be deployed to any static hosting platform (Vercel, Netlify, GitHub Pages, etc.).
-- Typical deployment flow: generate the production build and upload the output directory to the hosting platform or publish via CI/CD.
 
-Project structure (example)
-A recommended high-level layout:
-```
-/src
-  /components       # UI components: sequencer, controls, panels
-  /audio            # WebAudio abstractions: scheduler, sampler, transport
-  /state            # Global state and mode management
-  /lib              # Utility functions and helpers
-  /styles           # Global styles and variables
-  main.tsx / index.ts
-/public
-  /samples          # Default drum samples
-  index.html
-tests/
-docs/
-package.json
-tsconfig.json
+# Preview production build
+bun run preview
 ```
 
-Contributing
+The build output is static and can be deployed to any static hosting platform (Vercel, Netlify, GitHub Pages, etc.).
+
+## Project Structure
+
+```
+src/
+├── components/       # UI components
+├── hooks/           # Custom React hooks
+├── types/           # TypeScript type definitions
+├── utils/           # Utility functions
+├── styles/          # Global styles
+└── test/            # Test setup
+
+openspec/
+├── project.md       # Project context
+├── AGENTS.md        # AI assistant guidelines
+├── specs/           # Feature specifications
+└── changes/         # Change proposals
+```
+
+## Contributing
+
 Contributions are welcome. Follow these steps:
-1. Open an issue to discuss major changes when appropriate.
-2. Create a branch from main: `git checkout -b feat/your-feature`.
-3. Make changes with clear commits and ensure linting and tests pass.
-4. Open a pull request with a clear description, screenshots for UI changes, and test notes.
 
-PR checklist
-- Tests added or updated for relevant functionality
-- Code style follows repository conventions (Prettier / ESLint)
-- Documentation updated for any interface or behavioral changes
-- Screenshots or recordings provided for UI changes
+1. Check existing issues and specifications in `openspec/specs/`
+2. For new features or major changes, create a proposal in `openspec/changes/`
+3. Create a branch: `git checkout -b feat/your-feature`
+4. Follow TDD and SDD processes
+5. Ensure all tests pass and coverage requirements are met
+6. Open a pull request with clear description
 
-Roadmap
-Planned improvements and priorities:
-- Enhanced sample pack management and import/export workflows
-- Pattern chaining and song-mode sequencing
-- Expanded MIDI support and mapping tools
-- Export full songs as WAV
-- Mobile interaction and touch experience improvements
+## License
 
-License & acknowledgements
-This project is licensed under the MIT License. Third-party samples and assets must be listed in an ACKNOWLEDGEMENTS file or within docs with proper attribution and licensing details.
-
-Contact
-Maintainer: xtongs  
-Use GitHub issues and pull requests for discussions and contributions. Important decisions and design discussions are tracked in issues and PRs.
-
---- 
-
-This README is structured for direct use as the repository top-level README. Replace example project-structure entries and command names only if they differ from the repository's actual configuration.
+This project is licensed under the MIT License.
