@@ -26,7 +26,7 @@ const NOTATION_RENDERER_KEY = "drummer-notation-renderer";
  */
 export type NotationRenderer = "legacy" | "vexflow";
 
-const DEFAULT_NOTATION_RENDERER: NotationRenderer = "legacy";
+const DEFAULT_NOTATION_RENDERER: NotationRenderer = "vexflow";
 const VALID_RENDERERS = new Set<NotationRenderer>(["legacy", "vexflow"]);
 
 /**
@@ -406,7 +406,7 @@ export function getNextPatternName(existingPatterns: Pattern[]): string {
 
 /**
  * 获取 Notation 渲染器设置
- * @returns 渲染器类型，默认为 "legacy"
+ * @returns 渲染器类型，默认为 "vexflow"
  */
 export function getNotationRenderer(): NotationRenderer {
   try {

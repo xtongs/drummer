@@ -172,7 +172,7 @@ export function usePlaybackAutoScroll({
     const cursorPosition = currentBeat * cellSize;
     const scrollLeft = container.scrollLeft;
     const scrollRight = scrollLeft + container.clientWidth;
-    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4;
+    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 2;
 
     const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
 

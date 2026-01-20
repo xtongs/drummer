@@ -1,5 +1,11 @@
-import { useRef, useEffect, useCallback /* 临时注释: useState, NotationRenderer */ } from "react";
-import { DrumNotation /* 临时注释: RENDERER_CHANGE_EVENT */ } from "./DrumNotation";
+import {
+  useRef,
+  useEffect,
+  useCallback /* 临时注释: useState, NotationRenderer */,
+} from "react";
+import {
+  DrumNotation /* 临时注释: RENDERER_CHANGE_EVENT */,
+} from "./DrumNotation";
 import { Grid } from "./Grid";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
@@ -100,7 +106,7 @@ export function PatternEditor({
 
   // 导出模式：获取当前 pattern 的 JSON 内容
   const currentPatternForExport = savedPatterns.find(
-    (p) => p.id === pattern.id
+    (p) => p.id === pattern.id,
   );
   const exportContent = currentPatternForExport
     ? serializePatternToJSON(currentPatternForExport)
@@ -176,7 +182,7 @@ export function PatternEditor({
       let newBarIndex: number;
       if (addBarCursorBeatRef.current !== undefined) {
         const cursorBarIndex = Math.floor(
-          addBarCursorBeatRef.current / subdivisionsPerBar
+          addBarCursorBeatRef.current / subdivisionsPerBar,
         );
         const cursorPositionInBar =
           addBarCursorBeatRef.current % subdivisionsPerBar;
@@ -278,7 +284,7 @@ export function PatternEditor({
               <circle cx="6" cy="18" r="3" />
               <circle cx="18" cy="16" r="3" />
             </svg>
-          </button> */}
+          </button>
           {/* 保存按钮 / 导出输入框 - 仅在非草稿模式下显示 */}
           {!isDraftMode &&
             savedPatterns.some((p) => p.id === pattern.id) &&
