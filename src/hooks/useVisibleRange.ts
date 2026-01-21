@@ -39,7 +39,15 @@ export function useVisibleRange(
   const { itemSize, totalItems, bufferItems = 0 } = options;
 
   const initializedRef = useRef(false);
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: totalItems });
+  // 初始状态只渲染可见区域（假设视口宽度约 1000px，buffer 2 beat）
+  // 避免首次渲染时渲染所有 items 导致长 pattern 卡顿
+  const [visibleRange, setVisibleRange] = useState(() => {
+    const initialVisibleItems = Math.min(
+      totalItems,
+      Math.ceil(1000 / itemSize) + bufferItems! * 2
+    );
+    return { start: 0, end: initialVisibleItems };
+  });
 
   const calculateRange = useCallback(() => {
     const scrollContainer = scrollContainerRef?.current;
