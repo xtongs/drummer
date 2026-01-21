@@ -13,14 +13,14 @@ interface UseVisibleRangeOptions {
  * 计算可见范围
  */
 function calculateVisibleRange(
-  scrollRect: DOMRect,
-  contentRect: DOMRect,
+  scrollLeft: number,
+  viewportWidth: number,
   itemSize: number,
   bufferItems: number,
   totalItems: number,
 ): { start: number; end: number } {
-  const visibleLeft = scrollRect.left - contentRect.left;
-  const visibleRight = visibleLeft + scrollRect.width;
+  const visibleLeft = scrollLeft;
+  const visibleRight = visibleLeft + viewportWidth;
 
   const startItem = Math.max(0, Math.floor(visibleLeft / itemSize) - bufferItems);
   const endItem = Math.min(totalItems, Math.ceil(visibleRight / itemSize) + bufferItems);
@@ -39,12 +39,12 @@ export function useVisibleRange(
   const { itemSize, totalItems, bufferItems = 0 } = options;
 
   const initializedRef = useRef(false);
-  // 初始状态只渲染可见区域（假设视口宽度约 1000px，buffer 2 beat）
+  // 初始状态只渲染可见区域（按当前视口宽度估算，buffer 2 beat）
   // 避免首次渲染时渲染所有 items 导致长 pattern 卡顿
   const [visibleRange, setVisibleRange] = useState(() => {
     const initialVisibleItems = Math.min(
       totalItems,
-      Math.ceil(1000 / itemSize) + bufferItems! * 2
+      Math.ceil(window.innerWidth / itemSize) + bufferItems! * 2
     );
     return { start: 0, end: initialVisibleItems };
   });
@@ -63,18 +63,17 @@ export function useVisibleRange(
       initializedRef.current = true;
     }
 
-    const scrollRect = scrollContainer.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
+    const viewportWidth = scrollContainer.clientWidth;
 
     // 处理内容比视口小的情况
-    if (contentRect.width <= scrollRect.width) {
+    if (totalItems * itemSize <= viewportWidth) {
       setVisibleRange({ start: 0, end: totalItems });
       return;
     }
 
     const newRange = calculateVisibleRange(
-      scrollRect,
-      contentRect,
+      scrollContainer.scrollLeft,
+      viewportWidth,
       itemSize,
       bufferItems,
       totalItems,
@@ -89,11 +88,12 @@ export function useVisibleRange(
     });
   }, [scrollContainerRef, contentRef, itemSize, bufferItems, totalItems]);
 
-  useLayoutEffect(() => {
-    calculateRange();
+  const scrollContainer = scrollContainerRef?.current;
 
-    const scrollContainer = scrollContainerRef?.current;
+  useLayoutEffect(() => {
     if (!scrollContainer) return;
+
+    calculateRange();
 
     let rafId: number;
 
@@ -110,7 +110,7 @@ export function useVisibleRange(
       scrollContainer.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", calculateRange);
     };
-  }, [scrollContainerRef, calculateRange]);
+  }, [scrollContainer, calculateRange]);
 
   const visibleSet = useMemo(
     () =>

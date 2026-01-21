@@ -2,15 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useVisibleRange } from "./useVisibleRange";
 
-const mockGetBoundingClientRect = vi.fn();
 const mockAddEventListener = vi.fn();
 const mockRemoveEventListener = vi.fn();
-const mockRequestAnimationFrame = vi.fn();
-
 describe("useVisibleRange", () => {
   const scrollContainerRef = {
     current: {
-      getBoundingClientRect: mockGetBoundingClientRect,
+      scrollLeft: 0,
+      get clientWidth() { return 500; },
       addEventListener: mockAddEventListener,
       removeEventListener: mockRemoveEventListener,
     } as unknown as HTMLElement,
@@ -18,53 +16,33 @@ describe("useVisibleRange", () => {
 
   const contentRef = {
     current: {
-      getBoundingClientRect: mockGetBoundingClientRect,
+      getBoundingClientRect: vi.fn(),
     } as unknown as HTMLElement,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockGetBoundingClientRect.mockReturnValue({ left: 0, width: 500 });
-
-    mockRequestAnimationFrame.mockImplementation((cb) => {
-      cb();
-      return 1;
-    });
   });
 
   it("应该返回完整的可见范围当内容比视口小时", () => {
     // 模拟：scrollContainer 宽 500px，content 宽 300px（比视口小）
-    mockGetBoundingClientRect.mockImplementation((function () {
-      let calls = 0;
-      return function () {
-        calls++;
-        if (calls === 1) return { left: 0, width: 500 };
-        return { left: 0, width: 300 };
-      };
-    })());
+    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
 
     const { result } = renderHook(() =>
       useVisibleRange(scrollContainerRef, contentRef, {
         itemSize: 50,
-        totalItems: 40,
+        totalItems: 6,
         bufferItems: 2,
       }),
     );
 
     expect(result.current.start).toBe(0);
-    expect(result.current.end).toBe(40);
+    expect(result.current.end).toBe(6);
   });
 
   it("应该计算正确的可见范围（视口在起始位置）", () => {
-    mockGetBoundingClientRect.mockImplementation((function () {
-      let calls = 0;
-      return function () {
-        calls++;
-        if (calls === 1) return { left: 0, width: 500 };
-        return { left: 0, width: 2000 };
-      };
-    })());
+    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
+    scrollContainerRef.current.scrollLeft = 0;
 
     const { result } = renderHook(() =>
       useVisibleRange(scrollContainerRef, contentRef, {
@@ -82,14 +60,8 @@ describe("useVisibleRange", () => {
   });
 
   it("应该返回正确的 visibleSet", () => {
-    mockGetBoundingClientRect.mockImplementation((function () {
-      let calls = 0;
-      return function () {
-        calls++;
-        if (calls === 1) return { left: 500, width: 500 };
-        return { left: 0, width: 2000 };
-      };
-    })());
+    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
+    scrollContainerRef.current.scrollLeft = 500;
 
     const { result } = renderHook(() =>
       useVisibleRange(scrollContainerRef, contentRef, {
