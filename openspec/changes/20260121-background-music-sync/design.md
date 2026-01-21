@@ -82,102 +82,19 @@
 
 ### 2.1 类型定义扩展
 
-**文件**: `src/types/index.ts`
+需要扩展的类型定义:
 
-```typescript
-// ==================== 现有类型 (保持不变) ====================
-export type DrumType =
-  | "Crash 1" | "Crash 2" | "Hi-Hat Open" | "Hi-Hat Closed"
-  | "Ride" | "Tom 1" | "Tom 2" | "Snare" | "Tom 3" | "Kick";
+1. **Pattern 接口扩展**
+   - 新增 `backgroundMusic?: BackgroundMusicInfo` - 背景音乐元数据
+   - 新增 `musicVolume?: MusicVolumeMode` - 音量模式
+   - 新增 `musicOffset?: number` - 偏移量(秒),精度 10ms
 
-export type CellState = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-export interface LoopRange {
-  start: number;  // 起始小节
-  end: number;    // 结束小节
-}
-
-// ==================== 扩展现有类型 ====================
-
-export interface Pattern {
-  id: string;
-  name: string;
-  bpm: number;
-  timeSignature: [number, number];
-  bars: number;
-  grid: CellState[][];
-  drums: DrumType[];
-  loopRange?: LoopRange;
-
-  // 新增字段:背景音乐
-  backgroundMusic?: BackgroundMusicInfo;
-
-  // 新增字段:播放设置
-  musicVolume?: MusicVolumeMode;
-  musicOffset?: number;  // 偏移量(秒),精度 10ms
-
-  createdAt: number;
-  updatedAt: number;
-}
-
-// ==================== 新增类型定义 ====================
-
-/**
- * 背景音乐信息
- */
-export interface BackgroundMusicInfo {
-  id: string;          // 唯一标识
-  filename: string;    // 原始文件名
-  duration: number;    // 时长(秒)
-  uploadedAt: number;  // 上传时间戳
-}
-
-/**
- * 音乐音量模式
- */
-export type MusicVolumeMode = 0 | 0.2 | 0.5 | 0.8;
-
-/**
- * 背景音乐播放状态
- */
-export interface BackgroundMusicState {
-  audioElement: HTMLAudioElement | null;
-  isPlaying: boolean;
-  isLoading: boolean;
-  isLoaded: boolean;
-  volumeMode: MusicVolumeMode;
-  offset: number;  // 偏移量(秒),精度 10ms
-  error?: string;
-  patternId: string | null;
-}
-
-/**
- * 背景音乐操作接口
- */
-export interface BackgroundMusicActions {
-  load: (patternId: string) => Promise<void>;
-  play: (offset: number) => Promise<void>;
-  pause: () => void;
-  stop: () => void;
-  setVolumeMode: (mode: MusicVolumeMode) => void;
-  setOffset: (offset: number) => void;
-  setPlaybackRate: (rate: number) => void;
-  remove: () => Promise<void>;
-}
-
-/**
- * IndexedDB 存储记录
- */
-export interface BackgroundMusicRecord {
-  id: string;
-  patternId: string;
-  filename: string;
-  blob: Blob;
-  duration: number;
-  uploadedAt: number;
-  size: number;
-}
-```
+2. **新增类型定义**
+   - `BackgroundMusicInfo` - 背景音乐元信息(id, filename, duration, uploadedAt)
+   - `MusicVolumeMode` - 音量模式类型 (0 | 0.2 | 0.5 | 0.8)
+   - `BackgroundMusicState` - 播放状态(audioElement, isPlaying, isLoading, isLoaded, volumeMode, offset, error, patternId)
+   - `BackgroundMusicActions` - 操作接口(load, play, pause, stop, setVolumeMode, setOffset, setPlaybackRate, remove)
+   - `BackgroundMusicRecord` - IndexedDB 存储记录(id, patternId, filename, blob, duration, uploadedAt, size)
 
 ### 2.2 数据存储设计
 
@@ -208,386 +125,48 @@ export interface BackgroundMusicRecord {
 
 ### 3.1 IndexedDB 存储模块
 
-**文件**: `src/utils/backgroundMusicStorage.ts`
+**模块**: 背景音乐存储工具
 
-```typescript
-/**
- * IndexedDB 操作封装
- */
-
-const DB_NAME = 'DrummerDB';
-const STORE_NAME = 'backgroundMusic';
-const INDEX_PATTERN_ID = 'patternId';
-
-export class BackgroundMusicStorage {
-  private db: IDBDatabase | null = null;
-
-  /**
-   * 初始化数据库
-   */
-  async init(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 2); // 版本号升级
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        this.db = request.result;
-        resolve();
-      };
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        // 创建对象存储
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-          store.createIndex(INDEX_PATTERN_ID, 'patternId', { unique: true });
-        }
-      };
-    });
-  }
-
-  /**
-   * 保存背景音乐
-   */
-  async save(record: BackgroundMusicRecord): Promise<void> {
-    if (!this.db) await this.init();
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.put(record);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  /**
-   * 根据 patternId 查询
-   */
-  async getByPatternId(patternId: string): Promise<BackgroundMusicRecord | null> {
-    if (!this.db) await this.init();
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const index = store.index(INDEX_PATTERN_ID);
-      const request = index.get(patternId);
-
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  /**
-   * 根据 patternId 删除
-   */
-  async deleteByPatternId(patternId: string): Promise<void> {
-    if (!this.db) await this.init();
-
-    // 先获取记录的 id
-    const record = await this.getByPatternId(patternId);
-    if (!record) return;
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(record.id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  /**
-   * 获取 Blob URL (用于播放)
-   */
-  async getBlobURL(patternId: string): Promise<string | null> {
-    const record = await this.getByPatternId(patternId);
-    if (!record) return null;
-    return URL.createObjectURL(record.blob);
-  }
-}
-
-// 导出单例
-export const backgroundMusicStorage = new BackgroundMusicStorage();
-```
+**核心功能**:
+- 初始化数据库 (DrummerDB, 版本号升级到 2)
+- 创建 backgroundMusic 对象存储
+- 创建 patternId 唯一索引
+- 实现 CRUD 操作:
+  - `save()` - 保存记录
+  - `getByPatternId()` - 根据 patternId 查询
+  - `deleteByPatternId()` - 根据 patternId 删除
+  - `getBlobURL()` - 获取 Blob URL 用于播放
 
 ### 3.2 useBackgroundMusic Hook
 
-**文件**: `src/hooks/useBackgroundMusic.ts`
+**模块**: 背景音乐播放控制 Hook
 
-```typescript
-import { useState, useEffect, useRef } from 'react';
-import type { Pattern, BackgroundMusicState, BackgroundMusicActions, MusicVolumeMode } from '../types';
-import { backgroundMusicStorage } from '../utils/backgroundMusicStorage';
+**核心功能**:
+- 管理背景音乐播放状态 (BackgroundMusicState)
+- 提供操作接口 (BackgroundMusicActions):
+  - `load()` - 加载背景音乐
+  - `play()` - 播放(支持偏移量)
+  - `pause()` - 暂停
+  - `stop()` - 停止
+  - `setVolumeMode()` - 设置音量模式
+  - `setOffset()` - 设置偏移量
+  - `setPlaybackRate()` - 设置播放速率
+  - `remove()` - 删除背景音乐
+- 懒加载音频元素
+- 自动资源清理
 
-export function useBackgroundMusic(pattern: Pattern | null): [BackgroundMusicState, BackgroundMusicActions] {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+### 3.3 集成到多模式播放器
 
-  const [state, setState] = useState<BackgroundMusicState>({
-    audioElement: null,
-    isPlaying: false,
-    isLoading: false,
-    isLoaded: false,
-    volumeMode: (pattern?.musicVolume ?? 0.2) as MusicVolumeMode,
-    offset: pattern?.musicOffset ?? 0,
-    error: undefined,
-    patternId: pattern?.id ?? null,
-  });
+**模块**: 多模式播放器 Hook (修改现有模块)
 
-  // 初始化音频元素
-  useEffect(() => {
-    if (!pattern?.backgroundMusic) return;
-
-    const initAudio = async () => {
-      setState(prev => ({ ...prev, isLoading: true }));
-
-      try {
-        const blobURL = await backgroundMusicStorage.getBlobURL(pattern.id);
-
-        if (!blobURL) {
-          throw new Error('背景音乐文件未找到');
-        }
-
-        const audio = new Audio(blobURL);
-        audio.preservesPitch = true;  // 关键:变速保调
-        audio.volume = state.volumeMode;
-
-        audioRef.current = audio;
-        setState(prev => ({
-          ...prev,
-          audioElement: audio,
-          isLoaded: true,
-          isLoading: false,
-        }));
-      } catch (error) {
-        setState(prev => ({
-          ...prev,
-          error: error instanceof Error ? error.message : '加载失败',
-          isLoading: false,
-        }));
-      }
-    };
-
-    initAudio();
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [pattern?.id]);
-
-  // 加载背景音乐
-  const load = async (patternId: string): Promise<void> => {
-    setState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const blobURL = await backgroundMusicStorage.getBlobURL(patternId);
-
-      if (!blobURL) {
-        throw new Error('背景音乐文件未找到');
-      }
-
-      const audio = new Audio(blobURL);
-      audio.preservesPitch = true;
-      audio.volume = state.volumeMode;
-
-      audioRef.current = audio;
-      setState(prev => ({
-        ...prev,
-        audioElement: audio,
-        isLoaded: true,
-        isLoading: false,
-        patternId,
-      }));
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : '加载失败',
-        isLoading: false,
-      }));
-      throw error;
-    }
-  };
-
-  // 播放
-  const play = async (offset: number): Promise<void> => {
-    const audio = audioRef.current;
-    if (!audio || !state.isLoaded) return;
-
-    try {
-      // 计算起始时间
-      const startTime = Math.max(0, -offset);
-      audio.currentTime = startTime;
-      await audio.play();
-
-      setState(prev => ({ ...prev, isPlaying: true, offset }));
-    } catch (error) {
-      console.error('播放背景音乐失败:', error);
-      throw error;
-    }
-  };
-
-  // 暂停
-  const pause = (): void => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.pause();
-    setState(prev => ({ ...prev, isPlaying: false }));
-  };
-
-  // 停止
-  const stop = (): void => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.pause();
-    audio.currentTime = 0;
-    setState(prev => ({ ...prev, isPlaying: false }));
-  };
-
-  // 设置音量模式
-  const setVolumeMode = (mode: MusicVolumeMode): void => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = mode;
-    }
-    setState(prev => ({ ...prev, volumeMode: mode }));
-  };
-
-  // 设置偏移量
-  const setOffset = (offset: number): void => {
-    setState(prev => ({ ...prev, offset }));
-  };
-
-  // 设置播放速率
-  const setPlaybackRate = (rate: number): void => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.playbackRate = rate;
-  };
-
-  // 删除
-  const remove = async (): Promise<void> => {
-    if (!state.patternId) return;
-
-    await backgroundMusicStorage.deleteByPatternId(state.patternId);
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    setState({
-      audioElement: null,
-      isPlaying: false,
-      isLoading: false,
-      isLoaded: false,
-      volumeMode: 0.2,
-      offset: 0,
-      patternId: null,
-    });
-  };
-
-  const actions: BackgroundMusicActions = {
-    load,
-    play,
-    pause,
-    stop,
-    setVolumeMode,
-    setOffset,
-    setPlaybackRate,
-    remove,
-  };
-
-  return [state, actions];
-}
-```
-
-### 3.3 集成到 useMultiPatternPlayer
-
-**文件**: `src/hooks/useMultiPatternPlayer.ts` (修改)
-
-```typescript
-// 在现有的 useMultiPatternPlayer 中集成背景音乐
-
-import { useBackgroundMusic } from './useBackgroundMusic';
-
-export function useMultiPatternPlayer(patterns: Pattern[]) {
-  // ... 现有代码 ...
-
-  // 新增:获取当前 Pattern 的背景音乐控制
-  const currentPattern = patterns.find(p => p.id === currentPatternId);
-  const [bgMusicState, bgMusicActions] = useBackgroundMusic(currentPattern ?? null);
-
-  // 修改播放函数
-  const play = useCallback(async () => {
-    // ... 现有播放逻辑(鼓声和节拍器)...
-
-    // 新增:播放背景音乐
-    if (currentPattern?.backgroundMusic && bgMusicState.isLoaded) {
-      const offset = currentPattern.musicOffset ?? 0;
-      await bgMusicActions.play(offset);
-    }
-  }, [/* 现有依赖 */, bgMusicActions, currentPattern, bgMusicState.isLoaded]);
-
-  // 修改暂停函数
-  const pause = useCallback(() => {
-    // ... 现有暂停逻辑...
-
-    // 新增:暂停背景音乐
-    bgMusicActions.pause();
-  }, [/* 现有依赖 */, bgMusicActions]);
-
-  // 修改停止函数
-  const stop = useCallback(() => {
-    // ... 现有停止逻辑...
-
-    // 新增:停止背景音乐
-    bgMusicActions.stop();
-  }, [/* 现有依赖 */, bgMusicActions]);
-
-  // 修改变速函数
-  const setPlaybackRate = useCallback((rateIndex: number) => {
-    // ... 现有变速逻辑(鼓声)...
-
-    // 新增:背景音乐同步变速
-    const rate = calculateCumulativeRate(rateIndex);
-    bgMusicActions.setPlaybackRate(rate);
-  }, [/* 现有依赖 */, bgMusicActions]);
-
-  // 新增:循环时重置背景音乐
-  useEffect(() => {
-    if (currentPattern?.loopRange && isPlaying) {
-      const handleLoop = () => {
-        const offset = currentPattern.musicOffset ?? 0;
-        if (bgMusicState.isPlaying) {
-          bgMusicActions.play(offset);
-        }
-      };
-
-      // 监听循环事件(需要扩展 useMultiPatternPlayer)
-      // 具体实现取决于现有的循环机制
-
-      return () => {
-        // 清理监听器
-      };
-    }
-  }, [currentPattern?.loopRange, isPlaying, bgMusicState.isPlaying, bgMusicActions]);
-
-  return {
-    // ... 现有返回值 ...
-    bgMusicState,      // 新增:背景音乐状态
-    bgMusicActions,    // 新增:背景音乐操作
-  };
-}
-```
+**集成点**:
+1. 获取当前 Pattern 的背景音乐控制
+2. 在播放函数中调用背景音乐播放
+3. 在暂停函数中调用背景音乐暂停
+4. 在停止函数中调用背景音乐停止
+5. 在变速函数中同步背景音乐速率
+6. 在循环时重置背景音乐播放位置
+7. 返回 bgMusicState 和 bgMusicActions
 
 ---
 
@@ -595,363 +174,124 @@ export function useMultiPatternPlayer(patterns: Pattern[]) {
 
 ### 4.1 背景音乐控制组件
 
-**文件**: `src/components/BackgroundMusicControls/BackgroundMusicControls.tsx`
+**模块**: 背景音乐控制主组件
 
-```typescript
-import React, { useState } from 'react';
-import { FolderIcon, MusicNoteIcon, TrashIcon } from '@heroicons/react/24/outline';
-import type { BackgroundMusicState, BackgroundMusicActions, MusicVolumeMode } from '../../types';
-import { FileIconButton } from './FileIconButton';
-import { OffsetDisplay } from './OffsetDisplay';
-import { VolumeModeButton } from './VolumeModeButton';
-import { DeleteIconButton } from './DeleteIconButton';
+**容器位置**: 放置在 `bottom-play-button-container` 内部
 
-interface BackgroundMusicControlsProps {
-  state: BackgroundMusicState;
-  actions: BackgroundMusicActions;
-  patternId: string;
-}
-
-export function BackgroundMusicControls({
-  state,
-  actions,
-  patternId,
-}: BackgroundMusicControlsProps) {
-  return (
-    <div className="flex items-center gap-2 px-4">
-      {/* 左侧:文件选择和偏移量 */}
-      <div className="flex items-center gap-2">
-        <FileIconButton
-          isLoaded={state.isLoaded}
-          onLoad={() => actions.load(patternId)}
-        />
-        {state.isLoaded && (
-          <OffsetDisplay
-            offset={state.offset}
-            onOffsetChange={actions.setOffset}
-          />
-        )}
-      </div>
-
-      {/* 中间:播放按钮占位(实际播放按钮在其他组件) */}
-      <div className="flex-1" />
-
-      {/* 右侧:音量和删除 */}
-      {state.isLoaded && (
-        <div className="flex items-center gap-2">
-          <VolumeModeButton
-            volumeMode={state.volumeMode}
-            onModeChange={actions.setVolumeMode}
-          />
-          <DeleteIconButton onDelete={actions.remove} />
-        </div>
-      )}
-    </div>
-  );
-}
+**布局结构**:
 ```
+┌────────────────────────────────────────────────────────────┐
+│ [文件按钮] [偏移量]    [播放按钮]    [音量] [删除]        │
+│     左侧控件      中央播放按钮      右侧控件             │
+└────────────────────────────────────────────────────────────┘
+```
+
+**空间关系**:
+- 左侧: 文件选择按钮 + 偏移量显示
+- 中间: 现有播放按钮 (保持不变,居中对齐)
+- 右侧: 音量模式按钮 + 删除按钮
+- 使用 `flex` 布局确保播放按钮始终居中
+
+**子组件**:
+- 文件选择按钮 - 文件选择/加载状态显示
+- 偏移量显示 - 偏移量显示和调整
+- 音量模式按钮 - 音量模式切换
+- 删除按钮 - 删除确认
 
 ### 4.2 文件选择按钮
 
-**文件**: `src/components/BackgroundMusicControls/FileIconButton.tsx`
+**模块**: 文件选择按钮组件
 
-```typescript
-import React, { useRef } from 'react';
-import { FolderIcon, MusicNoteIcon } from '@heroicons/react/24/heroicons';
-import { backgroundMusicStorage } from '../../utils/backgroundMusicStorage';
+**核心功能**:
+- 点击打开文件选择器
+- 支持拖拽音频文件到按钮区域
+- 验证文件格式 (MP3/WAV/OGG/M4A)
+- 验证文件大小 (≤20MB)
+- 保存到 IndexedDB
+- 错误时显示 toast 提示
+- 显示加载状态
 
-interface FileIconButtonProps {
-  isLoaded: boolean;
-  onLoad: () => Promise<void>;
-}
-
-export function FileIconButton({ isLoaded, onLoad }: FileIconButtonProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleClick = () => {
-    if (isLoaded) return;
-    inputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 验证文件格式
-    const validFormats = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'];
-    if (!validFormats.includes(file.type) && !file.name.match(/\.(mp3|wav|ogg|m4a)$/i)) {
-      alert('请选择 MP3、WAV、OGG 或 M4A 格式的音频文件');
-      return;
-    }
-
-    // 验证文件大小 (20MB)
-    if (file.size > 20 * 1024 * 1024) {
-      alert('文件大小不能超过 20MB');
-      return;
-    }
-
-    try {
-      // 保存到 IndexedDB
-      const record = {
-        id: crypto.randomUUID(),
-        patternId: '', // 从父组件传入
-        filename: file.name,
-        blob: file,
-        duration: 0, // 需要在加载后获取
-        uploadedAt: Date.now(),
-        size: file.size,
-      };
-
-      await backgroundMusicStorage.save(record);
-
-      // 触发加载
-      await onLoad();
-    } catch (error) {
-      console.error('上传背景音乐失败:', error);
-      alert('上传失败,请重试');
-    }
-
-    // 重置 input
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  };
-
-  return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-      <button
-        onClick={handleClick}
-        className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-        title={isLoaded ? '背景音乐已加载' : '上传背景音乐'}
-      >
-        {isLoaded ? (
-          <MusicNoteIcon className="w-5 h-5 text-green-500" />
-        ) : (
-          <FolderIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        )}
-      </button>
-    </>
-  );
-}
-```
+**视觉设计**:
+- 未上传状态: 显示文件夹图标
+- 已上传状态: 显示音符图标
+- 使用内联 SVG 实现,避免外部依赖
 
 ### 4.3 偏移量显示和调整
 
-**文件**: `src/components/BackgroundMusicControls/OffsetDisplay.tsx`
+**模块**: 偏移量显示组件
 
-```typescript
-import React, { useState } from 'react';
-import { ClockIcon } from '@heroicons/react/24/outline';
+**核心功能**:
+- 显示当前偏移量(±10s, 精度 10ms)
+- 点击展开调整面板
+- 三档调整按钮: ±1s/±0.1s/±10ms
+- 长按显示输入框手动输入精确值
 
-interface OffsetDisplayProps {
-  offset: number;  // 偏移量(秒),精度 10ms
-  onOffsetChange: (offset: number) => void;
-}
-
-export function OffsetDisplay({ offset, onOffsetChange }: OffsetDisplayProps) {
-  const [showPanel, setShowPanel] = useState(false);
-
-  const formatOffset = (value: number): string => {
-    const sign = value >= 0 ? '+' : '-';
-    const absValue = Math.abs(value);
-    const seconds = Math.floor(absValue);
-    const milliseconds = Math.round((absValue - seconds) * 100);
-    return `${sign}${seconds}.${milliseconds.toString().padStart(2, '0')}s`;
-  };
-
-  const handleAdjust = (delta: number) => {
-    const newOffset = Math.max(-10, Math.min(10, offset + delta));
-    onOffsetChange(newOffset);
-  };
-
-  return (
-    <div className="relative">
-      {/* 偏移量显示 */}
-      <button
-        onClick={() => setShowPanel(!showPanel)}
-        className="flex items-center gap-1 px-2 py-1 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-      >
-        <ClockIcon className="w-4 h-4" />
-        <span>{formatOffset(offset)}</span>
-      </button>
-
-      {/* 快速调整面板 */}
-      {showPanel && (
-        <div className="absolute bottom-full left-0 mb-2 p-3 bg-white dark:bg-gray-800 rounded shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="text-xs font-medium mb-2">偏移量调整</div>
-          <div className="space-y-1">
-            <div className="flex gap-2">
-              <button onClick={() => handleAdjust(-1)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                -1s
-              </button>
-              <button onClick={() => handleAdjust(1)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                +1s
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleAdjust(-0.1)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                -0.1s
-              </button>
-              <button onClick={() => handleAdjust(0.1)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                +0.1s
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleAdjust(-0.01)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                -10ms
-              </button>
-              <button onClick={() => handleAdjust(0.01)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                +10ms
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-```
+**视觉设计**:
+- 使用时钟图标表示偏移量
+- 使用内联 SVG 实现
 
 ### 4.4 音量模式按钮
 
-**文件**: `src/components/BackgroundMusicControls/VolumeModeButton.tsx`
+**模块**: 音量模式按钮组件
 
-```typescript
-import React from 'react';
-import { VolumeOffIcon, VolumeLowIcon, VolumeMediumIcon, VolumeHighIcon } from '@heroicons/react/24/outline';
-import type { MusicVolumeMode } from '../../types';
+**核心功能**:
+- 四档音量切换: 静音(0%) / 低音量(20%) / 中音量(50%) / 高音量(80%)
+- 单击循环切换下一档
 
-interface VolumeModeButtonProps {
-  volumeMode: MusicVolumeMode;
-  onModeChange: (mode: MusicVolumeMode) => void;
-}
-
-const MODES: MusicVolumeMode[] = [0, 0.2, 0.5, 0.8];
-const ICONS = {
-  0: VolumeOffIcon,
-  0.2: VolumeLowIcon,
-  0.5: VolumeMediumIcon,
-  0.8: VolumeHighIcon,
-};
-
-export function VolumeModeButton({ volumeMode, onModeChange }: VolumeModeButtonProps) {
-  const CurrentIcon = ICONS[volumeMode];
-  const currentIndex = MODES.indexOf(volumeMode);
-
-  const handleClick = () => {
-    const nextIndex = (currentIndex + 1) % MODES.length;
-    onModeChange(MODES[nextIndex]);
-  };
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const prevIndex = (currentIndex - 1 + MODES.length) % MODES.length;
-    onModeChange(MODES[prevIndex]);
-  };
-
-  return (
-    <button
-      onClick={handleClick}
-      onContextMenu={handleContextMenu}
-      className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-      title={`音乐音量: ${Math.round(volumeMode * 100)}% (左键:下一个,右键:上一个)`}
-    >
-      <CurrentIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-    </button>
-  );
-}
-```
+**视觉设计**:
+- 根据当前音量模式显示对应图标:
+  - 静音: 喇叭带 X
+  - 低音量: 单个喇叭
+  - 中音量: 喇叭加一条声波线
+  - 高音量: 喇叭加多条声波线
+- 使用内联 SVG 实现,图标动态切换
 
 ### 4.5 删除按钮
 
-**文件**: `src/components/BackgroundMusicControls/DeleteIconButton.tsx`
+**模块**: 删除按钮组件
 
-```typescript
-import React, { useState } from 'react';
-import { TrashIcon } from '@heroicons/react/24/outline';
+**核心功能**:
+- 首次点击:进入确认模式(3秒)
+- 二次点击:执行删除
+- 超时自动退出确认模式
+- 视觉反馈(红色高亮)
 
-interface DeleteIconButtonProps {
-  onDelete: () => Promise<void>;
-}
-
-export function DeleteIconButton({ onDelete }: DeleteIconButtonProps) {
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const handleClick = () => {
-    if (!showConfirm) {
-      setShowConfirm(true);
-      setTimeout(() => setShowConfirm(false), 3000); // 3秒后自动隐藏
-      return;
-    }
-
-    onDelete();
-    setShowConfirm(false);
-  };
-
-  return (
-    <button
-      onClick={handleClick}
-      className={`p-2 rounded transition ${
-        showConfirm
-          ? 'bg-red-500 text-white hover:bg-red-600'
-          : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
-      title={showConfirm ? '确认删除?' : '删除背景音乐'}
-    >
-      <TrashIcon className="w-5 h-5" />
-    </button>
-  );
-}
-```
+**视觉设计**:
+- 使用垃圾桶图标
+- 确认模式时红色高亮显示
+- 使用内联 SVG 实现
 
 ---
 
-## 5. 响应式设计
+## 5. 交互设计 (移动端)
 
-### 5.1 移动端适配 (≤375px)
+### 5.1 触摸交互
 
-```css
-/* 移动端特定样式 */
-@media (max-width: 375px) {
-  .background-music-controls {
-    padding: 0 8px;
-    gap: 8px;
-  }
+**偏移量调整**:
+- 点击展开调整面板
+- 点击调整按钮: ±1s/±0.1s/±10ms
+- 长按显示输入框手动输入精确值
 
-  .background-music-controls button {
-    padding: 8px;
-  }
+**音量模式切换**:
+- 单击循环切换 4 种模式
 
-  .offset-display {
-    font-size: 12px;
-  }
+**文件上传**:
+- 点击按钮打开文件选择器
+- 支持拖拽音频文件到按钮区域
+- 自动识别并上传
+- 错误时显示 toast 提示
 
-  .offset-panel {
-    width: 200px;
-  }
-}
-```
+### 5.2 视觉反馈
 
-### 5.2 布局断点
+**按钮状态**:
+- 按下时显示按下效果
+- 禁用状态半透明显示
+- 加载状态显示加载指示器
 
-```tsx
-// 响应式间距
-<div className={cn(
-  "flex items-center gap-2",
-  "px-4",           // 默认
-  "sm:px-6",        // ≥640px
-  "md:gap-4",       // ≥768px
-)}>
-  {/* 控件 */}
-</div>
-```
+**删除确认**:
+- 首次点击: 进入确认模式(红色高亮)
+- 二次点击: 执行删除
+- 3秒超时后自动退出确认模式
 
 ---
 
@@ -959,63 +299,24 @@ export function DeleteIconButton({ onDelete }: DeleteIconButtonProps) {
 
 ### 6.1 单元测试
 
-**文件**: `src/hooks/__tests__/useBackgroundMusic.test.ts`
+**测试模块**: useBackgroundMusic Hook
 
-```typescript
-import { renderHook, act } from '@testing-library/react';
-import { useBackgroundMusic } from '../useBackgroundMusic';
-
-describe('useBackgroundMusic', () => {
-  it('should load background music', async () => {
-    const pattern = {
-      id: 'test-pattern',
-      backgroundMusic: {
-        id: 'test-music',
-        filename: 'test.mp3',
-        duration: 180,
-        uploadedAt: Date.now(),
-      },
-    };
-
-    const { result } = renderHook(() => useBackgroundMusic(pattern));
-
-    expect(result.current[0].isLoading).toBe(true);
-
-    await act(async () => {
-      await result.current[1].load('test-pattern');
-    });
-
-    expect(result.current[0].isLoaded).toBe(true);
-  });
-
-  it('should play with offset', async () => {
-    // ... 测试播放逻辑
-  });
-
-  it('should adjust offset in 10ms precision', () => {
-    // ... 测试偏移量调整
-  });
-});
-```
+**测试用例**:
+- 加载背景音乐功能
+- 播放功能(带偏移量)
+- 偏移量调整(10ms 精度)
+- 暂停/停止功能
+- 音量模式切换
+- 变速功能
+- 删除功能
 
 ### 6.2 集成测试
 
 **测试同步播放**:
-```typescript
-describe('Background Music Sync', () => {
-  it('should play drums and background music together', async () => {
-    // 测试鼓声和背景音乐同时播放
-  });
-
-  it('should pause both tracks together', () => {
-    // 测试同步暂停
-  });
-
-  it('should loop background music with pattern', () => {
-    // 测试循环同步
-  });
-});
-```
+- 鼓声和背景音乐同时播放
+- 同步暂停功能
+- 循环同步功能
+- 变速同步功能
 
 ### 6.3 手动测试清单
 
@@ -1040,41 +341,24 @@ describe('Background Music Sync', () => {
 
 ### 7.1 懒加载
 
-```typescript
-// 仅在 Pattern 有背景音乐时才加载音频元素
-useEffect(() => {
-  if (!pattern?.backgroundMusic) {
-    // 清理
-    return;
-  }
-
-  // 加载音频
-  loadAudio(pattern.backgroundMusic);
-}, [pattern?.backgroundMusic]);
-```
+**策略**:
+- 仅在 Pattern 有背景音乐时才加载音频元素
+- 使用 useEffect 监听 pattern.backgroundMusic 变化
+- 未使用时不创建音频元素
 
 ### 7.2 内存管理
 
-```typescript
-// 组件卸载时释放资源
-useEffect(() => {
-  return () => {
-    if (audioElement) {
-      audioElement.pause();
-      audioElement.src = '';
-      audioElement = null;
-    }
-  };
-}, []);
-```
+**策略**:
+- 组件卸载时释放音频元素资源
+- 清理 audioElement.src 和引用
+- 撤销 Blob URL
 
 ### 7.3 IndexedDB 优化
 
-```typescript
-// 使用索引加速查询
-const index = store.index('patternId');
-const request = index.get(patternId);
-```
+**策略**:
+- 使用 patternId 唯一索引加速查询
+- 避免全表扫描
+- 按需获取 Blob URL
 
 ---
 
@@ -1086,28 +370,11 @@ const request = index.get(patternId);
 
 ### 8.2 实现差异
 
-**使用 Tone.js 的代码**:
-
-```typescript
-import { Player } from 'tone';
-
-// 创建播放器
-const player = new Player({
-  url: audioBuffer,
-  loop: false,
-  volume: -6,
-  playbackRate: 1.0,
-});
-
-// 连接到输出
-player.connect(getAudioContext().destination);
-
-// 播放(精确调度)
-player.start(0, offset, duration);
-
-// 变速保调
-player.playbackRate = 0.7;
-```
+**使用 Tone.js**:
+- 使用 `Player` 类创建播放器
+- 连接到 Web Audio Context
+- 精确调度播放时间
+- 更好的变速保调效果
 
 **优点**:
 - 精确的时序控制(Web Audio API)
@@ -1119,46 +386,25 @@ player.playbackRate = 0.7;
 
 ### 8.3 动态导入
 
-```typescript
-// 仅在需要时加载 Tone.js
-const loadToneJs = async () => {
-  const tone = await import('tone');
-  return tone;
-};
-```
+**策略**:
+- 仅在需要时动态导入 Tone.js
+- 保持主包体积小型化
 
 ---
 
 ## 9. 部署清单
 
-### 9.1 新增文件
+### 9.1 新增模块
 
-```
-src/
-├── components/
-│   └── BackgroundMusicControls/
-│       ├── BackgroundMusicControls.tsx
-│       ├── FileIconButton.tsx
-│       ├── OffsetDisplay.tsx
-│       ├── VolumeModeButton.tsx
-│       └── DeleteIconButton.tsx
-├── hooks/
-│   └── useBackgroundMusic.ts
-├── utils/
-│   └── backgroundMusicStorage.ts
-└── types/
-    └── index.ts (修改)
-```
+- 背景音乐控制组件 (主组件 + 4 个子组件)
+- 背景音乐 Hook
+- 背景音乐存储工具
+- 类型定义扩展
 
-### 9.2 修改文件
+### 9.2 修改的现有模块
 
-```
-src/
-├── hooks/
-│   └── useMultiPatternPlayer.ts (集成背景音乐)
-└── components/
-    └── [播放控制组件].tsx (添加 BackgroundMusicControls)
-```
+- 多模式播放器 Hook (集成背景音乐控制)
+- 播放控制组件 (添加背景音乐控制 UI)
 
 ### 9.3 依赖
 
@@ -1174,22 +420,16 @@ bun add tone
 
 ## 10. 附录
 
-### 10.1 浏览器兼容性
-
-| 特性 | Chrome | Firefox | Safari | Edge |
-|------|--------|---------|--------|------|
-| HTML5 Audio | ✅ 90+ | ✅ 88+ | ✅ 14+ | ✅ 90+ |
-| preservesPitch | ✅ 90+ | ✅ 88+ | ✅ 14+ | ✅ 90+ |
-| IndexedDB | ✅ 90+ | ✅ 88+ | ✅ 14+ | ✅ 90+ |
-| Tone.js (可选) | ✅ 90+ | ✅ 88+ | ✅ 14+ | ✅ 90+ |
-
-### 10.2 相关文档
+### 10.1 相关文档
 
 - [HTML5 Audio 规范](https://html.spec.whatwg.org/multipage/media.html)
 - [IndexedDB 规范](https://w3c.github.io/IndexedDB/)
 - [Tone.js 文档](https://tonejs.github.io/)
-- 现有代码: [src/utils/audioEngine.ts](../../src/utils/audioEngine.ts)
-- 现有代码: [src/hooks/useMultiPatternPlayer.ts](../../src/hooks/useMultiPatternPlayer.ts)
+
+### 10.2 现有代码参考
+
+- 音频引擎模块
+- 多模式播放器 Hook
 
 ---
 
