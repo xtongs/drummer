@@ -159,7 +159,7 @@ describe("vexflowNotation utils", () => {
           {
             subdivision: 0,
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
@@ -178,14 +178,14 @@ describe("vexflowNotation utils", () => {
           {
             subdivision: 0,
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
           {
             subdivision: 4, // 4 个 16 分 => 8 units32
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
@@ -213,14 +213,14 @@ describe("vexflowNotation utils", () => {
           {
             subdivision: 0,
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
           {
             subdivision: 8, // 8 个 16 分 => 16 units32（2 beats）
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
@@ -256,14 +256,14 @@ describe("vexflowNotation utils", () => {
           {
             subdivision: 0,
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },
           {
             subdivision: 12, // 12*2=24 units32 (3 beats)
             subPosition: 0,
-            drums: [{ drum: "Snare", cellState: CELL_NORMAL }],
+            drums: [{ drum: "Snare", cellState: CELL_NORMAL, kind: "normal" }],
             is32nd: false,
             kind: "normal",
           },

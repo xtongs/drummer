@@ -3,6 +3,7 @@ import { Renderer, Stave, Voice, Formatter, Beam, Barline, Fraction } from "vexf
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
+import type { DrumType } from "../../types";
 import "./DrumNotation.css";
 import { patternToVexflowNoteEvents } from "../../utils/vexflowNotation";
 import {
@@ -350,14 +351,26 @@ export function VexFlowDrumNotation({
         // 处理鬼音符头缩放
         for (const noteObj of allNoteObjs) {
           const note = noteObj.note as unknown as {
-            _isGhost?: boolean;
+            _ghostDrums?: DrumType[];
             noteHeads?: Array<{
               el?: SVGElement;
               getSVGElement?: () => SVGElement;
             }>;
           };
-          if (note._isGhost && note.noteHeads) {
-            for (const head of note.noteHeads) {
+          if (note._ghostDrums && note._ghostDrums.length > 0 && note.noteHeads) {
+            // noteHeads 的索引顺序对应 allKeys 的顺序
+            // allKeys 是按 event.drums 的顺序生成的
+            const ghostDrumsSet = new Set(note._ghostDrums);
+            const drumTypes = noteObj.event.drums.map(d => d.drum);
+
+            for (let i = 0; i < note.noteHeads.length; i++) {
+              const head = note.noteHeads[i];
+              if (!head) continue;
+
+              // 检查对应的鼓是否是 ghost
+              const drumType = drumTypes[i];
+              if (!drumType || !ghostDrumsSet.has(drumType)) continue;
+
               const svgEl = head.getSVGElement?.() ?? head.el;
               if (svgEl) {
                 const bbox = (svgEl as SVGGraphicsElement).getBBox?.();
@@ -366,7 +379,7 @@ export function VexFlowDrumNotation({
                   const cy = bbox.y + bbox.height / 2;
                   svgEl.setAttribute(
                     "transform",
-                    `translate(${cx}, ${cy}) scale(0.75) translate(${-cx + (noteObj.event.drums[0]?.drum === "Kick" ? -2 : 2)}, ${-cy})`,
+                    `translate(${cx}, ${cy}) scale(0.75) translate(${-cx + (drumType === "Kick" ? -2 : 2)}, ${-cy})`,
                   );
                 }
               }

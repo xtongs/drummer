@@ -107,11 +107,11 @@ export function addGraceNoteAnnotation(
   }
 
   const annotation = new Annotation("♪");
-  annotation.setVerticalJustification(Annotation.VerticalJustify.TOP);
+  annotation.setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
   annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
   annotation.setFont("", 15, "normal");
   annotation.setXShift(10);
-  annotation.setYShift(43);
+  annotation.setYShift(-55);
   note.addModifier(annotation, 0);
 }
 
@@ -142,8 +142,10 @@ export function createStaveNote(
   const note = new StaveNote(noteStruct);
   if (durationToken.dots === 1) addDotToAllSafe(note);
 
-  if (event.kind === "ghost") {
-    (note as unknown as { _isGhost: boolean })._isGhost = true;
+  // 标记每个鼓的 ghost 状态（按索引顺序对应 allKeys）
+  const ghostDrums = event.drums.filter(d => d.kind === "ghost").map(d => d.drum);
+  if (ghostDrums.length > 0) {
+    (note as unknown as { _ghostDrums: DrumType[] })._ghostDrums = ghostDrums;
   }
 
   if (hasXNoteHead && !isLowerVoice) {

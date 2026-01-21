@@ -324,7 +324,7 @@ describe("vexflowRenderer utils", () => {
         {
           subdivision: 0,
           subPosition: 0 as const,
-          drums: [{ drum: "Snare" as const, cellState: CELL_NORMAL }],
+          drums: [{ drum: "Snare" as const, cellState: CELL_NORMAL, kind: "normal" as const }],
           is32nd: false,
           kind: "normal" as const,
         },

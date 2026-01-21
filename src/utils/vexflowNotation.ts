@@ -41,6 +41,7 @@ export interface VexflowNoteEvent {
   drums: {
     drum: DrumType;
     cellState: CellState;
+    kind: VexflowNoteKind;
   }[];
   is32nd: boolean;
   kind: VexflowNoteKind;
@@ -62,8 +63,16 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
 
   for (let sub = 0; sub < totalSubdivisions; sub++) {
     const createSlots = () => ({
-      0: { normal: [] as { drum: DrumType; cellState: CellState }[], ghost: [] as { drum: DrumType; cellState: CellState }[], grace: [] as { drum: DrumType; cellState: CellState }[] },
-      1: { normal: [] as { drum: DrumType; cellState: CellState }[], ghost: [] as { drum: DrumType; cellState: CellState }[], grace: [] as { drum: DrumType; cellState: CellState }[] },
+      0: {
+        normal: [] as { drum: DrumType; cellState: CellState }[],
+        ghost: [] as { drum: DrumType; cellState: CellState }[],
+        grace: [] as { drum: DrumType; cellState: CellState }[],
+      },
+      1: {
+        normal: [] as { drum: DrumType; cellState: CellState }[],
+        ghost: [] as { drum: DrumType; cellState: CellState }[],
+        grace: [] as { drum: DrumType; cellState: CellState }[],
+      },
     });
     const upperSlots = createSlots();
     const lowerSlots = createSlots();
@@ -74,7 +83,9 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
       const cellState = pattern.grid[drumIndex]?.[sub] ?? CELL_OFF;
       if (cellState === CELL_OFF) return;
 
-      const slots = DRUM_TO_VEXFLOW[drum].isLowerVoice ? lowerSlots : upperSlots;
+      const slots = DRUM_TO_VEXFLOW[drum].isLowerVoice
+        ? lowerSlots
+        : upperSlots;
       const push = (mode: "normal" | "ghost" | "grace", subPosition: 0 | 1) => {
         slots[subPosition][mode].push({ drum, cellState });
       };
@@ -93,8 +104,14 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
         if (DRUM_TO_VEXFLOW[drum].isLowerVoice) has32ndLower = true;
         else has32ndUpper = true;
       } else if (cellState === CELL_GRACE) {
-        push("normal", 0);
-        push("grace", 0);
+        // 只允许 Snare 添加倚音
+        if (drum === "Snare") {
+          push("normal", 0);
+          push("grace", 0);
+        } else {
+          // 其他鼓件将倚音状态当作正常音符处理
+          push("normal", 0);
+        }
       } else if (cellState === CELL_GHOST) {
         push("ghost", 0);
       } else {
@@ -109,23 +126,25 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
       is32nd: boolean,
     ) => {
       const slot = slots[subPosition];
-      if (slot.normal.length > 0) {
+
+      // 合并 normal 和 ghost 到同一个事件中，避免时值被拆分
+      const allDrums = [
+        ...slot.normal.map(d => ({ ...d, kind: "normal" as const })),
+        ...slot.ghost.map(d => ({ ...d, kind: "ghost" as const })),
+      ];
+
+      if (allDrums.length > 0) {
+        // 检查是否所有鼓都是 ghost，如果是则事件类型为 ghost
+        const allGhost = allDrums.every(d => d.kind === "ghost");
+        const eventKind = allGhost ? "ghost" : "normal";
+
         collection.push({
           subdivision: sub,
           subPosition,
-          drums: slot.normal,
+          drums: allDrums,
           is32nd,
-          kind: "normal",
+          kind: eventKind,
           graceDrums: slot.grace.length > 0 ? [...slot.grace] : undefined,
-        });
-      }
-      if (slot.ghost.length > 0) {
-        collection.push({
-          subdivision: sub,
-          subPosition,
-          drums: slot.ghost,
-          is32nd,
-          kind: "ghost",
         });
       }
     };
@@ -134,7 +153,6 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
     emitEvents(upperEvents, upperSlots, 1, true);
     emitEvents(lowerEvents, lowerSlots, 0, has32ndLower);
     emitEvents(lowerEvents, lowerSlots, 1, true);
-
   }
 
   return { upperVoice: upperEvents, lowerVoice: lowerEvents };
@@ -142,18 +160,18 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
 
 export type BarTimelineItem =
   | {
-    kind: "note";
-    event: VexflowNoteEvent;
-    startUnits32InBar: number;
-    durationToken: VexflowDurationToken;
-    durationUnits32: number;
-  }
+      kind: "note";
+      event: VexflowNoteEvent;
+      startUnits32InBar: number;
+      durationToken: VexflowDurationToken;
+      durationUnits32: number;
+    }
   | {
-    kind: "rest";
-    startUnits32InBar: number;
-    durationToken: VexflowDurationToken;
-    durationUnits32: number;
-  };
+      kind: "rest";
+      startUnits32InBar: number;
+      durationToken: VexflowDurationToken;
+      durationUnits32: number;
+    };
 
 export interface BuildBarTimelineOptions {
   /**
