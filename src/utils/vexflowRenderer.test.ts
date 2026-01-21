@@ -5,6 +5,9 @@ import {
   isBeamable,
   groupByQuarterBar,
   hasSixteenthOrShorter,
+  hasSixteenthByHalfBar,
+  splitNotesByHalfBar,
+  getRestTargetX,
   buildBarTickables,
   type NoteWithMeta,
 } from "./vexflowRenderer";
@@ -311,6 +314,156 @@ describe("vexflowRenderer utils", () => {
     });
   });
 
+  describe("hasSixteenthByHalfBar", () => {
+    const createMockItem = (
+      startUnits32InBar: number,
+      duration: string,
+      isRest: boolean = false,
+    ): NoteWithMeta => ({
+      note: { ...mockStaveNote, getDuration: () => duration } as unknown as import("vexflow").StaveNote,
+      event: {
+        subdivision: Math.floor(startUnits32InBar / 2),
+        subPosition: (startUnits32InBar % 2) as 0 | 1,
+        drums: [],
+        is32nd: startUnits32InBar % 2 === 1,
+        kind: "normal" as const,
+      },
+      isRest,
+      durationUnits32: 4,
+      startUnits32InBar,
+    });
+
+    it("应该正确检测前半小节的十六分音符", () => {
+      const items = [
+        createMockItem(0, "16"), // 前半小节
+        createMockItem(8, "8"),  // 前半小节
+      ];
+      const [firstHalf, secondHalf] = hasSixteenthByHalfBar(items, 16);
+      expect(firstHalf).toBe(true);
+      expect(secondHalf).toBe(false);
+    });
+
+    it("应该正确检测后半小节的十六分音符", () => {
+      const items = [
+        createMockItem(16, "8"),  // 后半小节
+        createMockItem(20, "16"), // 后半小节
+      ];
+      const [firstHalf, secondHalf] = hasSixteenthByHalfBar(items, 16);
+      expect(firstHalf).toBe(false);
+      expect(secondHalf).toBe(true);
+    });
+
+    it("应该忽略休止符", () => {
+      const items = [
+        createMockItem(0, "8"),
+        createMockItem(20, "16r", true), // 休止符应该被忽略
+      ];
+      const [firstHalf, secondHalf] = hasSixteenthByHalfBar(items, 16);
+      expect(firstHalf).toBe(false);
+      expect(secondHalf).toBe(false);
+    });
+
+    it("应该处理空数组", () => {
+      const [firstHalf, secondHalf] = hasSixteenthByHalfBar([], 16);
+      expect(firstHalf).toBe(false);
+      expect(secondHalf).toBe(false);
+    });
+  });
+
+  describe("splitNotesByHalfBar", () => {
+    const createMockItem = (
+      startUnits32InBar: number,
+    ): NoteWithMeta => ({
+      note: mockStaveNote as unknown as import("vexflow").StaveNote,
+      event: {
+        subdivision: Math.floor(startUnits32InBar / 2),
+        subPosition: (startUnits32InBar % 2) as 0 | 1,
+        drums: [],
+        is32nd: startUnits32InBar % 2 === 1,
+        kind: "normal" as const,
+      },
+      isRest: false,
+      durationUnits32: 4,
+      startUnits32InBar,
+    });
+
+    it("应该将音符按半小节分组", () => {
+      const items = [
+        createMockItem(0),
+        createMockItem(4),
+        createMockItem(16),
+        createMockItem(20),
+      ];
+
+      const [firstHalf, secondHalf] = splitNotesByHalfBar(items, 16);
+
+      expect(firstHalf).toHaveLength(2);
+      expect(secondHalf).toHaveLength(2);
+    });
+
+    it("应该处理所有音符都在前半小节的情况", () => {
+      const items = [
+        createMockItem(0),
+        createMockItem(4),
+        createMockItem(8),
+      ];
+
+      const [firstHalf, secondHalf] = splitNotesByHalfBar(items, 16);
+
+      expect(firstHalf).toHaveLength(3);
+      expect(secondHalf).toHaveLength(0);
+    });
+
+    it("应该处理所有音符都在后半小节的情况", () => {
+      const items = [
+        createMockItem(16),
+        createMockItem(20),
+      ];
+
+      const [firstHalf, secondHalf] = splitNotesByHalfBar(items, 16);
+
+      expect(firstHalf).toHaveLength(0);
+      expect(secondHalf).toHaveLength(2);
+    });
+
+    it("应该处理空数组", () => {
+      const [firstHalf, secondHalf] = splitNotesByHalfBar([], 16);
+      expect(firstHalf).toEqual([]);
+      expect(secondHalf).toEqual([]);
+    });
+  });
+
+  describe("getRestTargetX", () => {
+    const cellWidth = 50;
+
+    it("应该计算休止符的中心位置", () => {
+      // startUnits32InBar=0, durationUnits32=8 (四分音符)
+      const result = getRestTargetX(0, 8, cellWidth);
+      // centerUnits32 = 0 + 8/2 = 4
+      // centerSub = 4 / 2 = 2
+      // result = 2 * 50 - 50/4 * 1.2 = 100 - 15 = 85
+      expect(result).toBe(85);
+    });
+
+    it("应该计算不同起始位置的休止符", () => {
+      // startUnits32InBar=8, durationUnits32=4 (八分音符)
+      const result = getRestTargetX(8, 4, cellWidth);
+      // centerUnits32 = 8 + 4/2 = 10
+      // centerSub = 10 / 2 = 5
+      // result = 5 * 50 - 15 = 235
+      expect(result).toBe(235);
+    });
+
+    it("应该计算较长的休止符", () => {
+      // startUnits32InBar=0, durationUnits32=16 (二分音符)
+      const result = getRestTargetX(0, 16, cellWidth);
+      // centerUnits32 = 0 + 16/2 = 8
+      // centerSub = 8 / 2 = 4
+      // result = 4 * 50 - 15 = 185
+      expect(result).toBe(185);
+    });
+  });
+
   describe("buildBarTickables", () => {
     const totalSubdivisionsInBar = 16; // 4/4 拍，一小节 16 个 16 分音符
 
@@ -334,6 +487,11 @@ describe("vexflowRenderer utils", () => {
       expect(result[0]).toMatchObject({
         isRest: false,
       });
+    });
+
+    it("当只有休止符时，应该返回空数组", () => {
+      const result = buildBarTickables([], totalSubdivisionsInBar, false);
+      expect(result).toEqual([]);
     });
   });
 });

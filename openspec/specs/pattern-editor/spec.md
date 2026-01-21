@@ -56,6 +56,20 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 鼓谱实时更新显示
 - **AND** 系统 SHALL 使用 VexFlow 原生 API 渲染标准鼓谱
 
+#### Scenario: 移动端双击支持
+
+- **GIVEN** 用户在移动设备上使用鼓谱区域
+- **WHEN** 用户在 300ms 内、30px 距离内连续两次触摸鼓谱
+- **THEN** 系统 SHALL 触发双击事件，计算对应的 subdivision 并跳转播放位置
+
+#### Scenario: 鬼音符样式缩放
+
+- **GIVEN** 鼓谱区域已渲染鬼音（ghost note）
+- **WHEN** 渲染鬼音符符头
+- **THEN** 系统 SHALL 对鬼音符符头应用 0.75 倍缩放
+- **AND** Kick 鬼音符向左偏移 2px
+- **AND** 其他鼓件鬼音符向右偏移 2px
+
 #### Scenario: 鼓谱符头样式（常见鼓谱）
 
 - **GIVEN** 鼓谱区域已渲染
@@ -75,6 +89,9 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 系统 SHALL 使用 `Beam.generateBeams()` 自动生成符杠
 - **AND** 上声部符杠使用 `stemDirection: 1`
 - **AND** 下声部符杠使用 `stemDirection: -1`
+- **AND** 系统 SHALL 按半小节分组音符并分别生成符杠
+- **AND** 若半小节内包含十六分音符，按每拍（1/4 小节）分组生成符杠
+- **AND** 若半小节内无十六分音符，整个半小节生成单一符杠
 
 #### Scenario: 五线谱位置
 
