@@ -1,7 +1,7 @@
 {
   "name": "drummer",
   "private": true,
-  "version": "2.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -17,12 +17,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:watch": "vitest --watch",
-    "check:spec": "bun scripts/check-spec-coverage.mjs",
-    "version:bump": "node scripts/bump-version.mjs",
-    "version:bump:major": "node scripts/bump-version.mjs major",
-    "version:bump:minor": "node scripts/bump-version.mjs minor",
-    "version:bump:patch": "node scripts/bump-version.mjs patch",
-    "version:check": "node scripts/check-version-bump.mjs"
+    "check:spec": "bun scripts/check-spec-coverage.mjs"
   },
   "dependencies": {
     "react": "^18.2.0",
