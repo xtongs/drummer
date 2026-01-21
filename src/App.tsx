@@ -188,6 +188,44 @@ function App() {
   // 快速点击body空白区域5次显示版本号
   useVersionShortcut();
 
+  // 阻止右键菜单(在移动端模拟器中长按时)
+  useEffect(() => {
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      return false;
+    };
+
+    document.body.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      document.body.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
+  // 阻止移动端双指缩放和触摸手势
+  useEffect(() => {
+    const preventTouchMove = (event: TouchEvent) => {
+      // 如果是双指触摸(缩放手势),阻止默认行为
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
+
+    const preventGestureStart = (event: Event) => {
+      event.preventDefault();
+    };
+
+    // 阻止双指缩放
+    document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
+    // 阻止 iOS Safari 的缩放和滚动手势
+    document.body.addEventListener('gesturestart', preventGestureStart, { passive: false });
+
+    return () => {
+      document.body.removeEventListener('touchmove', preventTouchMove);
+      document.body.removeEventListener('gesturestart', preventGestureStart);
+    };
+  }, []);
+
   // 播放时切换 pattern 的回调
   const handlePlayingPatternChange = (patternName: string) => {
     if (patternName === "") {

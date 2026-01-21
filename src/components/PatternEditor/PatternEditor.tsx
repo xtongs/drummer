@@ -391,7 +391,10 @@ export function PatternEditor({
           </button>
         </div>
       </div>
-      <div className="pattern-editor-scrollable" ref={scrollContainerRef}>
+      <div
+        className="pattern-editor-scrollable"
+        ref={scrollContainerRef}
+      >
         <DrumNotation
           pattern={pattern}
           currentBeat={currentBeat}
