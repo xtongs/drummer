@@ -42,6 +42,7 @@ export function usePlaybackAutoScroll({
   const isScrollingRef = useRef(false);
   const lastScrollTargetRef = useRef<number | null>(null);
   const lastPatternIdRef = useRef<string | null>(null);
+  const lastPlayingStateRef = useRef(false); // 跟踪上一次的播放状态
   // pattern 切换后，记录预期的起始位置，用于验证 currentBeat 是否已同步
   const expectedStartSubRef = useRef<number | null>(null);
 
@@ -172,7 +173,7 @@ export function usePlaybackAutoScroll({
     const cursorPosition = currentBeat * cellSize;
     const scrollLeft = container.scrollLeft;
     const scrollRight = scrollLeft + container.clientWidth;
-    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 2;
+    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4;
 
     const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
 
@@ -233,8 +234,130 @@ export function usePlaybackAutoScroll({
   useEffect(() => {
     if (!isPlaying) {
       lastScrollTargetRef.current = null;
+      lastPlayingStateRef.current = false;
     }
   }, [isPlaying, pattern.id]);
+
+  // 当开始播放时，自动对齐游标所在小节的左边界到容器左边
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // 检测是否从停止状态开始播放
+    const wasNotPlaying = !lastPlayingStateRef.current && isPlaying;
+    lastPlayingStateRef.current = isPlaying;
+
+    if (!wasNotPlaying || currentBeat === undefined) {
+      return;
+    }
+
+    // 计算小节相关数据
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+    const totalSubdivisions = pattern.bars * subdivisionsPerBar;
+
+    // 检查 currentBeat 是否在当前 pattern 的有效范围内
+    // 如果超出范围，说明 pattern 和 currentBeat 状态还未同步，跳过本次滚动
+    if (currentBeat >= totalSubdivisions) {
+      return;
+    }
+
+    // 检查 currentBeat 是否在当前 pattern 的循环范围内
+    if (crossPatternLoop) {
+      let rangeStartSub = 0;
+      let rangeEndSub = totalSubdivisions;
+
+      const isStartPattern = isDraftMode
+        ? crossPatternLoop.startPatternName === ""
+        : crossPatternLoop.startPatternName === pattern.name;
+      const isEndPattern = isDraftMode
+        ? crossPatternLoop.endPatternName === ""
+        : crossPatternLoop.endPatternName === pattern.name;
+
+      if (isStartPattern) {
+        rangeStartSub = crossPatternLoop.startBar * subdivisionsPerBar;
+      }
+      if (isEndPattern) {
+        rangeEndSub = (crossPatternLoop.endBar + 1) * subdivisionsPerBar;
+      }
+
+      // 如果 currentBeat 不在循环范围内，说明状态还未同步
+      if (currentBeat < rangeStartSub || currentBeat >= rangeEndSub) {
+        return;
+      }
+    }
+
+    // 计算游标所在的小节索引
+    const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
+
+    // 计算该小节的左边界位置
+    const barLeft = currentBarIndex * subdivisionsPerBar * cellSize;
+
+    // 检查当前 scrollLeft 是否已经对齐（允许小幅误差）
+    const currentScrollLeft = container.scrollLeft;
+    const tolerance = cellSize; // 1个单元格的容差
+    if (Math.abs(currentScrollLeft - barLeft) <= tolerance) {
+      // 已经对齐，不需要滚动
+      return;
+    }
+
+    // 计算右侧提前量（与自动滚动逻辑保持一致）
+    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 2;
+
+    // 检查游标是否已经接近右边界（考虑 rightLead）
+    const cursorPosition = currentBeat * cellSize;
+    const scrollRight = currentScrollLeft + container.clientWidth;
+
+    if (cursorPosition + cellSize > scrollRight - rightLead) {
+      // 如果游标已经在接近右边界，滚动到下一个小节
+      // 确定当前 pattern 在 range 中的范围
+      let rangeStartBar = 0;
+      let rangeEndBar = pattern.bars - 1;
+
+      if (crossPatternLoop) {
+        const isStartPattern = isDraftMode
+          ? crossPatternLoop.startPatternName === ""
+          : crossPatternLoop.startPatternName === pattern.name;
+        const isEndPattern = isDraftMode
+          ? crossPatternLoop.endPatternName === ""
+          : crossPatternLoop.endPatternName === pattern.name;
+
+        if (isStartPattern) {
+          rangeStartBar = crossPatternLoop.startBar;
+        }
+        if (isEndPattern) {
+          rangeEndBar = crossPatternLoop.endBar;
+        }
+      }
+
+      // 计算下一个小节的位置
+      let nextBarIndex: number;
+      if (currentBarIndex >= rangeEndBar) {
+        // 当前是 range 最后一个小节，回到 range 开头
+        nextBarIndex = rangeStartBar;
+      } else {
+        // 滚到下一个小节
+        nextBarIndex = currentBarIndex + 1;
+      }
+
+      const nextBarLeft = nextBarIndex * subdivisionsPerBar * cellSize;
+      doScroll(container, nextBarLeft);
+    } else {
+      // 否则，滚动到当前小节的左边界
+      doScroll(container, barLeft);
+    }
+  }, [
+    isPlaying,
+    currentBeat,
+    cellSize,
+    pattern.timeSignature,
+    pattern.bars,
+    pattern.name,
+    crossPatternLoop,
+    isDraftMode,
+    scrollContainerRef,
+    doScroll,
+  ]);
 
   return {
     scrollContainerRef,

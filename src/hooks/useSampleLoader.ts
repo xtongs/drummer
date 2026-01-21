@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   preInitAudioContext,
   ensureSamplesLoaded,
+  updateSampleCache,
   setSampleLoadProgressCallback,
   type SampleLoadProgressCallback,
 } from "../utils/audioEngine";
@@ -64,6 +65,12 @@ export function useSampleLoader(): UseSampleLoaderReturn {
 
         // 清除进度回调
         setSampleLoadProgressCallback(null);
+
+        // 采样加载完成后，静默更新 IndexedDB 缓存
+        // 不阻塞界面，在后台执行
+        updateSampleCache().catch(() => {
+          // 静默处理错误，不影响用户体验
+        });
       } catch {
         // 采样加载失败或超时，使用合成音色作为后备
         // 静默处理，不打印日志

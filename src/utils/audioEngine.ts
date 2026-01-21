@@ -69,18 +69,19 @@ export async function resumeAudioContext(): Promise<void> {
 /**
  * 加载采样文件（加载为 AudioBuffer 用于精确时序调度，iOS 兼容）
  * 优先从 IndexedDB 缓存读取，避免重复解码
+ * 每次启动时静默更新缓存以确保最新
  */
-async function loadSample(url: string, name: string): Promise<void> {
+async function loadSample(url: string, name: string, forceUpdate = false): Promise<void> {
   const ctx = getAudioContext();
   try {
     let audioBuffer: AudioBuffer;
 
     // 尝试从 IndexedDB 缓存读取
     const cachedBuffer = await getCachedAudioBuffer(ctx, name);
-    if (cachedBuffer) {
+    if (cachedBuffer && !forceUpdate) {
       audioBuffer = cachedBuffer;
     } else {
-      // 缓存不存在，从网络加载并解码
+      // 缓存不存在或需要强制更新，从网络加载并解码
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
       audioBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -103,9 +104,10 @@ async function loadSample(url: string, name: string): Promise<void> {
 
 /**
  * 加载所有采样
+ * @param forceUpdate 是否强制更新缓存（即使缓存存在也重新加载）
  */
-function loadAllSamples(): Promise<void> {
-  if (samplesLoaded) return Promise.resolve();
+function loadAllSamples(forceUpdate = false): Promise<void> {
+  if (samplesLoaded && !forceUpdate) return Promise.resolve();
   if (samplesLoadPromise) return samplesLoadPromise;
 
   const samples = [
@@ -126,7 +128,7 @@ function loadAllSamples(): Promise<void> {
 
   samplesLoadPromise = (async () => {
     for (const sample of samples) {
-      await loadSample(sample.url, sample.name);
+      await loadSample(sample.url, sample.name, forceUpdate);
       loadedCount++;
       if (progressCallback) {
         progressCallback(loadedCount, samples.length, sample.name);
@@ -157,6 +159,22 @@ export async function ensureSamplesLoaded(): Promise<void> {
   // 检查并更新缓存版本
   await checkAndUpdateCacheVersion();
   await loadAllSamples();
+}
+
+/**
+ * 静默更新采样缓存（后台执行，不阻塞界面）
+ * 即使缓存存在也会重新加载和更新
+ */
+export async function updateSampleCache(): Promise<void> {
+  try {
+    // 强制重新加载所有采样并更新缓存
+    samplesLoaded = false;
+    samplesLoadPromise = null;
+    await loadAllSamples(true);
+  } catch (error) {
+    // 静默处理错误，不影响用户体验
+    console.warn("Failed to update sample cache:", error);
+  }
 }
 
 /**
