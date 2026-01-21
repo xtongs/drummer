@@ -15,7 +15,6 @@ import {
   loadPatterns,
   deletePattern,
   setCurrentPatternId,
-  getCurrentPatternId,
   generateId,
   saveMetronomeBPM,
   loadMetronomeBPM,
@@ -137,35 +136,12 @@ function App() {
     });
   };
 
-  // 加载保存的节奏型列表并恢复上次选中的tab
+  // 页面刷新时默认选中 draft tab，不自动恢复上次选中的 pattern
   useEffect(() => {
     const patterns = loadPatterns();
     setSavedPatterns(patterns);
 
-    // 获取上次选中的pattern ID
-    const savedPatternId = getCurrentPatternId();
-    if (savedPatternId) {
-      // 查找对应的pattern
-      const savedPattern = patterns.find((p) => p.id === savedPatternId);
-      if (savedPattern) {
-        // 加载上次选中的pattern
-        setIsDraftMode(false);
-        loadPattern(savedPattern);
-        // 同步 BPM 到节拍器（优先使用已保存的节拍器 BPM）
-        const savedBPM = loadMetronomeBPM();
-        if (savedBPM !== null) {
-          // 使用保存的节拍器 BPM 更新 pattern
-          setMetronomeBPM(savedBPM);
-        } else {
-          // 没有保存的节拍器 BPM，使用 pattern 的 BPM
-          setMetronomeBPM(savedPattern.bpm);
-          saveMetronomeBPM(savedPattern.bpm);
-        }
-      } else {
-        // 如果找不到，清除无效的ID
-        setCurrentPatternId(undefined);
-      }
-    }
+    // 不自动恢复上次选中的 pattern，始终保持 draft mode
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
