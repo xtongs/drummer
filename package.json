@@ -16,7 +16,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "check:spec": "bun scripts/check-spec-coverage.mjs"
   },
   "dependencies": {
     "react": "^18.2.0",
