@@ -7,6 +7,7 @@ import {
   hasSixteenthOrShorter,
   hasSixteenthByHalfBar,
   splitNotesByHalfBar,
+  splitNotesByBeat,
   getRestTargetX,
   buildBarTickables,
   type NoteWithMeta,
@@ -436,6 +437,86 @@ describe("vexflowRenderer utils", () => {
       const [firstHalf, secondHalf] = splitNotesByHalfBar([], 16);
       expect(firstHalf).toEqual([]);
       expect(secondHalf).toEqual([]);
+    });
+  });
+
+  describe("splitNotesByBeat", () => {
+    const createMockItem = (
+      startUnits32InBar: number,
+    ): NoteWithMeta => ({
+      note: mockStaveNote as unknown as import("vexflow").StaveNote,
+      event: {
+        subdivision: Math.floor(startUnits32InBar / 2),
+        subPosition: (startUnits32InBar % 2) as 0 | 1,
+        drums: [],
+        is32nd: startUnits32InBar % 2 === 1,
+        kind: "normal" as const,
+      },
+      isRest: false,
+      durationUnits32: 4,
+      startUnits32InBar,
+    });
+
+    it("应该将音符按拍子分组 (4/4 拍)", () => {
+      // 4/4 拍，每拍 8 units32
+      // 音符分布：第1拍有2个，第2拍有1个，第3拍有2个，第4拍有0个
+      const items = [
+        createMockItem(0),   // 第1拍
+        createMockItem(2),   // 第1拍
+        createMockItem(8),   // 第2拍
+        createMockItem(16),  // 第3拍
+        createMockItem(18),  // 第3拍
+      ];
+
+      const result = splitNotesByBeat(items, 16, 4);
+
+      expect(result).toHaveLength(3); // 3个非空拍
+      expect(result[0]).toHaveLength(2); // 第1拍有2个音符
+      expect(result[1]).toHaveLength(1); // 第2拍有1个音符
+      expect(result[2]).toHaveLength(2); // 第3拍有2个音符
+    });
+
+    it("应该将半小节的音符按拍子分组", () => {
+      // 半小节有2拍（4/4拍时）
+      // 第1拍有2个十六分音符，第2拍有2个十六分音符
+      const items = [
+        createMockItem(0),   // 第1拍位置0
+        createMockItem(2),   // 第1拍位置2
+        createMockItem(8),   // 第2拍位置0
+        createMockItem(10),  // 第2拍位置2
+      ];
+
+      const result = splitNotesByBeat(items, 16, 4);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveLength(2);
+      expect(result[1]).toHaveLength(2);
+
+      // 验证第1拍的音符
+      expect(result[0]![0]!.startUnits32InBar).toBe(0);
+      expect(result[0]![1]!.startUnits32InBar).toBe(2);
+
+      // 验证第2拍的音符
+      expect(result[1]![0]!.startUnits32InBar).toBe(8);
+      expect(result[1]![1]!.startUnits32InBar).toBe(10);
+    });
+
+    it("应该处理所有音符都在同一拍的情况", () => {
+      const items = [
+        createMockItem(0),
+        createMockItem(2),
+        createMockItem(4),
+      ];
+
+      const result = splitNotesByBeat(items, 16, 4);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveLength(3);
+    });
+
+    it("应该处理空数组", () => {
+      const result = splitNotesByBeat([], 16, 4);
+      expect(result).toEqual([]);
     });
   });
 

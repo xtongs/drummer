@@ -11,6 +11,7 @@ import {
   buildBarTickables,
   hasSixteenthByHalfBar,
   splitNotesByHalfBar,
+  splitNotesByBeat,
   getRestTargetX,
   type NoteWithMeta,
 } from "../../utils/vexflowRenderer";
@@ -323,22 +324,37 @@ export function VexFlowDrumNotation({
           for (const { notes: halfNotes, hasSixteenth } of halfBarGroups) {
             if (halfNotes.length === 0) continue;
 
-            // 使用 groups 参数控制分组：
-            // - 有十六分音符: [new Fraction(1, 4)] 每拍分组
-            // - 无十六分音符: [new Fraction(1, 2)] 每两拍分组（半小节内）
-            const groups = hasSixteenth
-              ? [new Fraction(1, 4)] // 每拍分组
-              : [new Fraction(1, 2)]; // 半小节内每两拍分组（即整个半小节1个符杠）
+            if (hasSixteenth) {
+              // 有十六分音符：将半小节内的音符按拍子进一步分组，防止跨拍符杠连接
+              // 例如：4/4 拍时，半小节有 2 拍，需要分成 2 组
+              const beatGroups = splitNotesByBeat(halfNotes, barSubdivisions, beatsPerBar);
 
-            const beams = Beam.generateBeams(
-              halfNotes.map((n) => n.note),
-              {
-                stemDirection,
-                flatBeams: true,
-                groups,
-              },
-            );
-            allBeams.push(...beams);
+              // 为每拍生成符杠
+              for (const beatNotes of beatGroups) {
+                if (beatNotes.length === 0) continue;
+
+                const beams = Beam.generateBeams(
+                  beatNotes.map((n) => n.note),
+                  {
+                    stemDirection,
+                    flatBeams: true,
+                    groups: [new Fraction(1, 4)], // 每拍分组
+                  },
+                );
+                allBeams.push(...beams);
+              }
+            } else {
+              // 无十六分音符：整个半小节一个符杠
+              const beams = Beam.generateBeams(
+                halfNotes.map((n) => n.note),
+                {
+                  stemDirection,
+                  flatBeams: true,
+                  groups: [new Fraction(1, 2)], // 半小节内每两拍分组（即整个半小节1个符杠）
+                },
+              );
+              allBeams.push(...beams);
+            }
           }
         }
 

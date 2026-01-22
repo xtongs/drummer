@@ -362,3 +362,38 @@ export function getRestTargetX(
   const centerSub = centerUnits32 / 2;
   return centerSub * cellWidth - (cellWidth / 4) * 1.2;
 }
+
+/**
+ * 将音符按拍子分组（防止跨拍符杠连接）
+ * @param items 音符列表
+ * @param barSubdivisions 小节内的细分数量（16 = 4/4拍）
+ * @param beatsPerBar 每小节的拍数（4 = 4/4拍）
+ * @returns 按拍子分组的音符数组，每个元素代表一拍的音符
+ */
+export function splitNotesByBeat(
+  items: NoteWithMeta[],
+  barSubdivisions: number,
+  beatsPerBar: number,
+): NoteWithMeta[][] {
+  const barUnits32 = barSubdivisions * 2;
+  const beatUnits32 = Math.floor(barUnits32 / beatsPerBar);
+
+  const result: NoteWithMeta[][] = Array.from({ length: beatsPerBar }, () => []);
+
+  for (const item of items) {
+    const startUnits32 =
+      item.startUnits32InBar ??
+      item.event.subdivision * 2 + item.event.subPosition;
+
+    // 计算音符所属的拍子索引
+    const beatIndex = Math.floor(startUnits32 / beatUnits32);
+
+    // 确保索引在有效范围内
+    if (beatIndex >= 0 && beatIndex < beatsPerBar) {
+      result[beatIndex]!.push(item);
+    }
+  }
+
+  // 过滤掉空拍
+  return result.filter((beatNotes) => beatNotes.length > 0);
+}
