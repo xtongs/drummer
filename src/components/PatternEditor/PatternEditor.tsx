@@ -7,11 +7,14 @@ import {
   DrumNotation /* 临时注释: RENDERER_CHANGE_EVENT */,
 } from "./DrumNotation";
 import { Grid } from "./Grid";
+import { GridLabels } from "./GridLabels";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
 import { PatternTabs } from "../PatternManager/PatternTabs";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
+import { usePracticeCellSize } from "../../hooks/usePracticeCellSize";
+import { useFullPracticeMode } from "../../hooks/useFullPracticeMode";
 import { useSingleLongPress } from "../../hooks/useSingleLongPress";
 import { useExportMode } from "../../hooks/useExportMode";
 import { usePlaybackAutoScroll } from "../../hooks/usePlaybackAutoScroll";
@@ -75,7 +78,11 @@ export function PatternEditor({
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
-  const cellSize = useGridCellSize(); // 动态计算单元格大小
+  const isFullPracticeMode = useFullPracticeMode();
+  const defaultCellSize = useGridCellSize(); // 动态计算单元格大小
+  const [beatsPerBar] = pattern.timeSignature;
+  const practiceCellSize = usePracticeCellSize(beatsPerBar, 2);
+  const cellSize = isFullPracticeMode ? practiceCellSize : defaultCellSize;
 
   // 渲染器切换状态
   // 临时注释: 固定为 vexflow，不再读取 localstorage，不再使用 useState
@@ -222,7 +229,9 @@ export function PatternEditor({
   ]);
 
   return (
-    <div className="pattern-editor">
+    <div
+      className={`pattern-editor${isFullPracticeMode ? " full-practice-mode" : ""}`}
+    >
       <div className="pattern-editor-controls">
         <BarControls
           bars={pattern.bars}
@@ -397,18 +406,25 @@ export function PatternEditor({
       >
         <DrumNotation
           pattern={pattern}
+          cellSize={cellSize}
           currentBeat={currentBeat}
           scrollContainerRef={scrollContainerRef}
           onDoubleClick={onNotationDoubleClick}
         />
-        <Grid
-          pattern={pattern}
-          onCellClick={onCellClick}
-          onToggleGhost={onToggleGhost}
-          onCellDoubleClick={onCycleThirtySecond}
-          currentBeat={currentBeat}
-          scrollContainerRef={scrollContainerRef}
-        />
+        {isFullPracticeMode && (
+          <GridLabels pattern={pattern} cellSize={cellSize} />
+        )}
+        {!isFullPracticeMode && (
+          <Grid
+            pattern={pattern}
+            cellSize={cellSize}
+            onCellClick={onCellClick}
+            onToggleGhost={onToggleGhost}
+            onCellDoubleClick={onCycleThirtySecond}
+            currentBeat={currentBeat}
+            scrollContainerRef={scrollContainerRef}
+          />
+        )}
       </div>
     </div>
   );

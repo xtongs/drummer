@@ -9,11 +9,11 @@ import {
 } from "../../types";
 import { getDrumNotation, getSymbolY } from "../../utils/drumNotation";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
-import { useGridCellSize } from "../../hooks/useGridCellSize";
 import "./DrumNotation.css";
 
 export interface DrumNotationProps {
   pattern: Pattern;
+  cellSize: number;
   currentBeat?: number;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   onDoubleClick?: (subdivision: number) => void;
@@ -30,13 +30,14 @@ const STAFF_HEIGHT = 5 * LINE_SPACING; // 六条线之间有5个间隔，让六�
 
 export function LegacyDrumNotation({
   pattern,
+  cellSize,
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
   onDoubleClick,
 }: DrumNotationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const cellWidth = useGridCellSize();
+  const cellWidth = cellSize;
 
   const handleDoubleClick = (event: React.MouseEvent<SVGSVGElement>) => {
     if (!onDoubleClick) return;

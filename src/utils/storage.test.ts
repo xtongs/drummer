@@ -375,41 +375,41 @@ describe("Storage 工具函数", () => {
   });
 
   describe("getNotationRenderer / setNotationRenderer", () => {
-    it("默认值应该为 'legacy'", () => {
-      expect(getNotationRenderer()).toBe("legacy");
+    it("默认值应该为 'vexflow'", () => {
+      expect(getNotationRenderer()).toBe("vexflow");
     });
 
-    it("应该正确保存和获取 'vexflow'", () => {
+    it("应该固定返回 'vexflow'", () => {
       setNotationRenderer("vexflow");
 
       expect(getNotationRenderer()).toBe("vexflow");
     });
 
-    it("应该正确保存和获取 'legacy'", () => {
+    it("设置为 legacy 仍然保持 'vexflow'", () => {
       setNotationRenderer("vexflow");
       setNotationRenderer("legacy");
 
-      expect(getNotationRenderer()).toBe("legacy");
+      expect(getNotationRenderer()).toBe("vexflow");
     });
 
-    it("非法值应该回退到默认值 'legacy'", () => {
+    it("非法值应该回退到默认值 'vexflow'", () => {
       localStorage.setItem("drummer-notation-renderer", "invalid-value");
 
-      expect(getNotationRenderer()).toBe("legacy");
+      expect(getNotationRenderer()).toBe("vexflow");
     });
 
-    it("空字符串应该回退到默认值 'legacy'", () => {
+    it("空字符串应该回退到默认值 'vexflow'", () => {
       localStorage.setItem("drummer-notation-renderer", "");
 
-      expect(getNotationRenderer()).toBe("legacy");
+      expect(getNotationRenderer()).toBe("vexflow");
     });
 
-    it("set 后 get 返回一致", () => {
+    it("set 后 get 仍然保持 'vexflow'", () => {
       setNotationRenderer("vexflow");
       expect(getNotationRenderer()).toBe("vexflow");
 
       setNotationRenderer("legacy");
-      expect(getNotationRenderer()).toBe("legacy");
+      expect(getNotationRenderer()).toBe("vexflow");
     });
   });
 });

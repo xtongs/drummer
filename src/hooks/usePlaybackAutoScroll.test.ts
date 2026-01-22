@@ -100,6 +100,37 @@ describe("usePlaybackAutoScroll", () => {
     expect(smoothScrollTo).not.toHaveBeenCalled();
   });
 
+  it("当进入新的小节时应该滚动到该小节起始位置", () => {
+    mockContainer.scrollLeft = 0;
+    mockContainer.clientWidth = 400;
+    const scrollContainerRef = { current: mockContainer as HTMLDivElement };
+
+    const { rerender } = renderHook(
+      ({ currentBeat }) =>
+        usePlaybackAutoScroll({
+          scrollContainerRef,
+          currentBeat,
+          cellSize: 20,
+          pattern: createMockPattern({ bars: 2 }),
+          crossPatternLoop: undefined,
+          isDraftMode: false,
+          isPlaying: true,
+        }),
+      { initialProps: { currentBeat: 5 } }
+    );
+
+    vi.clearAllMocks();
+
+    rerender({ currentBeat: 20 });
+
+    expect(smoothScrollTo).toHaveBeenCalledWith(
+      mockContainer,
+      320,
+      150,
+      expect.any(Function)
+    );
+  });
+
   it("当游标超出左侧时应该平滑滚动到游标所在小节的起始位置", () => {
     mockContainer.scrollLeft = 200;
     mockContainer.clientWidth = 400;

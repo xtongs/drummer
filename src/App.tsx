@@ -10,6 +10,7 @@ import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
 import { VersionDisplay } from "./components/VersionDisplay/VersionDisplay";
 import { useMultiPatternPlayer } from "./hooks/useMultiPatternPlayer";
+import { useFullPracticeMode } from "./hooks/useFullPracticeMode";
 import {
   savePattern,
   loadPatterns,
@@ -275,6 +276,7 @@ function App() {
       seekTo(0);
     }
   };
+  const isFullPracticeMode = useFullPracticeMode();
 
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
@@ -467,6 +469,16 @@ function App() {
         onRateIndexChange={setRateIndex}
         rates={BPM_RATES}
         rateLabels={BPM_RATE_LABELS}
+        patternPlayButton={
+          isFullPracticeMode ? (
+            <BottomPlayButton
+              variant="inline"
+              isPlaying={isPatternPlaying}
+              onClick={togglePatternPlay}
+              onLongPress={handleBottomPlayButtonLongPress}
+            />
+          ) : undefined
+        }
       />
       <main className="app-main">
         <PatternEditor
@@ -494,11 +506,13 @@ function App() {
           onNotationDoubleClick={handleNotationDoubleClick}
         />
       </main>
-      <BottomPlayButton
-        isPlaying={isPatternPlaying}
-        onClick={togglePatternPlay}
-        onLongPress={handleBottomPlayButtonLongPress}
-      />
+      {!isFullPracticeMode && (
+        <BottomPlayButton
+          isPlaying={isPatternPlaying}
+          onClick={togglePatternPlay}
+          onLongPress={handleBottomPlayButtonLongPress}
+        />
+      )}
       <VersionDisplay />
     </div>
   );

@@ -5,12 +5,14 @@ interface BottomPlayButtonProps {
   isPlaying: boolean;
   onClick: () => void;
   onLongPress?: () => void;
+  variant?: "floating" | "inline";
 }
 
 export function BottomPlayButton({
   isPlaying,
   onClick,
   onLongPress,
+  variant = "floating",
 }: BottomPlayButtonProps) {
   const longPressTimerRef = useRef<number | null>(null);
   const hasLongPressedRef = useRef<boolean>(false);
@@ -76,16 +78,18 @@ export function BottomPlayButton({
   };
 
   return (
-    <div className="bottom-play-button-container">
+    <div
+      className={`bottom-play-button-container${variant === "inline" ? " inline" : ""}`}
+    >
       <button
-        className="bottom-play-button"
+        className={`bottom-play-button${variant === "inline" ? " inline" : ""}`}
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        aria-label={isPlaying ? "Pause Metronome" : "Play Metronome"}
+        aria-label={isPlaying ? "Pause Pattern" : "Play Pattern"}
       >
         {isPlaying ? (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">

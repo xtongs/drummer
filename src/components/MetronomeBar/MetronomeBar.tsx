@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import type { ReactNode } from "react";
 import { BPMSlider } from "./BPMSlider";
 import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
@@ -19,6 +20,7 @@ interface MetronomeBarProps {
   onRateIndexChange: (index: number) => void;
   rates: number[];
   rateLabels: string[];
+  patternPlayButton?: ReactNode;
 }
 
 export function MetronomeBar({
@@ -33,6 +35,7 @@ export function MetronomeBar({
   onRateIndexChange,
   rates,
   rateLabels,
+  patternPlayButton,
 }: MetronomeBarProps) {
   // 查找当前拍号在列表中的索引
   const commonTimeSignatures = useMemo(
@@ -223,13 +226,17 @@ export function MetronomeBar({
         </div>
 
         <div className="loop-count-group">
-          {onPatternPlayToggle && (
-            <PlayButton
-              isPlaying={isPatternPlaying}
-              onClick={onPatternPlayToggle}
-              loopCount={loopCount}
-              onResetCount={handleResetCount}
-            />
+          {patternPlayButton ? (
+            patternPlayButton
+          ) : (
+            onPatternPlayToggle && (
+              <PlayButton
+                isPlaying={isPatternPlaying}
+                onClick={onPatternPlayToggle}
+                loopCount={loopCount}
+                onResetCount={handleResetCount}
+              />
+            )
           )}
         </div>
       </div>

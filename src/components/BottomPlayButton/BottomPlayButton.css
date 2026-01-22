@@ -17,6 +17,15 @@
   margin: 0 auto;
 }
 
+.bottom-play-button-container.inline {
+  position: static;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  padding: 0;
+  pointer-events: auto;
+}
+
 .bottom-play-button {
   width: 64px;
   height: 64px;
@@ -33,6 +42,14 @@
   pointer-events: auto;
   border: none;
   cursor: pointer;
+}
+
+.bottom-play-button.inline {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  box-shadow: none;
 }
 
 .bottom-play-button:active {
@@ -60,5 +77,17 @@
   .bottom-play-button svg {
     width: 24px;
     height: 24px;
+  }
+
+  .bottom-play-button.inline {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .bottom-play-button.inline svg {
+    width: 18px;
+    height: 18px;
   }
 }

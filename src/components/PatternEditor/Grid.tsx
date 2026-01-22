@@ -2,12 +2,12 @@ import { useRef } from "react";
 import { GridCell } from "./GridCell";
 import type { Pattern } from "../../types";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
-import { useGridCellSize } from "../../hooks/useGridCellSize";
 import { useVisibleRange } from "../../hooks/useVisibleRange";
 import "./Grid.css";
 
 interface GridProps {
   pattern: Pattern;
+  cellSize: number;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
   onToggleGhost: (drumIndex: number, beatIndex: number) => void;
   onCellDoubleClick: (drumIndex: number, beatIndex: number) => void;
@@ -17,6 +17,7 @@ interface GridProps {
 
 export function Grid({
   pattern,
+  cellSize,
   onCellClick,
   onToggleGhost,
   onCellDoubleClick,
@@ -24,7 +25,6 @@ export function Grid({
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
   const [beatsPerBar] = pattern.timeSignature;
-  const cellSize = useGridCellSize();
   const gridContentRef = useRef<HTMLDivElement>(null);
 
   const totalSubdivisions = pattern.grid[0]?.length || 0;

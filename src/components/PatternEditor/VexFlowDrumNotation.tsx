@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { Renderer, Stave, Voice, Formatter, Beam, Barline, Fraction } from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
-import { useGridCellSize } from "../../hooks/useGridCellSize";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
 import type { DrumType } from "../../types";
 import "./DrumNotation.css";
@@ -24,12 +23,13 @@ const STAFF_Y = (SVG_HEIGHT - STAVE_HEIGHT) / 2 - STAVE_INTERNAL_OFFSET;
 
 export function VexFlowDrumNotation({
   pattern,
+  cellSize,
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
   onDoubleClick,
 }: DrumNotationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const cellWidth = useGridCellSize();
+  const cellWidth = cellSize;
   const lastTouchRef = useRef<{ time: number; x: number } | null>(null);
 
   const DOUBLE_TAP_DELAY = 300;

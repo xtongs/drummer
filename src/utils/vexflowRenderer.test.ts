@@ -23,7 +23,9 @@ const mockStaveNote = {
 };
 
 vi.mock("vexflow", () => ({
-  StaveNote: vi.fn().mockImplementation(() => mockStaveNote),
+  StaveNote: vi.fn(function StaveNote() {
+    return mockStaveNote;
+  }),
   Dot: { buildAndAttach: vi.fn() },
   Annotation: {
     VerticalJustify: { TOP: 1 },
@@ -32,15 +34,19 @@ vi.mock("vexflow", () => ({
 }));
 
 // Mock DRUM_TO_VEXFLOW
-vi.mock("./vexflowNotation", () => ({
-  DRUM_TO_VEXFLOW: {
-    "Kick": { keys: ["f/4"], isLowerVoice: true },
-    "Snare": { keys: ["c/5"], isLowerVoice: false },
-    "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false },
-    "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
-    "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
-  },
-}));
+vi.mock("./vexflowNotation", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./vexflowNotation")>();
+  return {
+    ...actual,
+    DRUM_TO_VEXFLOW: {
+      "Kick": { keys: ["f/4"], isLowerVoice: true },
+      "Snare": { keys: ["c/5"], isLowerVoice: false },
+      "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false },
+      "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
+      "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
+    },
+  };
+});
 
 describe("vexflowRenderer utils", () => {
   beforeEach(() => {

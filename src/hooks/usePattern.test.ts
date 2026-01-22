@@ -129,57 +129,60 @@ describe("usePattern", () => {
   describe("toggleGhost", () => {
     it("应该在已激活的单元格上循环切换音类型", () => {
       const { result } = renderHook(() => usePattern(initialPattern));
+      const snareIndex = DRUMS.indexOf("Snare");
 
       // 先激活单元格
       act(() => {
-        result.current.toggleCell(0, 0);
+        result.current.toggleCell(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_NORMAL);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_NORMAL);
 
       // NORMAL -> GHOST
       act(() => {
-        result.current.toggleGhost(0, 0);
+        result.current.toggleGhost(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_GHOST);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_GHOST);
 
       // GHOST -> GRACE
       act(() => {
-        result.current.toggleGhost(0, 0);
+        result.current.toggleGhost(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_GRACE);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_GRACE);
 
       // GRACE -> NORMAL
       act(() => {
-        result.current.toggleGhost(0, 0);
+        result.current.toggleGhost(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_NORMAL);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_NORMAL);
     });
 
     it("不应该对未激活的单元格生效", () => {
       const { result } = renderHook(() => usePattern(initialPattern));
+      const snareIndex = DRUMS.indexOf("Snare");
 
       act(() => {
-        result.current.toggleGhost(0, 0);
+        result.current.toggleGhost(snareIndex, 0);
       });
 
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_OFF);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_OFF);
     });
 
     it("不应该对32分音符状态的单元格生效", () => {
       const { result } = renderHook(() => usePattern(initialPattern));
+      const snareIndex = DRUMS.indexOf("Snare");
 
       // 先设置为双32分
       act(() => {
-        result.current.toggleCell(0, 0);
-        result.current.cycleThirtySecond(0, 0);
+        result.current.toggleCell(snareIndex, 0);
+        result.current.cycleThirtySecond(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_DOUBLE_32);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_DOUBLE_32);
 
       // 尝试切换 ghost，应该无效
       act(() => {
-        result.current.toggleGhost(0, 0);
+        result.current.toggleGhost(snareIndex, 0);
       });
-      expect(result.current.pattern.grid[0][0]).toBe(CELL_DOUBLE_32);
+      expect(result.current.pattern.grid[snareIndex][0]).toBe(CELL_DOUBLE_32);
     });
   });
 

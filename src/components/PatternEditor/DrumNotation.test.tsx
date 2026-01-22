@@ -40,7 +40,9 @@ describe("DrumNotation 组件", () => {
   describe("渲染器选择", () => {
     it("默认应该使用 Legacy 渲染器", () => {
       const pattern = createTestPattern();
-      const { container } = render(<DrumNotation pattern={pattern} />);
+      const { container } = render(
+        <DrumNotation pattern={pattern} cellSize={20} />,
+      );
 
       // 验证容器存在
       expect(container.querySelector(".drum-notation-container")).toBeTruthy();
@@ -50,7 +52,9 @@ describe("DrumNotation 组件", () => {
       storage.setNotationRenderer("vexflow");
 
       const pattern = createTestPattern();
-      const { container } = render(<DrumNotation pattern={pattern} />);
+      const { container } = render(
+        <DrumNotation pattern={pattern} cellSize={20} />,
+      );
 
       // 验证容器存在
       expect(container.querySelector(".drum-notation-container")).toBeTruthy();
@@ -58,7 +62,9 @@ describe("DrumNotation 组件", () => {
 
     it("应该响应渲染器变更事件", async () => {
       const pattern = createTestPattern();
-      const { container } = render(<DrumNotation pattern={pattern} />);
+      const { container } = render(
+        <DrumNotation pattern={pattern} cellSize={20} />,
+      );
 
       // 初始状态
       expect(container.querySelector(".drum-notation-container")).toBeTruthy();
@@ -80,7 +86,11 @@ describe("DrumNotation 组件", () => {
       const onDoubleClick = vi.fn();
 
       const { container } = render(
-        <DrumNotation pattern={pattern} onDoubleClick={onDoubleClick} />
+        <DrumNotation
+          pattern={pattern}
+          cellSize={20}
+          onDoubleClick={onDoubleClick}
+        />
       );
 
       const svg = container.querySelector("svg");
@@ -114,7 +124,11 @@ describe("DrumNotation 组件", () => {
 
       try {
         const { container } = render(
-          <DrumNotation pattern={pattern} onDoubleClick={onDoubleClick} />
+          <DrumNotation
+            pattern={pattern}
+            cellSize={20}
+            onDoubleClick={onDoubleClick}
+          />
         );
 
         const svg = container.querySelector("svg");
@@ -137,7 +151,7 @@ describe("DrumNotation 组件", () => {
       storage.setNotationRenderer("vexflow");
 
       const pattern = createTestPattern();
-      render(<DrumNotation pattern={pattern} />);
+      render(<DrumNotation pattern={pattern} cellSize={20} />);
 
       // 验证读取了正确的设置
       expect(storage.getNotationRenderer()).toBe("vexflow");
@@ -149,14 +163,16 @@ describe("DrumNotation 组件", () => {
 
       // 第一次渲染
       const pattern = createTestPattern();
-      const { unmount } = render(<DrumNotation pattern={pattern} />);
+      const { unmount } = render(
+        <DrumNotation pattern={pattern} cellSize={20} />,
+      );
       unmount();
 
       // 验证设置仍然存在
       expect(storage.getNotationRenderer()).toBe("vexflow");
 
       // 第二次渲染（模拟刷新）
-      render(<DrumNotation pattern={pattern} />);
+      render(<DrumNotation pattern={pattern} cellSize={20} />);
       expect(storage.getNotationRenderer()).toBe("vexflow");
     });
   });
@@ -167,20 +183,20 @@ describe("渲染器设置存储", () => {
     localStorage.clear();
   });
 
-  it("默认值应该为 legacy", () => {
-    expect(storage.getNotationRenderer()).toBe("legacy");
+  it("默认值应该为 vexflow", () => {
+    expect(storage.getNotationRenderer()).toBe("vexflow");
   });
 
-  it("应该正确保存和获取设置", () => {
+  it("设置渲染器不影响当前默认值", () => {
     storage.setNotationRenderer("vexflow");
     expect(storage.getNotationRenderer()).toBe("vexflow");
 
     storage.setNotationRenderer("legacy");
-    expect(storage.getNotationRenderer()).toBe("legacy");
+    expect(storage.getNotationRenderer()).toBe("vexflow");
   });
 
   it("非法值应该回退到默认值", () => {
     localStorage.setItem("drummer-notation-renderer", "invalid");
-    expect(storage.getNotationRenderer()).toBe("legacy");
+    expect(storage.getNotationRenderer()).toBe("vexflow");
   });
 });

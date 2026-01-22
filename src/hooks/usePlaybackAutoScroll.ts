@@ -43,6 +43,7 @@ export function usePlaybackAutoScroll({
   const lastScrollTargetRef = useRef<number | null>(null);
   const lastPatternIdRef = useRef<string | null>(null);
   const lastPlayingStateRef = useRef(false); // 跟踪上一次的播放状态
+  const lastBarIndexRef = useRef<number | null>(null);
   // pattern 切换后，记录预期的起始位置，用于验证 currentBeat 是否已同步
   const expectedStartSubRef = useRef<number | null>(null);
 
@@ -102,6 +103,10 @@ export function usePlaybackAutoScroll({
 
       // 使用平滑滚动切换到新 pattern 的起始位置
       doScroll(container, Math.max(0, targetLeft));
+    }
+
+    if (previousPatternId !== currentPatternId) {
+      lastBarIndexRef.current = null;
     }
 
     lastPatternIdRef.current = currentPatternId;
@@ -177,6 +182,21 @@ export function usePlaybackAutoScroll({
 
     const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
 
+    if (
+      isPlaying &&
+      lastBarIndexRef.current !== null &&
+      currentBarIndex !== lastBarIndexRef.current
+    ) {
+      const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
+      doScroll(container, Math.max(0, targetLeft));
+      lastBarIndexRef.current = currentBarIndex;
+      return;
+    }
+
+    if (lastBarIndexRef.current === null) {
+      lastBarIndexRef.current = currentBarIndex;
+    }
+
     // 游标超出可视区域左侧时，滚动到游标所在小节的起始位置
     if (cursorPosition < scrollLeft) {
       const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
@@ -235,6 +255,7 @@ export function usePlaybackAutoScroll({
     if (!isPlaying) {
       lastScrollTargetRef.current = null;
       lastPlayingStateRef.current = false;
+      lastBarIndexRef.current = null;
     }
   }, [isPlaying, pattern.id]);
 
