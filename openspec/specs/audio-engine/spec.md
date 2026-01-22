@@ -106,7 +106,7 @@ Audio Engine 负责管理所有音频资源的加载、缓存和播放，是 Dru
 ## 技术约束
 
 ### AudioContext 配置
-当前实现使用浏览器默认的 `AudioContext` 配置，并在用户首次交互后恢复/初始化（以适配浏览器自动播放策略）。
+当前实现通过 Tone.js 管理 `AudioContext`，默认使用浏览器配置，并在用户首次交互后启动/恢复（以适配浏览器自动播放策略）。
 
 ### 缓存策略
 - 使用 IndexedDB 持久化音频 buffer

@@ -1,8 +1,9 @@
 /**
- * 音频引擎 - 使用 Web Audio API 生成鼓组声音
+ * 音频引擎 - 使用 Tone.js 生成鼓组声音
  * 支持真实采样和合成音色混合
  */
 
+import * as Tone from "tone";
 import type { DrumType } from "../types";
 import {
   getCachedAudioBuffer,
@@ -23,13 +24,11 @@ import tom2Url from "../sounds/tom2.mp3";
 import tom3Url from "../sounds/tom3.mp3";
 import metronomeUrl from "../sounds/metronome.mp3";
 
-let audioContext: AudioContext | null = null;
+let toneContext: Tone.BaseContext | null = null;
 let isResuming = false;
 
-// 采样缓存（Web Audio API 用于合成音色）
+// 采样缓存（用于 Tone.js 播放）
 const sampleBuffers: Map<string, AudioBuffer> = new Map();
-// HTML5 Audio 元素缓存（用于采样播放，不受静音开关影响）
-const audioElements: Map<string, HTMLAudioElement> = new Map();
 let samplesLoaded = false;
 let samplesLoadPromise: Promise<void> | null = null;
 
@@ -37,18 +36,46 @@ let samplesLoadPromise: Promise<void> | null = null;
 let currentVolumeMultiplier = 1;
 
 // 采样加载进度回调
-export type SampleLoadProgressCallback = (loaded: number, total: number, currentName: string) => void;
+export type SampleLoadProgressCallback = (
+  loaded: number,
+  total: number,
+  currentName: string
+) => void;
 let progressCallback: SampleLoadProgressCallback | null = null;
+
+function getToneContext(): Tone.BaseContext {
+  if (!toneContext) {
+    toneContext = Tone.getContext();
+  }
+  return toneContext;
+}
+
+function getRawContext(): AudioContext {
+  const context = getToneContext() as Tone.BaseContext & {
+    rawContext?: AudioContext;
+    context?: AudioContext;
+  };
+
+  return (
+    context.rawContext ??
+    context.context ??
+    (context as unknown as AudioContext)
+  );
+}
+
+function scheduleDispose(nodes: Array<{ dispose: () => void }>, disposeAtTime: number): void {
+  const delaySeconds = Math.max(0, disposeAtTime - getAudioContext().currentTime);
+  const delayMs = delaySeconds * 1000;
+  setTimeout(() => {
+    nodes.forEach((node) => node.dispose());
+  }, delayMs);
+}
 
 /**
  * 获取或创建 AudioContext（共享实例）
  */
 export function getAudioContext(): AudioContext {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
-  }
-  return audioContext;
+  return getRawContext();
 }
 
 /**
@@ -59,7 +86,7 @@ export async function resumeAudioContext(): Promise<void> {
   if (ctx.state === "suspended" && !isResuming) {
     isResuming = true;
     try {
-      await ctx.resume();
+      await Tone.start();
     } finally {
       isResuming = false;
     }
@@ -91,12 +118,6 @@ async function loadSample(url: string, name: string, forceUpdate = false): Promi
     }
 
     sampleBuffers.set(name, audioBuffer);
-
-    // 保留 HTML5 Audio 元素作为后备（虽然现在主要使用 AudioBuffer）
-    const audio = new Audio(url);
-    audio.preload = "auto";
-    audio.volume = 1;
-    audioElements.set(name, audio);
   } catch {
     // Failed to load sample - 继续使用合成音色作为后备
   }
@@ -146,7 +167,7 @@ function loadAllSamples(forceUpdate = false): Promise<void> {
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => { });
+    Tone.start().catch(() => { });
   }
   // 开始加载采样
   loadAllSamples();
@@ -187,50 +208,14 @@ export function setSampleLoadProgressCallback(
 }
 
 /**
- * 创建噪声缓冲区
- */
-function createNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer {
-  const bufferSize = ctx.sampleRate * duration;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
-  }
-  return buffer;
-}
-
-/**
- * 播放节拍器采样（使用 Web Audio API 精确调度，iOS 兼容）
+ * 播放节拍器采样（使用 Tone.js 精确调度，iOS 兼容）
  */
 function playMetronomeSample(
   time: number,
   volume: number = 1,
   playbackRate: number = 1
 ): boolean {
-  const buffer = sampleBuffers.get("metronome");
-  if (!buffer) return false;
-
-  const ctx = getAudioContext();
-  const source = ctx.createBufferSource();
-  const gainNode = ctx.createGain();
-
-  source.buffer = buffer;
-  source.playbackRate.value = playbackRate;
-  source.connect(gainNode);
-  gainNode.connect(ctx.destination);
-
-  gainNode.gain.value = Math.max(0, Math.min(1, volume));
-
-  const playTime = Math.max(time, ctx.currentTime);
-  source.start(playTime);
-
-  const duration = buffer.duration;
-  setTimeout(() => {
-    source.disconnect();
-    gainNode.disconnect();
-  }, (duration + 0.1) * 1000);
-
-  return true;
+  return playSample("metronome", time, volume, false, playbackRate);
 }
 
 /**
@@ -241,26 +226,17 @@ function playClickSynth(
   frequency: number = 800,
   duration: number = 0.01
 ): void {
-  const ctx = getAudioContext();
-  const oscillator = ctx.createOscillator();
-  const gainNode = ctx.createGain();
+  const gain = new Tone.Gain(0.3).toDestination();
+  const osc = new Tone.Oscillator({ frequency, type: "sine" });
 
-  oscillator.connect(gainNode);
-  gainNode.connect(ctx.destination);
+  osc.connect(gain);
+  gain.gain.setValueAtTime(0.3, time);
+  gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
 
-  oscillator.frequency.value = frequency;
-  oscillator.type = "sine";
+  osc.start(time);
+  osc.stop(time + duration);
 
-  gainNode.gain.setValueAtTime(0.3, time);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
-
-  oscillator.start(time);
-  oscillator.stop(time + duration);
-
-  setTimeout(() => {
-    oscillator.disconnect();
-    gainNode.disconnect();
-  }, (duration + 0.1) * 1000);
+  scheduleDispose([osc, gain], time + duration + 0.1);
 }
 
 /**
@@ -299,19 +275,15 @@ export function playKick(time: number): void {
  * 合成底鼓（后备）
  */
 function playKickSynth(time: number): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.85;
+  const masterGain = new Tone.Gain(0.85).toDestination();
+  const oscGain = new Tone.Gain();
+  const osc = new Tone.Oscillator({ type: "sine" });
 
-  const osc = ctx.createOscillator();
-  const oscGain = ctx.createGain();
   osc.connect(oscGain);
   oscGain.connect(masterGain);
 
   osc.frequency.setValueAtTime(150, time);
   osc.frequency.exponentialRampToValueAtTime(40, time + 0.08);
-  osc.type = "sine";
 
   oscGain.gain.setValueAtTime(1, time);
   oscGain.gain.setValueAtTime(0.8, time + 0.01);
@@ -320,47 +292,38 @@ function playKickSynth(time: number): void {
   osc.start(time);
   osc.stop(time + 0.25);
 
-  setTimeout(() => {
-    osc.disconnect();
-    oscGain.disconnect();
-    masterGain.disconnect();
-  }, 350);
+  scheduleDispose([osc, oscGain, masterGain], time + 0.35);
 }
 
 /**
- * 播放采样（使用 Web Audio API 精确调度，iOS 兼容）
+ * 播放采样（使用 Tone.js 精确调度，iOS 兼容）
  * @param applyVolumeMultiplier 是否应用全局音量乘数（用于鬼音等）
  */
 function playSample(
   name: string,
   time: number,
   volume: number = 1,
-  applyVolumeMultiplier: boolean = true
+  applyVolumeMultiplier: boolean = true,
+  playbackRate: number = 1
 ): boolean {
   const buffer = sampleBuffers.get(name);
   if (!buffer) return false;
 
-  const ctx = getAudioContext();
-  const source = ctx.createBufferSource();
-  const gainNode = ctx.createGain();
-
-  source.buffer = buffer;
-  source.connect(gainNode);
-  gainNode.connect(ctx.destination);
-
   const finalVolume = applyVolumeMultiplier
     ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier))
     : Math.max(0, Math.min(1, volume));
-  gainNode.gain.value = finalVolume;
 
-  const playTime = Math.max(time, ctx.currentTime);
-  source.start(playTime);
+  const gainNode = new Tone.Gain(finalVolume).toDestination();
+  const player = new Tone.Player(buffer);
+  player.connect(gainNode);
+  player.playbackRate = playbackRate;
 
-  const duration = buffer.duration;
-  setTimeout(() => {
-    source.disconnect();
-    gainNode.disconnect();
-  }, (duration + 0.1) * 1000);
+  const playTime = Math.max(time, getAudioContext().currentTime);
+  player.start(playTime);
+
+  const safeRate = Math.max(0.01, playbackRate);
+  const duration = buffer.duration / safeRate;
+  scheduleDispose([player, gainNode], playTime + duration + 0.1);
 
   return true;
 }
@@ -382,45 +345,33 @@ export function playSnare(time: number): void {
  * 合成军鼓音色（后备）
  */
 function playSnareSynth(time: number): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.5;
+  const masterGain = new Tone.Gain(0.5).toDestination();
 
-  const osc = ctx.createOscillator();
-  const oscGain = ctx.createGain();
+  const osc = new Tone.Oscillator({ type: "triangle" });
+  const oscGain = new Tone.Gain();
   osc.connect(oscGain);
   oscGain.connect(masterGain);
 
   osc.frequency.setValueAtTime(200, time);
   osc.frequency.exponentialRampToValueAtTime(120, time + 0.05);
-  osc.type = "triangle";
 
   oscGain.gain.setValueAtTime(0.7, time);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
 
-  const osc2 = ctx.createOscillator();
-  const osc2Gain = ctx.createGain();
+  const osc2 = new Tone.Oscillator({ type: "sine" });
+  const osc2Gain = new Tone.Gain();
   osc2.connect(osc2Gain);
   osc2Gain.connect(masterGain);
 
   osc2.frequency.setValueAtTime(400, time);
   osc2.frequency.exponentialRampToValueAtTime(200, time + 0.03);
-  osc2.type = "sine";
 
   osc2Gain.gain.setValueAtTime(0.3, time);
   osc2Gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
 
-  const noiseBuffer = createNoiseBuffer(ctx, 0.2);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.frequency.value = 5000;
-  filter.Q.value = 1;
-
-  const noiseGain = ctx.createGain();
+  const noise = new Tone.Noise("white");
+  const filter = new Tone.Filter({ type: "bandpass", frequency: 5000, Q: 1 });
+  const noiseGain = new Tone.Gain();
   noise.connect(filter);
   filter.connect(noiseGain);
   noiseGain.connect(masterGain);
@@ -435,16 +386,10 @@ function playSnareSynth(time: number): void {
   noise.start(time);
   noise.stop(time + 0.18);
 
-  setTimeout(() => {
-    osc.disconnect();
-    oscGain.disconnect();
-    osc2.disconnect();
-    osc2Gain.disconnect();
-    noise.disconnect();
-    filter.disconnect();
-    noiseGain.disconnect();
-    masterGain.disconnect();
-  }, 280);
+  scheduleDispose(
+    [osc, oscGain, osc2, osc2Gain, noise, filter, noiseGain, masterGain],
+    time + 0.28
+  );
 }
 
 /**
@@ -462,20 +407,12 @@ export function playHiHatClosed(time: number): void {
  * 合成闭合踩镲（后备）
  */
 function playHiHatClosedSynth(time: number): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.25;
+  const masterGain = new Tone.Gain(0.25).toDestination();
 
-  const noiseBuffer = createNoiseBuffer(ctx, 0.1);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
+  const noise = new Tone.Noise("white");
+  const highpass = new Tone.Filter({ type: "highpass", frequency: 7000 });
+  const noiseGain = new Tone.Gain();
 
-  const highpass = ctx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 7000;
-
-  const noiseGain = ctx.createGain();
   noise.connect(highpass);
   highpass.connect(noiseGain);
   noiseGain.connect(masterGain);
@@ -486,12 +423,7 @@ function playHiHatClosedSynth(time: number): void {
   noise.start(time);
   noise.stop(time + 0.05);
 
-  setTimeout(() => {
-    noise.disconnect();
-    highpass.disconnect();
-    noiseGain.disconnect();
-    masterGain.disconnect();
-  }, 150);
+  scheduleDispose([noise, highpass, noiseGain, masterGain], time + 0.15);
 }
 
 /**
@@ -509,20 +441,12 @@ export function playHiHatOpen(time: number): void {
  * 合成开放踩镲（后备）
  */
 function playHiHatOpenSynth(time: number): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.4;
+  const masterGain = new Tone.Gain(0.4).toDestination();
 
-  const noiseBuffer = createNoiseBuffer(ctx, 0.4);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
+  const noise = new Tone.Noise("white");
+  const highpass = new Tone.Filter({ type: "highpass", frequency: 6000 });
+  const noiseGain = new Tone.Gain();
 
-  const highpass = ctx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 6000;
-
-  const noiseGain = ctx.createGain();
   noise.connect(highpass);
   highpass.connect(noiseGain);
   noiseGain.connect(masterGain);
@@ -533,12 +457,7 @@ function playHiHatOpenSynth(time: number): void {
   noise.start(time);
   noise.stop(time + 0.35);
 
-  setTimeout(() => {
-    noise.disconnect();
-    highpass.disconnect();
-    noiseGain.disconnect();
-    masterGain.disconnect();
-  }, 450);
+  scheduleDispose([noise, highpass, noiseGain, masterGain], time + 0.45);
 }
 
 /**
@@ -558,20 +477,12 @@ export function playCrash(time: number, brightness: number = 1): void {
  * 合成 Crash 镲（后备）
  */
 function playCrashSynth(time: number, brightness: number = 1): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.5;
+  const masterGain = new Tone.Gain(0.5).toDestination();
 
-  const noiseBuffer = createNoiseBuffer(ctx, 1.5);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
+  const noise = new Tone.Noise("white");
+  const highpass = new Tone.Filter({ type: "highpass", frequency: 3000 * brightness });
+  const noiseGain = new Tone.Gain();
 
-  const highpass = ctx.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 3000 * brightness;
-
-  const noiseGain = ctx.createGain();
   noise.connect(highpass);
   highpass.connect(noiseGain);
   noiseGain.connect(masterGain);
@@ -582,12 +493,7 @@ function playCrashSynth(time: number, brightness: number = 1): void {
   noise.start(time);
   noise.stop(time + 1.2);
 
-  setTimeout(() => {
-    noise.disconnect();
-    highpass.disconnect();
-    noiseGain.disconnect();
-    masterGain.disconnect();
-  }, 1300);
+  scheduleDispose([noise, highpass, noiseGain, masterGain], time + 1.3);
 }
 
 /**
@@ -605,18 +511,12 @@ export function playRide(time: number): void {
  * 合成 Ride 镲（后备）
  */
 function playRideSynth(time: number): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.4;
+  const masterGain = new Tone.Gain(0.4).toDestination();
 
-  const bell = ctx.createOscillator();
-  const bellGain = ctx.createGain();
+  const bellGain = new Tone.Gain();
+  const bell = new Tone.Oscillator({ type: "sine", frequency: 3000 });
   bell.connect(bellGain);
   bellGain.connect(masterGain);
-
-  bell.frequency.value = 3000;
-  bell.type = "sine";
 
   bellGain.gain.setValueAtTime(0.4, time);
   bellGain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
@@ -624,11 +524,7 @@ function playRideSynth(time: number): void {
   bell.start(time);
   bell.stop(time + 0.5);
 
-  setTimeout(() => {
-    bell.disconnect();
-    bellGain.disconnect();
-    masterGain.disconnect();
-  }, 600);
+  scheduleDispose([bell, bellGain, masterGain], time + 0.6);
 }
 
 /**
@@ -657,19 +553,15 @@ export function playTom(time: number, frequency: number = 200): void {
  * 合成嗵鼓（后备）
  */
 function playTomSynth(time: number, frequency: number = 200): void {
-  const ctx = getAudioContext();
-  const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.value = 0.65;
+  const masterGain = new Tone.Gain(0.65).toDestination();
 
-  const osc = ctx.createOscillator();
-  const oscGain = ctx.createGain();
+  const oscGain = new Tone.Gain();
+  const osc = new Tone.Oscillator({ type: "sine" });
   osc.connect(oscGain);
   oscGain.connect(masterGain);
 
   osc.frequency.setValueAtTime(frequency * 1.5, time);
   osc.frequency.exponentialRampToValueAtTime(frequency * 0.6, time + 0.2);
-  osc.type = "sine";
 
   oscGain.gain.setValueAtTime(1, time);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
@@ -677,12 +569,9 @@ function playTomSynth(time: number, frequency: number = 200): void {
   osc.start(time);
   osc.stop(time + 0.3);
 
-  setTimeout(() => {
-    osc.disconnect();
-    oscGain.disconnect();
-    masterGain.disconnect();
-  }, 400);
+  scheduleDispose([osc, oscGain, masterGain], time + 0.4);
 }
+
 /**
  * 根据鼓件类型播放对应的声音
  * @param volume 音量乘数，默认为 1（正常），鬼音使用 0.5
