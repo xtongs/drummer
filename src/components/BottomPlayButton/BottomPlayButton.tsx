@@ -6,6 +6,7 @@ interface BottomPlayButtonProps {
   onClick: () => void;
   onLongPress?: () => void;
   variant?: "floating" | "inline";
+  hasBgm?: boolean; // 是否有 BGM 播放
 }
 
 export function BottomPlayButton({
@@ -13,6 +14,7 @@ export function BottomPlayButton({
   onClick,
   onLongPress,
   variant = "floating",
+  hasBgm = false,
 }: BottomPlayButtonProps) {
   const longPressTimerRef = useRef<number | null>(null);
   const hasLongPressedRef = useRef<boolean>(false);
@@ -74,7 +76,17 @@ export function BottomPlayButton({
       hasLongPressedRef.current = false;
       return;
     }
-    onClick();
+    // 如果有 BGM 播放且当前未播放（即将开始），则先触发长按行为
+    if (hasBgm && !isPlaying && onLongPress) {
+      onLongPress();
+      setTimeout(() => {
+        hasLongPressedRef.current = false;
+        onClick();
+      }, 100);
+      return;
+    } else {
+      onClick();
+    }
   };
 
   return (

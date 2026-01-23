@@ -575,5 +575,44 @@ export function useMultiPatternPlayer({
     };
   }, [isPlaying, start, stop]);
 
-  return { seekTo };
+  // 重置到循环范围的起始位置（并停止播放）
+  const resetToRangeStart = useCallback(() => {
+    const steps = playStepsRef.current;
+    if (steps.length === 0) return;
+
+    // 先停止播放器（如果正在运行）
+    if (isRunningRef.current) {
+      isRunningRef.current = false;
+      if (schedulerIntervalRef.current !== null) {
+        clearInterval(schedulerIntervalRef.current);
+        schedulerIntervalRef.current = null;
+      }
+      releaseWakeLock();
+    }
+
+    // 找到 range start 对应的 step（根据 crossPatternLoop）
+    // crossPatternLoop 的信息已经通过 buildPlaySteps 处理
+    // 第一个 step 就是 range start
+    const firstStep = steps[0];
+    const firstStepSubsPerBar = getSubdivisionsPerBar(firstStep.pattern);
+    const rangeStartSubdivision = firstStep.startBar * firstStepSubsPerBar;
+
+    // 更新播放位置（不播放）
+    currentStepIndexRef.current = 0;
+    currentSubdivisionInStepRef.current = rangeStartSubdivision;
+
+    // 更新动画状态
+    const callback = onSubdivisionChangeRef.current;
+    if (callback) {
+      scheduleAnimationUpdate(rangeStartSubdivision, callback, 0);
+    }
+
+    // 通知 pattern 变化
+    const patternCallback = onPatternChangeRef.current;
+    if (patternCallback) {
+      patternCallback(firstStep.patternName);
+    }
+  }, [getSubdivisionsPerBar]);
+
+  return { seekTo, resetToRangeStart };
 }

@@ -14,6 +14,7 @@ interface BackgroundMusicControlsProps {
   onDelete: () => void;
   masterVolume: number;
   onMasterVolumeChange: (volumePct: number) => void;
+  isPlaying: boolean;
 }
 
 export function BackgroundMusicControls({
@@ -26,6 +27,7 @@ export function BackgroundMusicControls({
   onDelete,
   masterVolume,
   onMasterVolumeChange,
+  isPlaying,
 }: BackgroundMusicControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const applyVolumeDelta = (delta: number) => {
@@ -59,10 +61,10 @@ export function BackgroundMusicControls({
     },
   );
   const offsetDecreaseHandlers = useLongPress(() => applyOffsetDelta(-100), {
-    clickCallback: () => applyOffsetDelta(-1),
+    clickCallback: () => applyOffsetDelta(-10),
   });
   const offsetIncreaseHandlers = useLongPress(() => applyOffsetDelta(100), {
-    clickCallback: () => applyOffsetDelta(1),
+    clickCallback: () => applyOffsetDelta(10),
   });
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -83,7 +85,7 @@ export function BackgroundMusicControls({
   const negatedOffsetMs = -offsetMs;
   const offsetDisplay =
     Math.abs(negatedOffsetMs) >= 1000
-      ? `${(negatedOffsetMs / 1000).toFixed(3)}s`
+      ? `${(negatedOffsetMs / 1000).toFixed(2)}s`
       : `${negatedOffsetMs}ms`;
 
   return (
@@ -245,7 +247,8 @@ export function BackgroundMusicControls({
               className="loop-range-button"
               aria-label="Decrease background music offset"
               title="Decrease background music offset"
-              {...offsetDecreaseHandlers}
+              disabled={isPlaying}
+              {...offsetIncreaseHandlers}
             >
               <svg
                 width="12"
@@ -268,7 +271,8 @@ export function BackgroundMusicControls({
               className="loop-range-button"
               aria-label="Increase background music offset"
               title="Increase background music offset"
-              {...offsetIncreaseHandlers}
+              disabled={isPlaying}
+              {...offsetDecreaseHandlers}
             >
               <svg
                 width="12"

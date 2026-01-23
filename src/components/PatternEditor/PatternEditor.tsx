@@ -459,6 +459,7 @@ export function PatternEditor({
           masterVolume={masterVolume}
           onMasterVolumeChange={onMasterVolumeChange}
           onDelete={onBgmDelete}
+          isPlaying={isPlaying}
         />
       )}
     </div>

@@ -293,7 +293,7 @@ function App() {
   };
 
   // 节奏型播放（支持跨 pattern 循环）
-  const { seekTo } = useMultiPatternPlayer({
+  const { seekTo, resetToRangeStart } = useMultiPatternPlayer({
     currentPattern: pattern,
     savedPatterns,
     crossPatternLoop,
@@ -307,10 +307,17 @@ function App() {
     },
   });
 
-  // 处理长按底部播放按钮，重置播放游标到开头
+  // 处理长按底部播放按钮，完全停止并回到 range start
   const handleBottomPlayButtonLongPress = () => {
-    if (!isPatternPlaying) {
-      seekTo(0);
+    // resetToRangeStart 内部会停止播放器并重置位置
+    resetToRangeStart();
+    // 更新播放状态
+    if (isPatternPlaying) {
+      setIsPatternPlaying(false);
+    }
+    // 停止节拍器播放（如果正在播放）
+    if (isMetronomePlaying) {
+      setIsMetronomePlaying(false);
     }
   };
   const isFullPracticeMode = useFullPracticeMode();
@@ -639,6 +646,7 @@ function App() {
               isPlaying={isPatternPlaying}
               onClick={togglePatternPlay}
               onLongPress={handleBottomPlayButtonLongPress}
+              hasBgm={!!bgmConfig.fileId}
             />
           ) : undefined
         }
@@ -683,6 +691,7 @@ function App() {
           isPlaying={isPatternPlaying}
           onClick={togglePatternPlay}
           onLongPress={handleBottomPlayButtonLongPress}
+          hasBgm={!!bgmConfig.fileId}
         />
       )}
       <VersionDisplay />

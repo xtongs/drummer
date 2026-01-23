@@ -41,6 +41,7 @@ export function useBackgroundMusicPlayer({
   playbackRateRef.current = playbackRate;
   const positionSecondsRef = useRef(0);
   const lastSubdivisionRef = useRef<number | null>(null);
+  const lastStartTimeRef = useRef<number>(0);
 
   const startFromCurrentPosition = () => {
     const player = playerRef.current;
@@ -74,7 +75,12 @@ export function useBackgroundMusicPlayer({
     if (player.state === "started") {
       player.stop();
     }
-    player.start(startTime, safeStartOffset);
+
+    // 确保 startTime 严格递增（Tone.js 要求）
+    const adjustedStartTime = Math.max(startTime, lastStartTimeRef.current + 0.001);
+    lastStartTimeRef.current = adjustedStartTime;
+
+    player.start(adjustedStartTime, safeStartOffset);
   };
 
   useEffect(() => {
