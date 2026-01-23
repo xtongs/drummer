@@ -57,6 +57,8 @@ interface PatternEditorProps {
   onBgmOffsetChange: (offsetMs: number) => void;
   onBgmVolumeChange: (volumePct: number) => void;
   onBgmDelete: () => void;
+  masterVolume: number;
+  onMasterVolumeChange: (volumePct: number) => void;
 }
 
 export function PatternEditor({
@@ -89,6 +91,8 @@ export function PatternEditor({
   onBgmOffsetChange,
   onBgmVolumeChange,
   onBgmDelete,
+  masterVolume,
+  onMasterVolumeChange,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
@@ -452,6 +456,8 @@ export function PatternEditor({
           onUpload={onBgmUpload}
           onOffsetChange={onBgmOffsetChange}
           onVolumeChange={onBgmVolumeChange}
+          masterVolume={masterVolume}
+          onMasterVolumeChange={onMasterVolumeChange}
           onDelete={onBgmDelete}
         />
       )}

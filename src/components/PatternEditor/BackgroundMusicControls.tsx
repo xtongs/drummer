@@ -12,6 +12,8 @@ interface BackgroundMusicControlsProps {
   onOffsetChange: (offsetMs: number) => void;
   onVolumeChange: (volumePct: number) => void;
   onDelete: () => void;
+  masterVolume: number;
+  onMasterVolumeChange: (volumePct: number) => void;
 }
 
 export function BackgroundMusicControls({
@@ -22,22 +24,40 @@ export function BackgroundMusicControls({
   onOffsetChange,
   onVolumeChange,
   onDelete,
+  masterVolume,
+  onMasterVolumeChange,
 }: BackgroundMusicControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const applyVolumeDelta = (delta: number) => {
     const next = clampNumber((config.volumePct ?? 100) + delta, 0, 100);
     onVolumeChange(next);
   };
+  const applyMasterVolumeDelta = (delta: number) => {
+    const next = clampNumber(masterVolume + delta, 0, 100);
+    onMasterVolumeChange(next);
+  };
   const applyOffsetDelta = (delta: number) => {
     const next = (config.offsetMs ?? 0) + delta;
     onOffsetChange(next);
   };
   const volumeDecreaseHandlers = useLongPress(() => applyVolumeDelta(-10), {
-    clickCallback: () => applyVolumeDelta(-1),
+    clickCallback: () => applyVolumeDelta(-10),
   });
   const volumeIncreaseHandlers = useLongPress(() => applyVolumeDelta(10), {
-    clickCallback: () => applyVolumeDelta(1),
+    clickCallback: () => applyVolumeDelta(10),
   });
+  const masterVolumeDecreaseHandlers = useLongPress(
+    () => applyMasterVolumeDelta(-10),
+    {
+      clickCallback: () => applyMasterVolumeDelta(-10),
+    },
+  );
+  const masterVolumeIncreaseHandlers = useLongPress(
+    () => applyMasterVolumeDelta(10),
+    {
+      clickCallback: () => applyMasterVolumeDelta(10),
+    },
+  );
   const offsetDecreaseHandlers = useLongPress(() => applyOffsetDelta(-100), {
     clickCallback: () => applyOffsetDelta(-1),
   });
@@ -53,9 +73,18 @@ export function BackgroundMusicControls({
     event.target.value = "";
   };
 
-  const fileName = config.meta?.name ?? "";
+  // 去掉扩展名的文件名
+  const fileName = (config.meta?.name ?? "").replace(/\.[^/.]+$/, "");
   const volumeDisplay = Math.round(config.volumePct ?? 100);
-  const offsetDisplay = Math.round(config.offsetMs ?? 0);
+  const masterVolumeDisplay = Math.round(masterVolume);
+
+  // offset 显示值乘以 -1，超过 1s 时显示秒
+  const offsetMs = config.offsetMs ?? 0;
+  const negatedOffsetMs = -offsetMs;
+  const offsetDisplay =
+    Math.abs(negatedOffsetMs) >= 1000
+      ? `${(negatedOffsetMs / 1000).toFixed(3)}s`
+      : `${negatedOffsetMs}ms`;
 
   return (
     <div className="bgm-controls-container">
@@ -91,9 +120,6 @@ export function BackgroundMusicControls({
             accept="audio/mpeg"
             onChange={handleFileChange}
           />
-          <span className="bgm-file-name">
-            {isLoading ? "Loading..." : fileName || ""}
-          </span>
           {config.fileId && !isLoading && (
             <button
               type="button"
@@ -116,8 +142,9 @@ export function BackgroundMusicControls({
               </svg>
             </button>
           )}
-        </div>
-        <div className="bgm-controls-right">
+          <span className="bgm-file-name">
+            {isLoading ? "Loading..." : fileName || ""}
+          </span>
           <div className="bgm-control-group">
             <button
               type="button"
@@ -164,6 +191,54 @@ export function BackgroundMusicControls({
               </svg>
             </button>
           </div>
+        </div>
+        <div className="bgm-controls-right">
+          <div className="bgm-control-group">
+            <button
+              type="button"
+              className="loop-range-button"
+              aria-label="Decrease pattern volume"
+              title="Decrease pattern volume"
+              {...masterVolumeDecreaseHandlers}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <div className="bgm-control-center">
+              <span className="bgm-control-value">{masterVolumeDisplay}%</span>
+            </div>
+            <button
+              type="button"
+              className="loop-range-button"
+              aria-label="Increase pattern volume"
+              title="Increase pattern volume"
+              {...masterVolumeIncreaseHandlers}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
           <div className="bgm-control-group">
             <button
               type="button"
@@ -186,7 +261,7 @@ export function BackgroundMusicControls({
               </svg>
             </button>
             <div className="bgm-control-center">
-              <span className="bgm-control-value">{offsetDisplay}ms</span>
+              <span className="bgm-control-value">{offsetDisplay}</span>
             </div>
             <button
               type="button"

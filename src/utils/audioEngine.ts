@@ -35,6 +35,9 @@ let samplesLoadPromise: Promise<void> | null = null;
 // 当前音量乘数（用于鬼音等）
 let currentVolumeMultiplier = 1;
 
+// 主音量乘数（用于控制节奏型整体音量，0-100）
+let masterVolumeMultiplier = 100;
+
 // 采样加载进度回调
 export type SampleLoadProgressCallback = (
   loaded: number,
@@ -309,9 +312,10 @@ function playSample(
   const buffer = sampleBuffers.get(name);
   if (!buffer) return false;
 
+  const masterVolume = masterVolumeMultiplier / 100;
   const finalVolume = applyVolumeMultiplier
-    ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier))
-    : Math.max(0, Math.min(1, volume));
+    ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier * masterVolume))
+    : Math.max(0, Math.min(1, volume * masterVolume));
 
   const gainNode = new Tone.Gain(finalVolume).toDestination();
   const player = new Tone.Player(buffer);
@@ -641,4 +645,18 @@ export function setVolumeMultiplier(multiplier: number): void {
  */
 export function resetVolumeMultiplier(): void {
   currentVolumeMultiplier = 1;
+}
+
+/**
+ * 设置主音量乘数（用于控制节奏型整体音量）
+ */
+export function setMasterVolumeMultiplier(volumePct: number): void {
+  masterVolumeMultiplier = Math.max(0, Math.min(100, volumePct));
+}
+
+/**
+ * 获取主音量乘数
+ */
+export function getMasterVolumeMultiplier(): number {
+  return masterVolumeMultiplier;
 }

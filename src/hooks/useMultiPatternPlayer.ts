@@ -52,7 +52,7 @@ const ANIMATION_THROTTLE = 16;
 function scheduleAnimationUpdate(
   subdivision: number,
   callback: (subdivision: number) => void,
-  delayMs: number
+  delayMs: number,
 ) {
   const timeoutDelay = Math.max(0, delayMs);
   setTimeout(() => {
@@ -130,7 +130,8 @@ export function useMultiPatternPlayer({
     // 应用 playbackRate：rate 越小，BPM 越慢，duration 越长
     // 因为 rate 已经是累积倍率（如 0.9 表示减速到 90%），直接除以 rate
     const effectiveBPM = pattern.bpm * playbackRateRef.current;
-    const beatDuration = (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
+    const beatDuration =
+      (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
     return beatDuration / SUBDIVISIONS_PER_BEAT;
   }, []);
 
@@ -141,59 +142,62 @@ export function useMultiPatternPlayer({
   }, []);
 
   // seekTo 函数：跳转到指定的 subdivision 位置
-  const seekTo = useCallback((subdivision: number) => {
-    const steps = playStepsRef.current;
-    if (steps.length === 0) return;
+  const seekTo = useCallback(
+    (subdivision: number) => {
+      const steps = playStepsRef.current;
+      if (steps.length === 0) return;
 
-    // 找到包含该 subdivision 的 step
-    let targetStepIndex = -1;
-    let targetSubInStep = subdivision;
+      // 找到包含该 subdivision 的 step
+      let targetStepIndex = -1;
+      let targetSubInStep = subdivision;
 
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const stepSubsPerBar = getSubdivisionsPerBar(step.pattern);
-      const stepStartSub = step.startBar * stepSubsPerBar;
-      const stepEndSub = (step.endBar + 1) * stepSubsPerBar;
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepSubsPerBar = getSubdivisionsPerBar(step.pattern);
+        const stepStartSub = step.startBar * stepSubsPerBar;
+        const stepEndSub = (step.endBar + 1) * stepSubsPerBar;
 
-      // 检查 subdivision 是否在当前 step 的范围内
-      if (subdivision >= stepStartSub && subdivision < stepEndSub) {
-        targetStepIndex = i;
-        targetSubInStep = subdivision;
-        break;
+        // 检查 subdivision 是否在当前 step 的范围内
+        if (subdivision >= stepStartSub && subdivision < stepEndSub) {
+          targetStepIndex = i;
+          targetSubInStep = subdivision;
+          break;
+        }
       }
-    }
 
-    // 如果找不到对应的 step，跳到第一个 step 的开始
-    if (targetStepIndex === -1) {
-      targetStepIndex = 0;
-      const firstStep = steps[0];
-      const firstStepSubsPerBar = getSubdivisionsPerBar(firstStep.pattern);
-      targetSubInStep = firstStep.startBar * firstStepSubsPerBar;
-    }
+      // 如果找不到对应的 step，跳到第一个 step 的开始
+      if (targetStepIndex === -1) {
+        targetStepIndex = 0;
+        const firstStep = steps[0];
+        const firstStepSubsPerBar = getSubdivisionsPerBar(firstStep.pattern);
+        targetSubInStep = firstStep.startBar * firstStepSubsPerBar;
+      }
 
-    // 更新播放位置
-    currentStepIndexRef.current = targetStepIndex;
-    currentSubdivisionInStepRef.current = targetSubInStep;
+      // 更新播放位置
+      currentStepIndexRef.current = targetStepIndex;
+      currentSubdivisionInStepRef.current = targetSubInStep;
 
-    // 如果正在播放，更新 nextNoteTimeRef
-    if (isRunningRef.current) {
-      const ctx = getAudioContext();
-      nextNoteTimeRef.current = ctx.currentTime;
-    }
+      // 如果正在播放，更新 nextNoteTimeRef
+      if (isRunningRef.current) {
+        const ctx = getAudioContext();
+        nextNoteTimeRef.current = ctx.currentTime;
+      }
 
-    // 更新动画状态
-    const callback = onSubdivisionChangeRef.current;
-    if (callback) {
-      scheduleAnimationUpdate(targetSubInStep, callback, 0);
-    }
+      // 更新动画状态
+      const callback = onSubdivisionChangeRef.current;
+      if (callback) {
+        scheduleAnimationUpdate(targetSubInStep, callback, 0);
+      }
 
-    // 通知 pattern 变化
-    const patternCallback = onPatternChangeRef.current;
-    if (patternCallback) {
-      const targetStep = steps[targetStepIndex];
-      patternCallback(targetStep.patternName);
-    }
-  }, [getSubdivisionsPerBar]);
+      // 通知 pattern 变化
+      const patternCallback = onPatternChangeRef.current;
+      if (patternCallback) {
+        const targetStep = steps[targetStepIndex];
+        patternCallback(targetStep.patternName);
+      }
+    },
+    [getSubdivisionsPerBar],
+  );
 
   // 构建播放序列
   const buildPlaySteps = useCallback((): PlayStep[] => {
@@ -210,28 +214,34 @@ export function useMultiPatternPlayer({
       return steps;
     }
 
-    const { startPatternName, startBar, endPatternName, endBar } = crossPatternLoop;
+    const { startPatternName, startBar, endPatternName, endBar } =
+      crossPatternLoop;
 
     // 按字母顺序获取从 start 到 end 的所有 patterns
     const sortedPatterns = [...savedPatterns].sort((a, b) =>
-      a.name.localeCompare(b.name)
+      a.name.localeCompare(b.name),
     );
 
     // 如果是草稿模式，添加草稿 pattern 到列表最前面
     // 如果不是草稿模式，但当前编辑的 pattern 在循环范围内，使用当前编辑的 pattern 替换 savedPatterns 中的版本
     const allPatterns: { name: string; pattern: Pattern }[] = isDraftMode
-      ? [{ name: "", pattern: currentPattern }, ...sortedPatterns.map((p) => ({ name: p.name, pattern: p }))]
+      ? [
+          { name: "", pattern: currentPattern },
+          ...sortedPatterns.map((p) => ({ name: p.name, pattern: p })),
+        ]
       : sortedPatterns.map((p) => {
-        // 如果当前编辑的 pattern ID 匹配（无论名称是否相同），使用当前编辑的版本
-        // 这确保页面刷新后加载的 pattern 数据是最新的
-        if (p.id === currentPattern.id) {
-          return { name: p.name, pattern: currentPattern };
-        }
-        return { name: p.name, pattern: p };
-      });
+          // 如果当前编辑的 pattern ID 匹配（无论名称是否相同），使用当前编辑的版本
+          // 这确保页面刷新后加载的 pattern 数据是最新的
+          if (p.id === currentPattern.id) {
+            return { name: p.name, pattern: currentPattern };
+          }
+          return { name: p.name, pattern: p };
+        });
 
     // 找到开始和结束的索引
-    const startIndex = allPatterns.findIndex((p) => p.name === startPatternName);
+    const startIndex = allPatterns.findIndex(
+      (p) => p.name === startPatternName,
+    );
     const endIndex = allPatterns.findIndex((p) => p.name === endPatternName);
 
     if (startIndex === -1 || endIndex === -1) {
@@ -274,9 +284,9 @@ export function useMultiPatternPlayer({
       const halfSubdivision = subDuration / 2;
 
       const triggerDrum = (
-        drum: typeof pattern.drums[number],
+        drum: (typeof pattern.drums)[number],
         playTime: number,
-        volume: number
+        volume: number,
       ) => {
         setVolumeMultiplier(volume);
         switch (drum) {
@@ -346,7 +356,7 @@ export function useMultiPatternPlayer({
         triggerDrum(drum, playTime, volumeMultiplier);
       });
     },
-    [getSubdivisionDuration]
+    [getSubdivisionDuration],
   );
 
   // 调度器函数
@@ -400,7 +410,8 @@ export function useMultiPatternPlayer({
         if (stepIndex + 1 < steps.length) {
           const nextStep = steps[stepIndex + 1];
           const nextStepSubsPerBar = getSubdivisionsPerBar(nextStep.pattern);
-          currentSubdivisionInStepRef.current = nextStep.startBar * nextStepSubsPerBar;
+          currentSubdivisionInStepRef.current =
+            nextStep.startBar * nextStepSubsPerBar;
 
           // 通知 pattern 变化
           const callback = onPatternChangeRef.current;
@@ -472,8 +483,10 @@ export function useMultiPatternPlayer({
       const stepEndSub = (currentStep.endBar + 1) * currentStepSubsPerBar;
 
       // 检查当前位置是否有效，且该位置的 pattern 是否是当前选中的 pattern
-      const isPositionValid = currentSubInStep >= stepStartSub && currentSubInStep < stepEndSub;
-      const isCorrectPattern = currentStep.pattern.id === currentPatternRef.current.id;
+      const isPositionValid =
+        currentSubInStep >= stepStartSub && currentSubInStep < stepEndSub;
+      const isCorrectPattern =
+        currentStep.pattern.id === currentPatternRef.current.id;
 
       // 只有当位置有效且 pattern 匹配时，才不需要重置
       if (isPositionValid && isCorrectPattern) {
@@ -486,12 +499,18 @@ export function useMultiPatternPlayer({
       // 找到当前选中的 pattern 在播放序列中的位置
       // 优先使用 ID 匹配，因为这更可靠（特别是在页面刷新后）
       const currentPatternId = currentPatternRef.current.id;
-      let startStepIndex = steps.findIndex((step) => step.pattern.id === currentPatternId);
+      let startStepIndex = steps.findIndex(
+        (step) => step.pattern.id === currentPatternId,
+      );
 
       // 如果 ID 匹配失败，尝试使用名称匹配
       if (startStepIndex === -1) {
-        const currentPatternName = isDraftModeRef.current ? "" : currentPatternRef.current.name;
-        startStepIndex = steps.findIndex((step) => step.patternName === currentPatternName);
+        const currentPatternName = isDraftModeRef.current
+          ? ""
+          : currentPatternRef.current.name;
+        startStepIndex = steps.findIndex(
+          (step) => step.patternName === currentPatternName,
+        );
       }
 
       // 如果当前 pattern 不在播放序列中，从第一个 step 开始
@@ -529,7 +548,7 @@ export function useMultiPatternPlayer({
 
     schedulerIntervalRef.current = window.setInterval(
       scheduler,
-      lookaheadRef.current
+      lookaheadRef.current,
     );
   }, [scheduler, getSubdivisionsPerBar]);
 

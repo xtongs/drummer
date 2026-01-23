@@ -2,6 +2,7 @@ const BGM_DB_NAME = "drummer-bgm-files";
 const BGM_DB_VERSION = 1;
 const BGM_STORE_NAME = "bgm-files";
 const BGM_CONFIG_KEY = "drummer-bgm-config";
+const MASTER_VOLUME_KEY = "drummer-master-volume";
 
 export interface BgmFileMeta {
   name: string;
@@ -142,4 +143,25 @@ export function deleteBgmConfig(patternId: string): void {
   const map = loadBgmConfigMap();
   delete map[patternId];
   saveBgmConfigMap(map);
+}
+
+const DEFAULT_MASTER_VOLUME = 100;
+
+export function getMasterVolume(): number {
+  const raw = localStorage.getItem(MASTER_VOLUME_KEY);
+  if (!raw) return DEFAULT_MASTER_VOLUME;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "number" && parsed >= 0 && parsed <= 100) {
+      return parsed;
+    }
+  } catch {
+    // Ignore invalid data
+  }
+  return DEFAULT_MASTER_VOLUME;
+}
+
+export function saveMasterVolume(volume: number): void {
+  const clamped = Math.max(0, Math.min(100, volume));
+  localStorage.setItem(MASTER_VOLUME_KEY, JSON.stringify(clamped));
 }

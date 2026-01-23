@@ -6,6 +6,7 @@ import { useSampleLoader } from "./hooks/useSampleLoader";
 import { useVersionShortcut } from "./hooks/useVersionShortcut";
 import { usePlaybackState } from "./hooks/usePlaybackState";
 import { useBackgroundMusicPlayer } from "./hooks/useBackgroundMusicPlayer";
+import { setMasterVolumeMultiplier } from "./utils/audioEngine";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
@@ -32,6 +33,8 @@ import {
   deleteBgmConfig,
   saveBgmFile,
   deleteBgmFile,
+  getMasterVolume,
+  saveMasterVolume,
 } from "./utils/bgmStorage";
 import {
   DEFAULT_BPM,
@@ -68,7 +71,6 @@ function App() {
   const [isDraftMode, setIsDraftMode] = useState(true);
   const lastLoopStartRef = useRef<number | null>(null);
   const lastLoopPatternRef = useRef<string | null>(null);
-  const [patternStartTime, setPatternStartTime] = useState<number | null>(null);
   const [patternStartToken, setPatternStartToken] = useState(0);
   // 节拍器独立 BPM（与 pattern 分开存储）
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
@@ -110,6 +112,8 @@ function App() {
     isLoading: boolean;
     error: string | null;
   }>({ isLoading: false, error: null });
+  // 节奏型主音量（0-100）
+  const [masterVolume, setMasterVolume] = useState<number>(() => getMasterVolume());
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
@@ -194,6 +198,11 @@ function App() {
   useEffect(() => {
     setBgmConfig(getBgmConfig(pattern.id));
   }, [pattern.id]);
+
+  // 当 masterVolume 改变时更新 audioEngine
+  useEffect(() => {
+    setMasterVolumeMultiplier(masterVolume);
+  }, [masterVolume]);
 
   // 当 crossPatternLoop 改变时保存到本地存储
   useEffect(() => {
@@ -293,8 +302,7 @@ function App() {
     playbackRate: calculateCumulativeRate(rateIndex),
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
-    onPlayStart: (startTime) => {
-      setPatternStartTime(startTime);
+    onPlayStart: () => {
       setPatternStartToken((prev) => prev + 1);
     },
   });
@@ -313,7 +321,6 @@ function App() {
     bgmConfig,
     currentSubdivision,
     pattern,
-    patternStartTime,
     patternStartToken,
   });
 
@@ -532,6 +539,11 @@ function App() {
     setBgmConfig(nextConfig);
   };
 
+  const handleMasterVolumeChange = (volumePct: number) => {
+    setMasterVolume(volumePct);
+    saveMasterVolume(volumePct);
+  };
+
   const handleBgmDelete = () => {
     const remove = async () => {
       if (bgmConfig.fileId) {
@@ -662,6 +674,8 @@ function App() {
           onBgmOffsetChange={handleBgmOffsetChange}
           onBgmVolumeChange={handleBgmVolumeChange}
           onBgmDelete={handleBgmDelete}
+          masterVolume={masterVolume}
+          onMasterVolumeChange={handleMasterVolumeChange}
         />
       </main>
       {!isFullPracticeMode && (

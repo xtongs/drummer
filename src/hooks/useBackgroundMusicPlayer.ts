@@ -13,7 +13,6 @@ interface UseBackgroundMusicPlayerOptions {
   bgmConfig: BgmConfig;
   currentSubdivision: number;
   pattern: Pattern;
-  patternStartTime: number | null;
   patternStartToken: number;
 }
 
@@ -29,7 +28,6 @@ export function useBackgroundMusicPlayer({
   bgmConfig,
   currentSubdivision,
   pattern,
-  patternStartTime,
   patternStartToken,
 }: UseBackgroundMusicPlayerOptions): BackgroundMusicState {
   const playerRef = useRef<Tone.GrainPlayer | null>(null);
@@ -49,10 +47,22 @@ export function useBackgroundMusicPlayer({
     if (!player) return;
 
     const ctx = getAudioContext();
-    const baseTime = patternStartTime ?? ctx.currentTime;
+    const baseTime = ctx.currentTime;
     const offsetSeconds = (bgmConfig.offsetMs ?? 0) / 1000;
-    const desiredBgmPosition = positionSecondsRef.current - offsetSeconds;
-    const startDelay = desiredBgmPosition < 0 ? Math.abs(desiredBgmPosition) : 0;
+    const effectiveRate = Math.max(0.1, playbackRateRef.current);
+
+    // Pattern 当前播放时间（实际时间）
+    const patternTime = positionSecondsRef.current;
+
+    // offset 直接应用在实际时间上
+    // 例如：offset = 10s，表示 BGM 提前 10 秒播放
+    const adjustedPatternTime = patternTime - offsetSeconds;
+
+    // 转换为 BGM 原始速率下的位置
+    // 因为 Tone.js 的 startOffset 是相对于音频文件的，不受 playbackRate 影响
+    const desiredBgmPosition = adjustedPatternTime / effectiveRate;
+
+    const startDelay = adjustedPatternTime < 0 ? Math.abs(adjustedPatternTime) : 0;
     const startTime = baseTime + startDelay;
     const startOffset = Math.max(0, desiredBgmPosition);
     let safeStartOffset = startOffset;
@@ -108,6 +118,10 @@ export function useBackgroundMusicPlayer({
         const player = new Tone.GrainPlayer(audioBuffer).toDestination();
         player.loop = false;
         player.playbackRate = Math.max(0.1, playbackRateRef.current);
+        // 初始化时立即设置音量
+        const volume = Math.max(0, Math.min(100, bgmConfig.volumePct ?? 100));
+        const normalized = Math.max(0.0001, volume / 100);
+        player.volume.value = Tone.gainToDb(normalized);
         playerRef.current = player;
         fileIdRef.current = bgmConfig.fileId;
         setIsLoaded(true);
@@ -131,6 +145,7 @@ export function useBackgroundMusicPlayer({
   }, [bgmConfig.fileId]);
 
   useEffect(() => {
+    // 计算实际播放时间（考虑 playbackRate）
     const effectiveBpm = pattern.bpm * playbackRate;
     const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
     const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
@@ -159,12 +174,31 @@ export function useBackgroundMusicPlayer({
     player.volume.value = Tone.gainToDb(normalized);
   }, [bgmConfig.volumePct]);
 
+  // 监听 offset 变化，使用平滑过渡重新定位
+  const lastOffsetRef = useRef(bgmConfig.offsetMs ?? 0);
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || !isPlaying || !isFullPracticeMode || !bgmConfig.fileId || !isLoaded) {
+      lastOffsetRef.current = bgmConfig.offsetMs ?? 0;
+      return;
+    }
+
+    const lastOffset = lastOffsetRef.current;
+    lastOffsetRef.current = bgmConfig.offsetMs ?? 0;
+
+    // 只有当 offset 真正改变时才重新定位（避免不必要的重新定位）
+    if (lastOffset !== (bgmConfig.offsetMs ?? 0)) {
+      startFromCurrentPosition();
+    }
+  }, [bgmConfig.offsetMs, isPlaying, isFullPracticeMode, isLoaded, bgmConfig.fileId]);
+
   useEffect(() => {
     const player = playerRef.current;
     if (!player) return;
 
     if (!isFullPracticeMode || !bgmConfig.fileId) {
       if (player.state === "started") {
+        // 立即停止
         player.stop();
       }
       return;
@@ -207,6 +241,7 @@ export function useBackgroundMusicPlayer({
     }
 
     if (currentSubdivision < lastSubdivision) {
+      // 循环播放时不需要平滑过渡
       startFromCurrentPosition();
     }
   }, [
@@ -215,7 +250,6 @@ export function useBackgroundMusicPlayer({
     isFullPracticeMode,
     bgmConfig.fileId,
     isLoaded,
-    bgmConfig.offsetMs,
   ]);
 
   useEffect(() => {
