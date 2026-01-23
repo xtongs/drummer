@@ -36,6 +36,10 @@
   -ms-overflow-style: none;
 }
 
+.pattern-editor.full-practice-mode .pattern-editor-scrollable {
+  flex: none;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .pattern-editor-scrollable::-webkit-scrollbar {
   display: none;
@@ -130,6 +134,78 @@
 .export-input:focus {
   border-color: var(--color-secondary);
   box-shadow: none;
+}
+
+.bgm-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 2px 0;
+  min-height: 28px;
+  width: 100%;
+  font-weight: 600;
+}
+
+.bgm-controls-container {
+  width: 100%;
+}
+
+.bgm-controls-left,
+.bgm-controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.bgm-file-input {
+  display: none;
+}
+
+.bgm-file-name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bgm-control-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bgm-control-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: calc(var(--button-size) - 2px);
+  background: var(--color-surface);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  justify-content: center;
+}
+
+.bgm-control-icon {
+  color: currentColor;
+  display: block;
+}
+
+.bgm-control-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.bgm-error {
+  margin-top: 2px;
+  padding-bottom: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  width: 100%;
+  font-weight: 600;
 }
 
 /* 渲染器切换按钮 */

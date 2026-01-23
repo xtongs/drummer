@@ -202,6 +202,11 @@ export function usePlaybackAutoScroll({
       const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
       doScroll(container, Math.max(0, targetLeft));
     } else if (cursorPosition + cellSize > scrollRight - rightLead) {
+      if (!isPlaying) {
+        const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
+        doScroll(container, Math.max(0, targetLeft));
+        return;
+      }
       // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
       // 确定当前 pattern 在 range 中的范围
       let rangeStartBar = 0;

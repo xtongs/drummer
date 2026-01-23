@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useLongPress } from "../../hooks/useLongPress";
 import "./LoopRangeSelector.css";
@@ -18,6 +18,7 @@ export function LoopRangeSelector({
   onCrossPatternLoopChange,
   isDraftMode,
 }: LoopRangeSelectorProps) {
+  const lastBarsRef = useRef(currentPattern.bars);
   // 按名称排序的 patterns
   const sortedPatterns = [...savedPatterns].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -135,7 +136,10 @@ export function LoopRangeSelector({
     // 但如果是跨 pattern 的 range，则不自动扩展（保持用户设置的范围）
     if (isCurrentPattern && !isCrossPatternRange) {
       const currentMaxBar = currentPattern.bars - 1;
-      if (updatedLoop.endBar < currentMaxBar) {
+      const previousBars = lastBarsRef.current;
+      const barsIncreased = currentPattern.bars > previousBars;
+      const wasAtPreviousEnd = updatedLoop.endBar === previousBars - 1;
+      if (barsIncreased && wasAtPreviousEnd) {
         updatedLoop.endBar = currentMaxBar;
         needsUpdate = true;
       }
@@ -158,6 +162,7 @@ export function LoopRangeSelector({
     if (needsUpdate) {
       onCrossPatternLoopChange(updatedLoop);
     }
+    lastBarsRef.current = currentPattern.bars;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPattern.bars, isDraftMode, currentPattern.name, savedPatterns]);
 

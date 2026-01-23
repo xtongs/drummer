@@ -85,6 +85,7 @@ interface UseMultiPatternPlayerOptions {
   playbackRate?: number; // 播放速率（累积 rate），默认为 1
   onSubdivisionChange?: (subdivision: number) => void;
   onPatternChange?: (patternName: string) => void;
+  onPlayStart?: (startTime: number) => void;
 }
 
 export function useMultiPatternPlayer({
@@ -96,6 +97,7 @@ export function useMultiPatternPlayer({
   playbackRate = 1,
   onSubdivisionChange,
   onPatternChange,
+  onPlayStart,
 }: UseMultiPatternPlayerOptions) {
   const nextNoteTimeRef = useRef<number>(0);
   const scheduleAheadTimeRef = useRef<number>(0.2);
@@ -454,6 +456,10 @@ export function useMultiPatternPlayer({
 
     if (steps.length === 0) return;
 
+    if (onPlayStart) {
+      onPlayStart(currentTime);
+    }
+
     // 检查当前位置是否在有效范围内，且指向的是当前选中的 pattern
     let needsReset = true;
     const currentStepIndex = currentStepIndexRef.current;
@@ -552,4 +558,3 @@ export function useMultiPatternPlayer({
 
   return { seekTo };
 }
-

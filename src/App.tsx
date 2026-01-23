@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { useBeforeUnloadWarning } from "./hooks/useBeforeUnloadWarning";
 import { useVisibilityHandler } from "./hooks/useVisibilityHandler";
 import { useSampleLoader } from "./hooks/useSampleLoader";
 import { useVersionShortcut } from "./hooks/useVersionShortcut";
 import { usePlaybackState } from "./hooks/usePlaybackState";
+import { useBackgroundMusicPlayer } from "./hooks/useBackgroundMusicPlayer";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
@@ -26,15 +27,24 @@ import {
   getNextPatternName,
 } from "./utils/storage";
 import {
+  getBgmConfig,
+  saveBgmConfig,
+  deleteBgmConfig,
+  saveBgmFile,
+  deleteBgmFile,
+} from "./utils/bgmStorage";
+import {
   DEFAULT_BPM,
   DEFAULT_BARS,
   DEFAULT_TIME_SIGNATURE,
   BPM_RATES,
   BPM_RATE_LABELS,
   calculateCumulativeRate,
+  SUBDIVISIONS_PER_BEAT,
 } from "./utils/constants";
 import type { TimeSignature } from "./types";
 import type { Pattern, CrossPatternLoop } from "./types";
+import type { BgmConfig } from "./utils/bgmStorage";
 import "./index.css";
 
 function App() {
@@ -56,6 +66,10 @@ function App() {
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
   // 草稿模式：当前编辑的 pattern 不保存到本地
   const [isDraftMode, setIsDraftMode] = useState(true);
+  const lastLoopStartRef = useRef<number | null>(null);
+  const lastLoopPatternRef = useRef<string | null>(null);
+  const [patternStartTime, setPatternStartTime] = useState<number | null>(null);
+  const [patternStartToken, setPatternStartToken] = useState(0);
   // 节拍器独立 BPM（与 pattern 分开存储）
   const [metronomeBPM, setMetronomeBPM] = useState<number>(() => {
     return loadMetronomeBPM() ?? DEFAULT_BPM;
@@ -89,6 +103,13 @@ function App() {
     loadPattern,
     resetPattern,
   } = usePattern(createEmptyPattern());
+  const [bgmConfig, setBgmConfig] = useState<BgmConfig>(() =>
+    getBgmConfig(pattern.id)
+  );
+  const [bgmUploadState, setBgmUploadState] = useState<{
+    isLoading: boolean;
+    error: string | null;
+  }>({ isLoading: false, error: null });
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
@@ -169,6 +190,10 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setBgmConfig(getBgmConfig(pattern.id));
+  }, [pattern.id]);
 
   // 当 crossPatternLoop 改变时保存到本地存储
   useEffect(() => {
@@ -268,6 +293,10 @@ function App() {
     playbackRate: calculateCumulativeRate(rateIndex),
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
+    onPlayStart: (startTime) => {
+      setPatternStartTime(startTime);
+      setPatternStartToken((prev) => prev + 1);
+    },
   });
 
   // 处理长按底部播放按钮，重置播放游标到开头
@@ -277,6 +306,48 @@ function App() {
     }
   };
   const isFullPracticeMode = useFullPracticeMode();
+  const bgmPlayerState = useBackgroundMusicPlayer({
+    isPlaying: isPatternPlaying,
+    isFullPracticeMode,
+    playbackRate: calculateCumulativeRate(rateIndex),
+    bgmConfig,
+    currentSubdivision,
+    pattern,
+    patternStartTime,
+    patternStartToken,
+  });
+
+  useEffect(() => {
+    if (!crossPatternLoop) return;
+
+    const currentPatternName = isDraftMode ? "" : pattern.name;
+    if (crossPatternLoop.startPatternName !== currentPatternName) {
+      return;
+    }
+
+    if (
+      lastLoopStartRef.current === crossPatternLoop.startBar &&
+      lastLoopPatternRef.current === crossPatternLoop.startPatternName
+    ) {
+      return;
+    }
+
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+    seekTo(crossPatternLoop.startBar * subdivisionsPerBar);
+
+    lastLoopStartRef.current = crossPatternLoop.startBar;
+    lastLoopPatternRef.current = crossPatternLoop.startPatternName;
+  }, [
+    crossPatternLoop,
+    isDraftMode,
+    pattern.name,
+    pattern.timeSignature,
+    seekTo,
+  ]);
+
+  const bgmIsLoading = bgmUploadState.isLoading || bgmPlayerState.isLoading;
+  const bgmError = bgmUploadState.error ?? bgmPlayerState.error;
 
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
@@ -297,6 +368,8 @@ function App() {
 
   const handleSave = () => {
     const nextLetter = getNextPatternName(savedPatterns);
+    const previousPatternId = pattern.id;
+    const previousBgmConfig = getBgmConfig(previousPatternId);
 
     const patternToSave: Pattern = {
       ...pattern,
@@ -306,6 +379,14 @@ function App() {
     };
 
     savePattern(patternToSave);
+    if (
+      previousBgmConfig.fileId ||
+      previousBgmConfig.offsetMs !== 0 ||
+      previousBgmConfig.volumePct !== 100
+    ) {
+      saveBgmConfig(patternToSave.id, previousBgmConfig);
+      deleteBgmConfig(previousPatternId);
+    }
     setIsDraftMode(false); // 保存后退出草稿模式
     setCurrentPatternId(patternToSave.id);
     // 加载保存的pattern，这样会自动选中对应的tab
@@ -383,6 +464,15 @@ function App() {
   };
 
   const handleDeletePattern = (patternId: string) => {
+    const removeBgmAssociation = async () => {
+      const config = getBgmConfig(patternId);
+      if (config.fileId) {
+        await deleteBgmFile(config.fileId);
+      }
+      deleteBgmConfig(patternId);
+    };
+    void removeBgmAssociation();
+
     deletePattern(patternId);
     if (pattern.id === patternId) {
       // 如果删除的是当前节奏型，进入草稿模式
@@ -391,6 +481,67 @@ function App() {
       setCurrentPatternId(undefined);
     }
     setSavedPatterns(loadPatterns());
+  };
+
+  const handleBgmUpload = async (file: File) => {
+    const isMp3 = file.type === "audio/mpeg" || file.name.toLowerCase().endsWith(".mp3");
+    if (!isMp3) {
+      setBgmUploadState({ isLoading: false, error: "Please upload an MP3 file." });
+      return;
+    }
+
+    setBgmUploadState({ isLoading: true, error: null });
+    try {
+      if (bgmConfig.fileId) {
+        await deleteBgmFile(bgmConfig.fileId);
+      }
+
+      const { id, meta } = await saveBgmFile(file);
+      const nextConfig: BgmConfig = {
+        fileId: id,
+        offsetMs: bgmConfig.offsetMs ?? 0,
+        volumePct: bgmConfig.volumePct ?? 50,
+        meta,
+      };
+      saveBgmConfig(pattern.id, nextConfig);
+      setBgmConfig(nextConfig);
+      setBgmUploadState({ isLoading: false, error: null });
+    } catch (error) {
+      setBgmUploadState({
+        isLoading: false,
+        error: error instanceof Error ? error.message : "Failed to upload background music.",
+      });
+    }
+  };
+
+  const handleBgmOffsetChange = (offsetMs: number) => {
+    const nextConfig: BgmConfig = {
+      ...bgmConfig,
+      offsetMs,
+    };
+    saveBgmConfig(pattern.id, nextConfig);
+    setBgmConfig(nextConfig);
+  };
+
+  const handleBgmVolumeChange = (volumePct: number) => {
+    const nextConfig: BgmConfig = {
+      ...bgmConfig,
+      volumePct,
+    };
+    saveBgmConfig(pattern.id, nextConfig);
+    setBgmConfig(nextConfig);
+  };
+
+  const handleBgmDelete = () => {
+    const remove = async () => {
+      if (bgmConfig.fileId) {
+        await deleteBgmFile(bgmConfig.fileId);
+      }
+      const nextConfig: BgmConfig = { offsetMs: 0, volumePct: 50 };
+      saveBgmConfig(pattern.id, nextConfig);
+      setBgmConfig(nextConfig);
+    };
+    void remove();
   };
 
   // 从 JSON 字符串导入 pattern 数据并创建新 tab
@@ -504,6 +655,13 @@ function App() {
           onPlayToggle={togglePatternPlay}
           isDraftMode={isDraftMode}
           onNotationDoubleClick={handleNotationDoubleClick}
+          bgmConfig={bgmConfig}
+          bgmIsLoading={bgmIsLoading}
+          bgmError={bgmError}
+          onBgmUpload={handleBgmUpload}
+          onBgmOffsetChange={handleBgmOffsetChange}
+          onBgmVolumeChange={handleBgmVolumeChange}
+          onBgmDelete={handleBgmDelete}
         />
       </main>
       {!isFullPracticeMode && (

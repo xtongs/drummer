@@ -4,13 +4,14 @@ interface UseLongPressOptions {
     delay?: number;
     interval?: number;
     shouldStop?: () => boolean;
+    clickCallback?: () => void;
 }
 
 export function useLongPress(
     callback: () => void,
     options: UseLongPressOptions = {}
 ) {
-    const { delay = 500, interval = 100, shouldStop } = options;
+    const { delay = 500, interval = 100, shouldStop, clickCallback } = options;
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const isPressingRef = useRef(false);
@@ -68,9 +69,13 @@ export function useLongPress(
         const pressDuration = Date.now() - startTimeRef.current;
 
         if (!hasTriggeredRef.current && pressDuration < delay) {
-            callbackRef.current();
+            if (clickCallback) {
+                clickCallback();
+            } else {
+                callbackRef.current();
+            }
         }
-    }, [delay]);
+    }, [delay, clickCallback]);
 
     const handleMouseDown = useCallback(() => {
         startPress();

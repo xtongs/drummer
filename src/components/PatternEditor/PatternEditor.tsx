@@ -11,6 +11,7 @@ import { GridLabels } from "./GridLabels";
 import { BarControls } from "./BarControls";
 import { LoopRangeSelector } from "./LoopRangeSelector";
 import { PatternTabs } from "../PatternManager/PatternTabs";
+import { BackgroundMusicControls } from "./BackgroundMusicControls";
 import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import { usePracticeCellSize } from "../../hooks/usePracticeCellSize";
@@ -23,6 +24,7 @@ import {
   serializePatternToJSON,
   /* 临时注释: getNotationRenderer, setNotationRenderer, type NotationRenderer, */
 } from "../../utils/storage";
+import type { BgmConfig } from "../../utils/bgmStorage";
 import "./PatternEditor.css";
 
 interface PatternEditorProps {
@@ -48,6 +50,13 @@ interface PatternEditorProps {
   onPlayToggle?: () => void;
   isDraftMode: boolean;
   onNotationDoubleClick?: (subdivision: number) => void;
+  bgmConfig: BgmConfig;
+  bgmIsLoading: boolean;
+  bgmError: string | null;
+  onBgmUpload: (file: File) => void;
+  onBgmOffsetChange: (offsetMs: number) => void;
+  onBgmVolumeChange: (volumePct: number) => void;
+  onBgmDelete: () => void;
 }
 
 export function PatternEditor({
@@ -73,6 +82,13 @@ export function PatternEditor({
   onPlayToggle: _onPlayToggle,
   isDraftMode,
   onNotationDoubleClick,
+  bgmConfig,
+  bgmIsLoading,
+  bgmError,
+  onBgmUpload,
+  onBgmOffsetChange,
+  onBgmVolumeChange,
+  onBgmDelete,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
@@ -412,7 +428,9 @@ export function PatternEditor({
           onDoubleClick={onNotationDoubleClick}
         />
         {isFullPracticeMode && (
-          <GridLabels pattern={pattern} cellSize={cellSize} />
+          <>
+            <GridLabels pattern={pattern} cellSize={cellSize} />
+          </>
         )}
         {!isFullPracticeMode && (
           <Grid
@@ -426,6 +444,17 @@ export function PatternEditor({
           />
         )}
       </div>
+      {isFullPracticeMode && (
+        <BackgroundMusicControls
+          config={bgmConfig}
+          isLoading={bgmIsLoading}
+          error={bgmError}
+          onUpload={onBgmUpload}
+          onOffsetChange={onBgmOffsetChange}
+          onVolumeChange={onBgmVolumeChange}
+          onDelete={onBgmDelete}
+        />
+      )}
     </div>
   );
 }
