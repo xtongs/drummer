@@ -371,7 +371,7 @@ export function PatternEditor({
               onClick={onBarBpmModeToggle}
               aria-label="Toggle bar BPM mode"
               aria-pressed={currentBarHasOverride}
-              title={currentBarHasOverride ? "点击清除当前小节BPM" : "进入小节BPM模式"}
+              title={currentBarHasOverride ? "Clear current bar BPM" : "Enter bar BPM mode"}
             >
               <svg
                 width="14"
