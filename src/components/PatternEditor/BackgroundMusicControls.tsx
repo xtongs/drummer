@@ -109,6 +109,15 @@ export function BackgroundMusicControls({
     setIsEditingOffset(false);
   };
 
+  const toggleBgmVolume = () => {
+    const currentVolume = config.volumePct ?? 100;
+    onVolumeChange(currentVolume === 0 ? 100 : 0);
+  };
+
+  const toggleMasterVolume = () => {
+    onMasterVolumeChange(masterVolume === 0 ? 100 : 0);
+  };
+
   return (
     <div className="bgm-controls-container">
       <div className="bgm-controls">
@@ -193,7 +202,15 @@ export function BackgroundMusicControls({
                   </svg>
                 </button>
                 <div className="bgm-control-center">
-                  <span className="bgm-control-value">{volumeDisplay}%</span>
+                  <button
+                    type="button"
+                    className="bgm-volume-display"
+                    onClick={toggleBgmVolume}
+                    aria-label="Toggle BGM volume"
+                    title="Click to toggle 0%/100%"
+                  >
+                    <span className="bgm-control-value">{volumeDisplay}%</span>
+                  </button>
                 </div>
                 <button
                   type="button"
@@ -243,7 +260,15 @@ export function BackgroundMusicControls({
               </svg>
             </button>
             <div className="bgm-control-center">
-              <span className="bgm-control-value">{masterVolumeDisplay}%</span>
+              <button
+                type="button"
+                className="bgm-volume-display"
+                onClick={toggleMasterVolume}
+                aria-label="Toggle pattern volume"
+                title="Click to toggle 0%/100%"
+              >
+                <span className="bgm-control-value">{masterVolumeDisplay}%</span>
+              </button>
             </div>
             <button
               type="button"

@@ -12,6 +12,7 @@ interface MetronomeBarProps {
   bpm: number;
   timeSignature: [number, number];
   isPlaying: boolean;
+  resetToken?: number;
   onBPMChange: (bpm: number, shouldSave?: boolean) => void;
   isPatternPlaying?: boolean;
   isCountInPlaying?: boolean;
@@ -29,6 +30,7 @@ export function MetronomeBar({
   bpm,
   timeSignature,
   isPlaying: _isPlaying,
+  resetToken,
   onBPMChange,
   isPatternPlaying = false,
   isCountInPlaying = false,
@@ -88,6 +90,7 @@ export function MetronomeBar({
     bpm,
     timeSignature,
     isPlaying: isPatternPlaying,
+    resetToken,
   });
 
   // 循环计数器

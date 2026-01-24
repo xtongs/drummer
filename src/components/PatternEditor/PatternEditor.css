@@ -240,6 +240,20 @@
   padding: 0;
 }
 
+.bgm-volume-display {
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  padding: 0;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
 .bgm-offset-input {
   width: calc(var(--button-size) * 2);
   height: var(--button-size);

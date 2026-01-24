@@ -127,6 +127,12 @@ export function useBackgroundMusicPlayer({
         const player = new Tone.GrainPlayer(audioBuffer).toDestination();
         player.loop = false;
         player.playbackRate = Math.max(0.1, playbackRateRef.current);
+
+        // 优化 GrainPlayer 参数以减少音量波动
+        // 使用较大的 grainSize 和较小的 overlap 可以提供更稳定的播放效果
+        player.grainSize = 0.2; // 200ms 颗粒尺寸
+        player.overlap = 0.02; // 20ms 交叉淡入淡出时间（最小化波动）
+
         // 初始化时立即设置音量
         const volume = Math.max(0, Math.min(100, bgmConfig.volumePct ?? 100));
         const normalized = Math.max(0.0001, volume / 100);

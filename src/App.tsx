@@ -89,6 +89,7 @@ function App() {
   const [isCountInEnabled, setIsCountInEnabled] = useState(false);
   const [isCountInPlaying, setIsCountInPlaying] = useState(false);
   const [countInStartToken, setCountInStartToken] = useState(0);
+  const [metronomeStartToken, setMetronomeStartToken] = useState(0);
   const countInTimeoutRef = useRef<number | null>(null);
   const [copiedPatternGrid, setCopiedPatternGrid] =
     useState<PatternGridCopy | null>(null);
@@ -463,7 +464,9 @@ function App() {
   const countInBpm = Math.max(1, countInPattern.bpm * playbackRate);
   const countInTimeSignature = countInPattern.timeSignature;
   const countInBarDurationMs = Math.round(
-    ((60 / countInBpm) * (4 / countInTimeSignature[1]) * countInTimeSignature[0]) *
+    (60 / countInBpm) *
+      (4 / countInTimeSignature[1]) *
+      countInTimeSignature[0] *
       1000,
   );
 
@@ -509,6 +512,7 @@ function App() {
     setIsCountInPlaying(true);
     countInTimeoutRef.current = window.setTimeout(() => {
       setIsCountInPlaying(false);
+      setMetronomeStartToken((prev) => prev + 1);
       setIsPatternPlaying(true);
     }, countInBarDurationMs);
   };
@@ -791,6 +795,7 @@ function App() {
         bpm={metronomeBPM}
         timeSignature={metronomeTimeSignature}
         isPlaying={isPatternPlaying}
+        resetToken={metronomeStartToken}
         onBPMChange={handleBPMChange}
         isPatternPlaying={isMetronomePlaying}
         isCountInPlaying={isCountInPlaying}
