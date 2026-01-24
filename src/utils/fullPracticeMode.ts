@@ -1,82 +1,39 @@
-const PHONE_MAX_WIDTH = 960;
+const FULL_PRACTICE_MODE_KEY = "drummer-full-practice-mode";
 
 let isFullPracticeMode = false;
 const listeners = new Set<() => void>();
 let isInitialized = false;
 
-function getIsLandscape(): boolean {
+function loadStoredValue(): boolean {
   if (typeof window === "undefined") return false;
-
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia("(orientation: landscape)").matches;
+  const raw = localStorage.getItem(FULL_PRACTICE_MODE_KEY);
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "boolean" ? parsed : false;
+  } catch {
+    return false;
   }
-
-  return window.innerWidth > window.innerHeight;
-}
-
-function getIsPhoneWidth(): boolean {
-  if (typeof window === "undefined") return false;
-
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia(`(max-width: ${PHONE_MAX_WIDTH}px)`).matches;
-  }
-
-  return window.innerWidth <= PHONE_MAX_WIDTH;
-}
-
-function getIsTouchDevice(): boolean {
-  if (typeof window === "undefined") return false;
-
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia("(pointer: coarse)").matches;
-  }
-
-  if (typeof navigator !== "undefined") {
-    return (navigator as Navigator).maxTouchPoints > 0;
-  }
-
-  return false;
-}
-
-function evaluateFullPracticeMode(): boolean {
-  return getIsLandscape() && getIsPhoneWidth() && getIsTouchDevice();
 }
 
 function notifyListeners() {
   listeners.forEach((listener) => listener());
 }
 
-function setFullPracticeMode(nextValue: boolean) {
+export function setFullPracticeMode(nextValue: boolean) {
+  ensureInitialized();
   if (isFullPracticeMode === nextValue) return;
   isFullPracticeMode = nextValue;
+  if (typeof window !== "undefined") {
+    localStorage.setItem(FULL_PRACTICE_MODE_KEY, JSON.stringify(nextValue));
+  }
   notifyListeners();
-}
-
-function handleViewportChange() {
-  setFullPracticeMode(evaluateFullPracticeMode());
 }
 
 function ensureInitialized() {
   if (isInitialized || typeof window === "undefined") return;
 
-  isFullPracticeMode = evaluateFullPracticeMode();
-
-  window.addEventListener("resize", handleViewportChange);
-  window.addEventListener("orientationchange", handleViewportChange);
-
-  if (typeof window.matchMedia === "function") {
-    const mediaQuery = window.matchMedia(
-      `(max-width: ${PHONE_MAX_WIDTH}px) and (orientation: landscape)`,
-    );
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleViewportChange);
-    } else {
-      const legacyMediaQuery = mediaQuery as MediaQueryList & {
-        addListener?: (listener: () => void) => void;
-      };
-      legacyMediaQuery.addListener?.(handleViewportChange);
-    }
-  }
+  isFullPracticeMode = loadStoredValue();
 
   isInitialized = true;
 }
@@ -86,9 +43,12 @@ export function getFullPracticeMode(): boolean {
   return isFullPracticeMode;
 }
 
+export function toggleFullPracticeMode(): void {
+  setFullPracticeMode(!isFullPracticeMode);
+}
+
 export function subscribeFullPracticeMode(listener: () => void): () => void {
   ensureInitialized();
   listeners.add(listener);
-  setFullPracticeMode(evaluateFullPracticeMode());
   return () => listeners.delete(listener);
 }

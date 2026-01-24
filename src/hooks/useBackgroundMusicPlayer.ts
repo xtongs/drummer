@@ -18,6 +18,7 @@ interface UseBackgroundMusicPlayerOptions {
 
 interface BackgroundMusicState {
   isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
 }
 
@@ -34,6 +35,7 @@ export function useBackgroundMusicPlayer({
   const fileIdRef = useRef<string | undefined>(undefined);
   const [state, setState] = useState<BackgroundMusicState>({
     isLoading: false,
+    isLoaded: false,
     error: null,
   });
   const [isLoaded, setIsLoaded] = useState(false);
@@ -95,6 +97,7 @@ export function useBackgroundMusicPlayer({
           playerRef.current.dispose();
           playerRef.current = null;
         }
+        setState({ isLoading: false, isLoaded: false, error: null });
         return;
       }
 
@@ -102,7 +105,7 @@ export function useBackgroundMusicPlayer({
         return;
       }
 
-      setState({ isLoading: true, error: null });
+      setState({ isLoading: true, isLoaded: false, error: null });
       setIsLoaded(false);
       try {
         const record = await getBgmFile(bgmConfig.fileId);
@@ -131,12 +134,13 @@ export function useBackgroundMusicPlayer({
         playerRef.current = player;
         fileIdRef.current = bgmConfig.fileId;
         setIsLoaded(true);
-        setState({ isLoading: false, error: null });
+        setState({ isLoading: false, isLoaded: true, error: null });
       } catch (error) {
         if (!isCancelled) {
           setIsLoaded(false);
           setState({
             isLoading: false,
+            isLoaded: false,
             error: error instanceof Error ? error.message : "Failed to load background music",
           });
         }

@@ -17,7 +17,7 @@ export interface BgmConfig {
   meta?: BgmFileMeta;
 }
 
-const DEFAULT_BGM_VOLUME = 50;
+const DEFAULT_BGM_VOLUME = 100;
 
 interface BgmFileRecord extends BgmFileMeta {
   id: string;
@@ -145,7 +145,7 @@ export function deleteBgmConfig(patternId: string): void {
   saveBgmConfigMap(map);
 }
 
-const DEFAULT_MASTER_VOLUME = 100;
+const DEFAULT_MASTER_VOLUME = 0;
 
 export function getMasterVolume(): number {
   const raw = localStorage.getItem(MASTER_VOLUME_KEY);

@@ -23,12 +23,6 @@
   cursor: pointer;
 }
 
-.pattern-tab:hover {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: white;
-}
-
 .pattern-tab.active {
   background: var(--color-primary);
   border-color: var(--color-primary);

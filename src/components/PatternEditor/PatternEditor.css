@@ -36,7 +36,7 @@
   -ms-overflow-style: none;
 }
 
-.pattern-editor.full-practice-mode .pattern-editor-scrollable {
+.pattern-editor.landscape-mode .pattern-editor-scrollable {
   flex: none;
 }
 
@@ -150,6 +150,13 @@
   width: 100%;
 }
 
+.pattern-editor-scrollable .bgm-controls-container {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  padding-top: var(--spacing-sm);
+}
+
 .bgm-controls-left,
 .bgm-controls-right {
   display: flex;
@@ -174,6 +181,42 @@
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.bgm-control-button {
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+  min-height: var(--button-size);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.bgm-delete-button {
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+  min-height: var(--button-size);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  box-shadow: none;
 }
 
 .bgm-control-center {
@@ -215,6 +258,18 @@
 }
 
 .renderer-toggle-button.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.practice-toggle-button {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.practice-toggle-button.active {
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);

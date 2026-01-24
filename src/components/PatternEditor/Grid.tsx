@@ -24,7 +24,6 @@ export function Grid({
   currentBeat,
   scrollContainerRef: _scrollContainerRef,
 }: GridProps) {
-  const [beatsPerBar] = pattern.timeSignature;
   const gridContentRef = useRef<HTMLDivElement>(null);
 
   const totalSubdivisions = pattern.grid[0]?.length || 0;
@@ -32,15 +31,11 @@ export function Grid({
 
   const BUFFER_SUBDIVISIONS = SUBDIVISIONS_PER_BEAT * 2;
 
-  const { visibleSet } = useVisibleRange(
-    _scrollContainerRef,
-    gridContentRef,
-    {
-      itemSize: cellSize,
-      totalItems: totalSubdivisions,
-      bufferItems: BUFFER_SUBDIVISIONS,
-    },
-  );
+  const { visibleSet } = useVisibleRange(_scrollContainerRef, gridContentRef, {
+    itemSize: cellSize,
+    totalItems: totalSubdivisions,
+    bufferItems: BUFFER_SUBDIVISIONS,
+  });
 
   return (
     <div className="grid-container">
@@ -50,35 +45,6 @@ export function Grid({
           ref={gridContentRef}
           style={{ width: `${totalWidth}px` }}
         >
-          <div className="grid-beat-labels">
-            {Array.from({ length: pattern.bars }, (_, barIndex) => {
-              const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-              return (
-                <div
-                  key={barIndex}
-                  className="grid-beat-label-group"
-                  style={{ width: `${subdivisionsPerBar * cellSize}px` }}
-                >
-                  {Array.from({ length: beatsPerBar }, (_, beatIndex) => {
-                    const beatStart = beatIndex * SUBDIVISIONS_PER_BEAT;
-
-                    return (
-                      <div
-                        key={beatIndex}
-                        className="grid-beat-label"
-                        style={{
-                          width: `${SUBDIVISIONS_PER_BEAT * cellSize}px`,
-                          left: `${beatStart * cellSize}px`,
-                        }}
-                      >
-                        {barIndex + 1}.{beatIndex + 1}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
           <div className="grid-rows">
             {pattern.grid.map((row, drumIndex) => {
               const drumType = pattern.drums[drumIndex];

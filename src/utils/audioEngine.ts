@@ -218,7 +218,7 @@ function playMetronomeSample(
   volume: number = 1,
   playbackRate: number = 1
 ): boolean {
-  return playSample("metronome", time, volume, false, playbackRate);
+  return playSample("metronome", time, volume, false, playbackRate, false);
 }
 
 /**
@@ -301,18 +301,20 @@ function playKickSynth(time: number): void {
 /**
  * 播放采样（使用 Tone.js 精确调度，iOS 兼容）
  * @param applyVolumeMultiplier 是否应用全局音量乘数（用于鬼音等）
+ * @param applyMasterVolume 是否应用主音量乘数（用于节奏型整体音量）
  */
 function playSample(
   name: string,
   time: number,
   volume: number = 1,
   applyVolumeMultiplier: boolean = true,
-  playbackRate: number = 1
+  playbackRate: number = 1,
+  applyMasterVolume: boolean = true
 ): boolean {
   const buffer = sampleBuffers.get(name);
   if (!buffer) return false;
 
-  const masterVolume = masterVolumeMultiplier / 100;
+  const masterVolume = applyMasterVolume ? masterVolumeMultiplier / 100 : 1;
   const finalVolume = applyVolumeMultiplier
     ? Math.max(0, Math.min(1, volume * currentVolumeMultiplier * masterVolume))
     : Math.max(0, Math.min(1, volume * masterVolume));

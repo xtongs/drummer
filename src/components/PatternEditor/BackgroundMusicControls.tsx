@@ -7,6 +7,7 @@ import "./Grid.css";
 interface BackgroundMusicControlsProps {
   config: BgmConfig;
   isLoading: boolean;
+  isLoaded: boolean;
   error: string | null;
   onUpload: (file: File) => void;
   onOffsetChange: (offsetMs: number) => void;
@@ -20,6 +21,7 @@ interface BackgroundMusicControlsProps {
 export function BackgroundMusicControls({
   config,
   isLoading,
+  isLoaded,
   error,
   onUpload,
   onOffsetChange,
@@ -92,44 +94,14 @@ export function BackgroundMusicControls({
     <div className="bgm-controls-container">
       <div className="bgm-controls">
         <div className="bgm-controls-left">
-          <button
-            type="button"
-            className="loop-range-button"
-            onClick={() => inputRef.current?.click()}
-            aria-label="Upload background music"
-            title="Upload background music"
-            disabled={isLoading}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </button>
-          <input
-            ref={inputRef}
-            className="bgm-file-input"
-            type="file"
-            accept="audio/mpeg"
-            onChange={handleFileChange}
-          />
-          {config.fileId && !isLoading && (
+          {config.fileId && isLoaded && !isLoading ? (
             <button
               type="button"
-              className="action-button delete-button"
+              className="bgm-delete-button"
               onClick={onDelete}
               aria-label="Delete background music"
               title="Delete background music"
-              disabled={!config.fileId}
+              disabled={!config.fileId || isLoading}
             >
               <svg
                 width="12"
@@ -143,14 +115,45 @@ export function BackgroundMusicControls({
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="bgm-control-button"
+                onClick={() => inputRef.current?.click()}
+                aria-label="Upload background music"
+                title="Upload background music"
+                disabled={isLoading}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3v12" />
+                  <polyline points="8 7 12 3 16 7" />
+                  <path d="M4 21h16v0" />
+                </svg>
+              </button>
+              <input
+                ref={inputRef}
+                className="bgm-file-input"
+                type="file"
+                accept="audio/mpeg"
+                onChange={handleFileChange}
+              />
+            </>
           )}
-          <span className="bgm-file-name">
-            {isLoading ? "Loading..." : fileName || ""}
-          </span>
+          <span className="bgm-file-name">{fileName || ""}</span>
           <div className="bgm-control-group">
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Decrease background music volume"
               title="Decrease background music volume"
               {...volumeDecreaseHandlers}
@@ -173,7 +176,7 @@ export function BackgroundMusicControls({
             </div>
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Increase background music volume"
               title="Increase background music volume"
               {...volumeIncreaseHandlers}
@@ -198,7 +201,7 @@ export function BackgroundMusicControls({
           <div className="bgm-control-group">
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Decrease pattern volume"
               title="Decrease pattern volume"
               {...masterVolumeDecreaseHandlers}
@@ -221,7 +224,7 @@ export function BackgroundMusicControls({
             </div>
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Increase pattern volume"
               title="Increase pattern volume"
               {...masterVolumeIncreaseHandlers}
@@ -244,7 +247,7 @@ export function BackgroundMusicControls({
           <div className="bgm-control-group">
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Decrease background music offset"
               title="Decrease background music offset"
               disabled={isPlaying}
@@ -268,7 +271,7 @@ export function BackgroundMusicControls({
             </div>
             <button
               type="button"
-              className="loop-range-button"
+              className="bgm-control-button"
               aria-label="Increase background music offset"
               title="Increase background music offset"
               disabled={isPlaying}

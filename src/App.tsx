@@ -49,6 +49,7 @@ import type { TimeSignature } from "./types";
 import type { Pattern, CrossPatternLoop } from "./types";
 import type { BgmConfig } from "./utils/bgmStorage";
 import "./index.css";
+import { useLandscapeMode } from "./hooks/useLandscapeMode";
 
 function App() {
   // 采样加载
@@ -64,6 +65,8 @@ function App() {
     setIsMetronomePlaying,
     setIsPatternPlaying,
   } = usePlaybackState();
+  const isFullPracticeMode = useFullPracticeMode();
+  const isLandscapeMode = useLandscapeMode();
 
   const [currentSubdivision, setCurrentSubdivision] = useState<number>(0);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
@@ -91,7 +94,7 @@ function App() {
         startBar: 0,
         endPatternName: "",
         endBar: DEFAULT_BARS - 1,
-      }
+      },
   );
   const {
     pattern,
@@ -106,14 +109,16 @@ function App() {
     resetPattern,
   } = usePattern(createEmptyPattern());
   const [bgmConfig, setBgmConfig] = useState<BgmConfig>(() =>
-    getBgmConfig(pattern.id)
+    getBgmConfig(pattern.id),
   );
   const [bgmUploadState, setBgmUploadState] = useState<{
     isLoading: boolean;
     error: string | null;
   }>({ isLoading: false, error: null });
   // 节奏型主音量（0-100）
-  const [masterVolume, setMasterVolume] = useState<number>(() => getMasterVolume());
+  const [masterVolume, setMasterVolume] = useState<number>(() =>
+    getMasterVolume(),
+  );
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
@@ -201,8 +206,9 @@ function App() {
 
   // 当 masterVolume 改变时更新 audioEngine
   useEffect(() => {
-    setMasterVolumeMultiplier(masterVolume);
-  }, [masterVolume]);
+    const nextVolume = isFullPracticeMode ? masterVolume : 100;
+    setMasterVolumeMultiplier(nextVolume);
+  }, [isFullPracticeMode, masterVolume]);
 
   // 当 crossPatternLoop 改变时保存到本地存储
   useEffect(() => {
@@ -230,10 +236,10 @@ function App() {
       return false;
     };
 
-    document.body.addEventListener('contextmenu', handleContextMenu);
+    document.body.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
-      document.body.removeEventListener('contextmenu', handleContextMenu);
+      document.body.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
 
@@ -251,13 +257,17 @@ function App() {
     };
 
     // 阻止双指缩放
-    document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
+    document.body.addEventListener("touchmove", preventTouchMove, {
+      passive: false,
+    });
     // 阻止 iOS Safari 的缩放和滚动手势
-    document.body.addEventListener('gesturestart', preventGestureStart, { passive: false });
+    document.body.addEventListener("gesturestart", preventGestureStart, {
+      passive: false,
+    });
 
     return () => {
-      document.body.removeEventListener('touchmove', preventTouchMove);
-      document.body.removeEventListener('gesturestart', preventGestureStart);
+      document.body.removeEventListener("touchmove", preventTouchMove);
+      document.body.removeEventListener("gesturestart", preventGestureStart);
     };
   }, []);
 
@@ -320,7 +330,6 @@ function App() {
       setIsMetronomePlaying(false);
     }
   };
-  const isFullPracticeMode = useFullPracticeMode();
   const bgmPlayerState = useBackgroundMusicPlayer({
     isPlaying: isPatternPlaying,
     isFullPracticeMode,
@@ -361,6 +370,7 @@ function App() {
   ]);
 
   const bgmIsLoading = bgmUploadState.isLoading || bgmPlayerState.isLoading;
+  const bgmIsLoaded = bgmPlayerState.isLoaded;
   const bgmError = bgmUploadState.error ?? bgmPlayerState.error;
 
   // 处理鼓谱区域双击事件
@@ -498,9 +508,13 @@ function App() {
   };
 
   const handleBgmUpload = async (file: File) => {
-    const isMp3 = file.type === "audio/mpeg" || file.name.toLowerCase().endsWith(".mp3");
+    const isMp3 =
+      file.type === "audio/mpeg" || file.name.toLowerCase().endsWith(".mp3");
     if (!isMp3) {
-      setBgmUploadState({ isLoading: false, error: "Please upload an MP3 file." });
+      setBgmUploadState({
+        isLoading: false,
+        error: "Please upload an MP3 file.",
+      });
       return;
     }
 
@@ -514,7 +528,7 @@ function App() {
       const nextConfig: BgmConfig = {
         fileId: id,
         offsetMs: bgmConfig.offsetMs ?? 0,
-        volumePct: bgmConfig.volumePct ?? 50,
+        volumePct: bgmConfig.volumePct ?? 100,
         meta,
       };
       saveBgmConfig(pattern.id, nextConfig);
@@ -523,7 +537,10 @@ function App() {
     } catch (error) {
       setBgmUploadState({
         isLoading: false,
-        error: error instanceof Error ? error.message : "Failed to upload background music.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload background music.",
       });
     }
   };
@@ -556,7 +573,7 @@ function App() {
       if (bgmConfig.fileId) {
         await deleteBgmFile(bgmConfig.fileId);
       }
-      const nextConfig: BgmConfig = { offsetMs: 0, volumePct: 50 };
+      const nextConfig: BgmConfig = { offsetMs: 0, volumePct: 100 };
       saveBgmConfig(pattern.id, nextConfig);
       setBgmConfig(nextConfig);
     };
@@ -605,7 +622,7 @@ function App() {
   // 加载中显示加载界面
   if (isLoading) {
     const progressPercent = Math.round(
-      (loadingProgress.loaded / loadingProgress.total) * 100
+      (loadingProgress.loaded / loadingProgress.total) * 100,
     );
     return (
       <div className="app loading">
@@ -640,13 +657,13 @@ function App() {
         rates={BPM_RATES}
         rateLabels={BPM_RATE_LABELS}
         patternPlayButton={
-          isFullPracticeMode ? (
+          isLandscapeMode ? (
             <BottomPlayButton
               variant="inline"
               isPlaying={isPatternPlaying}
               onClick={togglePatternPlay}
               onLongPress={handleBottomPlayButtonLongPress}
-              hasBgm={!!bgmConfig.fileId}
+              fullPracticeMode={isFullPracticeMode}
             />
           ) : undefined
         }
@@ -677,6 +694,7 @@ function App() {
           onNotationDoubleClick={handleNotationDoubleClick}
           bgmConfig={bgmConfig}
           bgmIsLoading={bgmIsLoading}
+          bgmIsLoaded={bgmIsLoaded}
           bgmError={bgmError}
           onBgmUpload={handleBgmUpload}
           onBgmOffsetChange={handleBgmOffsetChange}
@@ -686,12 +704,12 @@ function App() {
           onMasterVolumeChange={handleMasterVolumeChange}
         />
       </main>
-      {!isFullPracticeMode && (
+      {!isLandscapeMode && (
         <BottomPlayButton
           isPlaying={isPatternPlaying}
           onClick={togglePatternPlay}
           onLongPress={handleBottomPlayButtonLongPress}
-          hasBgm={!!bgmConfig.fileId}
+          fullPracticeMode={isFullPracticeMode}
         />
       )}
       <VersionDisplay />

@@ -125,24 +125,24 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 系统 SHALL 计算对应的 subdivision 并触发跳转
 - **AND** 在不同渲染器下该映射行为一致
 
-### Requirement: 完整练习模式背景音乐控件
+### Requirement: 练习模式背景音乐控件
 
-系统 SHALL 在完整练习模式下提供背景音乐上传与控制 UI。
+系统 SHALL 仅在练习模式下提供背景音乐上传与控制 UI。
 
 #### Scenario: 控件可见性与布局
 
-- **GIVEN** 系统处于完整练习模式
+- **GIVEN** 系统处于练习模式
 - **WHEN** Pattern Editor 渲染
 - **THEN** 背景音乐控件 SHALL 显示在 scrollable 区域下方
 - **AND** 控件两端对齐排列
-- **AND** 仅在完整练习模式下显示
+- **AND** 练习模式切换按钮显示在 Pattern Editor 操作区，位于保存按钮左侧
 
 #### Scenario: 控件样式
 
 - **GIVEN** 背景音乐控件渲染
 - **WHEN** 渲染上传/控制按钮
 - **THEN** 按钮样式 SHALL 遵循现有按钮规范
-- **AND** 使用 SVG 图标
+- **AND** 使用 SVG 图标（练习模式按钮为音符，上传按钮为上传图标）
 - **AND** 控件包含音量与偏移量调节，均为图标 + 数字 + +/- 按钮布局
 
 #### Scenario: 播放位置同步
@@ -322,22 +322,37 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **THEN** 自动滚动使播放位置保持可见
 - **AND** 滚动平滑，不影响用户体验
 
-### Requirement: 手机横屏完整练习模式
+### Requirement: 手机横屏布局模式
 
-系统 SHALL 在手机横屏时进入完整练习模式，并根据该模式调整编辑器布局。
+系统 SHALL 在手机横屏时进入横屏布局模式，并根据该模式调整编辑器布局。
 
-#### Scenario: 进入完整练习模式
+#### Scenario: 进入横屏布局模式
 
 - **GIVEN** 用户在手机设备上使用应用
 - **WHEN** 设备处于横屏方向
-- **THEN** 系统 SHALL 进入完整练习模式
+- **THEN** 系统 SHALL 进入横屏布局模式
 
-#### Scenario: 完整练习模式布局
+#### Scenario: 横屏布局模式布局
 
-- **GIVEN** 系统处于完整练习模式
+- **GIVEN** 系统处于横屏布局模式
+- **WHEN** Pattern Editor 渲染
+- **THEN** notation 区域 SHALL 在视口内展示两个小节
+
+### Requirement: 手动练习模式
+
+系统 SHALL 提供手动练习模式开关，并在开启后应用练习模式布局。
+
+#### Scenario: 切换练习模式
+
+- **GIVEN** 用户点击练习模式切换按钮
+- **WHEN** 开关被触发
+- **THEN** 系统 SHALL 切换练习模式状态
+
+#### Scenario: 练习模式布局
+
+- **GIVEN** 系统处于练习模式
 - **WHEN** Pattern Editor 渲染
 - **THEN** grid 区域 SHALL 隐藏
-- **AND** notation 区域 SHALL 在视口内展示两个小节
 
 ### Requirement: 性能优化（Lazy Loading）
 

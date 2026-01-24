@@ -16,10 +16,12 @@ import type { Pattern, CrossPatternLoop } from "../../types";
 import { useGridCellSize } from "../../hooks/useGridCellSize";
 import { usePracticeCellSize } from "../../hooks/usePracticeCellSize";
 import { useFullPracticeMode } from "../../hooks/useFullPracticeMode";
+import { useLandscapeMode } from "../../hooks/useLandscapeMode";
 import { useSingleLongPress } from "../../hooks/useSingleLongPress";
 import { useExportMode } from "../../hooks/useExportMode";
 import { usePlaybackAutoScroll } from "../../hooks/usePlaybackAutoScroll";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
+import { toggleFullPracticeMode } from "../../utils/fullPracticeMode";
 import {
   serializePatternToJSON,
   /* 临时注释: getNotationRenderer, setNotationRenderer, type NotationRenderer, */
@@ -52,6 +54,7 @@ interface PatternEditorProps {
   onNotationDoubleClick?: (subdivision: number) => void;
   bgmConfig: BgmConfig;
   bgmIsLoading: boolean;
+  bgmIsLoaded: boolean;
   bgmError: string | null;
   onBgmUpload: (file: File) => void;
   onBgmOffsetChange: (offsetMs: number) => void;
@@ -86,6 +89,7 @@ export function PatternEditor({
   onNotationDoubleClick,
   bgmConfig,
   bgmIsLoading,
+  bgmIsLoaded,
   bgmError,
   onBgmUpload,
   onBgmOffsetChange,
@@ -99,10 +103,11 @@ export function PatternEditor({
   const isUserAddBarRef = useRef(false); // 标记是否是用户点击+按钮增加的小节数
   const addBarCursorBeatRef = useRef<number | undefined>(undefined); // 记录添加bar时的游标位置
   const isFullPracticeMode = useFullPracticeMode();
+  const isLandscapeMode = useLandscapeMode();
   const defaultCellSize = useGridCellSize(); // 动态计算单元格大小
   const [beatsPerBar] = pattern.timeSignature;
   const practiceCellSize = usePracticeCellSize(beatsPerBar, 2);
-  const cellSize = isFullPracticeMode ? practiceCellSize : defaultCellSize;
+  const cellSize = isLandscapeMode ? practiceCellSize : defaultCellSize;
 
   // 渲染器切换状态
   // 临时注释: 固定为 vexflow，不再读取 localstorage，不再使用 useState
@@ -161,6 +166,10 @@ export function PatternEditor({
     addBarCursorBeatRef.current = currentBeat;
     onAddBar(currentBeat);
   }, [onAddBar, currentBeat]);
+
+  const handlePracticeModeToggle = useCallback(() => {
+    toggleFullPracticeMode();
+  }, []);
 
   // 保存按钮的长按事件处理
   const saveButtonLongPressProps = useSingleLongPress({
@@ -250,7 +259,7 @@ export function PatternEditor({
 
   return (
     <div
-      className={`pattern-editor${isFullPracticeMode ? " full-practice-mode" : ""}`}
+      className={`pattern-editor${isLandscapeMode ? " landscape-mode" : ""}`}
     >
       <div className="pattern-editor-controls">
         <BarControls
@@ -281,6 +290,31 @@ export function PatternEditor({
           />
         </div>
         <div className="pattern-editor-actions-right">
+          <button
+            type="button"
+            className={`action-button practice-toggle-button${
+              isFullPracticeMode ? " active" : ""
+            }`}
+            onClick={handlePracticeModeToggle}
+            aria-label="Toggle practice mode"
+            title="Toggle practice mode"
+            aria-pressed={isFullPracticeMode}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </button>
           {/* 临时注释: 隐藏渲染器切换按钮，固定使用 vexflow */}
           {/* <button
             className={`action-button renderer-toggle-button ${
@@ -420,10 +454,7 @@ export function PatternEditor({
           </button>
         </div>
       </div>
-      <div
-        className="pattern-editor-scrollable"
-        ref={scrollContainerRef}
-      >
+      <div className="pattern-editor-scrollable" ref={scrollContainerRef}>
         <DrumNotation
           pattern={pattern}
           cellSize={cellSize}
@@ -431,12 +462,8 @@ export function PatternEditor({
           scrollContainerRef={scrollContainerRef}
           onDoubleClick={onNotationDoubleClick}
         />
-        {isFullPracticeMode && (
-          <>
-            <GridLabels pattern={pattern} cellSize={cellSize} />
-          </>
-        )}
-        {!isFullPracticeMode && (
+        <GridLabels pattern={pattern} cellSize={cellSize} />
+        {!isLandscapeMode && (
           <Grid
             pattern={pattern}
             cellSize={cellSize}
@@ -447,11 +474,28 @@ export function PatternEditor({
             scrollContainerRef={scrollContainerRef}
           />
         )}
+        {!isLandscapeMode && isFullPracticeMode && (
+          <BackgroundMusicControls
+            config={bgmConfig}
+            isLoading={bgmIsLoading}
+            isLoaded={bgmIsLoaded}
+            error={bgmError}
+            onUpload={onBgmUpload}
+            onOffsetChange={onBgmOffsetChange}
+            onVolumeChange={onBgmVolumeChange}
+            masterVolume={masterVolume}
+            onMasterVolumeChange={onMasterVolumeChange}
+            onDelete={onBgmDelete}
+            isPlaying={isPlaying}
+          />
+        )}
       </div>
-      {isFullPracticeMode && (
+
+      {isLandscapeMode && isFullPracticeMode && (
         <BackgroundMusicControls
           config={bgmConfig}
           isLoading={bgmIsLoading}
+          isLoaded={bgmIsLoaded}
           error={bgmError}
           onUpload={onBgmUpload}
           onOffsetChange={onBgmOffsetChange}

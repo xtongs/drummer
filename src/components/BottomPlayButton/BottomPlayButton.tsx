@@ -6,7 +6,7 @@ interface BottomPlayButtonProps {
   onClick: () => void;
   onLongPress?: () => void;
   variant?: "floating" | "inline";
-  hasBgm?: boolean; // 是否有 BGM 播放
+  fullPracticeMode?: boolean; // 是否为完整练习模式
 }
 
 export function BottomPlayButton({
@@ -14,7 +14,7 @@ export function BottomPlayButton({
   onClick,
   onLongPress,
   variant = "floating",
-  hasBgm = false,
+  fullPracticeMode = false,
 }: BottomPlayButtonProps) {
   const longPressTimerRef = useRef<number | null>(null);
   const hasLongPressedRef = useRef<boolean>(false);
@@ -77,7 +77,7 @@ export function BottomPlayButton({
       return;
     }
     // 如果有 BGM 播放且当前未播放（即将开始），则先触发长按行为
-    if (hasBgm && !isPlaying && onLongPress) {
+    if (fullPracticeMode && !isPlaying && onLongPress) {
       onLongPress();
       setTimeout(() => {
         hasLongPressedRef.current = false;
@@ -103,15 +103,19 @@ export function BottomPlayButton({
         onTouchEnd={handleTouchEnd}
         aria-label={isPlaying ? "Pause Pattern" : "Play Pattern"}
       >
-        {isPlaying ? (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        {isPlaying && !fullPracticeMode ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="4" width="4" height="16" />
             <rect x="14" y="4" width="4" height="16" />
           </svg>
+        ) : isPlaying && fullPracticeMode ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" />
+          </svg>
         ) : (
           <svg
-            width="28"
-            height="28"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
             fill="currentColor"
             className="play-icon"

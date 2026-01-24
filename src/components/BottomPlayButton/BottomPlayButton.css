@@ -56,11 +56,6 @@
   transform: scale(0.95);
 }
 
-.bottom-play-button svg {
-  width: 28px;
-  height: 28px;
-}
-
 /* 优化播放按钮三角形的位置，使其视觉上更居中（向右微调1px补偿视觉偏差） */
 .bottom-play-button svg.play-icon {
   transform: translateX(1px);
@@ -72,11 +67,6 @@
     height: 56px;
     min-width: 56px;
     min-height: 56px;
-  }
-
-  .bottom-play-button svg {
-    width: 24px;
-    height: 24px;
   }
 
   .bottom-play-button.inline {
