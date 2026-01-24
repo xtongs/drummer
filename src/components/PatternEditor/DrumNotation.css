@@ -7,7 +7,7 @@
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
-  margin-top: 18px;
+  margin-top: var(--spacing-sm);
 }
 
 .drum-notation-svg {

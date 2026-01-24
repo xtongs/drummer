@@ -6,6 +6,7 @@ import { useSampleLoader } from "./hooks/useSampleLoader";
 import { useVersionShortcut } from "./hooks/useVersionShortcut";
 import { usePlaybackState } from "./hooks/usePlaybackState";
 import { useBackgroundMusicPlayer } from "./hooks/useBackgroundMusicPlayer";
+import { useMetronome } from "./hooks/useMetronome";
 import { setMasterVolumeMultiplier } from "./utils/audioEngine";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
@@ -84,6 +85,10 @@ function App() {
     useState<TimeSignature>(DEFAULT_TIME_SIGNATURE);
   // BPM rate index（控制 x0.9, x0.8 等变速状态）
   const [rateIndex, setRateIndex] = useState<number>(0);
+  const [isCountInEnabled, setIsCountInEnabled] = useState(false);
+  const [isCountInPlaying, setIsCountInPlaying] = useState(false);
+  const [countInStartToken, setCountInStartToken] = useState(0);
+  const countInTimeoutRef = useRef<number | null>(null);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -119,6 +124,25 @@ function App() {
   const [masterVolume, setMasterVolume] = useState<number>(() =>
     getMasterVolume(),
   );
+  const playbackRate = calculateCumulativeRate(rateIndex);
+
+  const clearCountIn = () => {
+    if (countInTimeoutRef.current) {
+      clearTimeout(countInTimeoutRef.current);
+      countInTimeoutRef.current = null;
+    }
+    if (isCountInPlaying) {
+      setIsCountInPlaying(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (countInTimeoutRef.current) {
+        clearTimeout(countInTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
@@ -138,6 +162,7 @@ function App() {
 
   // 选择草稿模式
   const handleSelectDraft = () => {
+    clearCountIn();
     // 如果正在播放，停止播放
     if (isPatternPlaying) {
       setIsPatternPlaying(false);
@@ -309,7 +334,7 @@ function App() {
     crossPatternLoop,
     isPlaying: isPatternPlaying,
     isDraftMode,
-    playbackRate: calculateCumulativeRate(rateIndex),
+    playbackRate,
     onSubdivisionChange: setCurrentSubdivision,
     onPatternChange: handlePlayingPatternChange,
     onPlayStart: () => {
@@ -321,6 +346,7 @@ function App() {
   const handleBottomPlayButtonLongPress = () => {
     // resetToRangeStart 内部会停止播放器并重置位置
     resetToRangeStart();
+    clearCountIn();
     // 更新播放状态
     if (isPatternPlaying) {
       setIsPatternPlaying(false);
@@ -333,7 +359,7 @@ function App() {
   const bgmPlayerState = useBackgroundMusicPlayer({
     isPlaying: isPatternPlaying,
     isFullPracticeMode,
-    playbackRate: calculateCumulativeRate(rateIndex),
+    playbackRate,
     bgmConfig,
     currentSubdivision,
     pattern,
@@ -376,6 +402,81 @@ function App() {
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
     seekTo(subdivision);
+  };
+
+  const resolvePatternByName = (patternName: string): Pattern => {
+    if (patternName === "" && isDraftMode) {
+      return pattern;
+    }
+    if (patternName === pattern.name) {
+      return pattern;
+    }
+    const match = savedPatterns.find((item) => item.name === patternName);
+    return match ?? pattern;
+  };
+
+  const countInPatternName = crossPatternLoop
+    ? crossPatternLoop.startPatternName
+    : isDraftMode
+      ? ""
+      : pattern.name;
+  const countInPattern = resolvePatternByName(countInPatternName);
+  const countInBpm = Math.max(1, countInPattern.bpm * playbackRate);
+  const countInTimeSignature = countInPattern.timeSignature;
+  const countInBarDurationMs = Math.round(
+    ((60 / countInBpm) * (4 / countInTimeSignature[1]) * countInTimeSignature[0]) *
+      1000,
+  );
+
+  const { currentBeat: countInBeat } = useMetronome({
+    bpm: countInBpm,
+    timeSignature: countInTimeSignature,
+    isPlaying: isCountInPlaying,
+    resetToken: countInStartToken,
+  });
+
+  const handleCountInToggle = () => {
+    setIsCountInEnabled((prev) => {
+      const next = !prev;
+      if (!next) {
+        clearCountIn();
+      }
+      return next;
+    });
+  };
+
+  const handlePatternPlayToggle = () => {
+    if (isCountInPlaying) {
+      clearCountIn();
+      return;
+    }
+
+    if (isPatternPlaying) {
+      setIsPatternPlaying(false);
+      return;
+    }
+
+    if (!isCountInEnabled) {
+      togglePatternPlay();
+      return;
+    }
+
+    if (isMetronomePlaying) {
+      setIsMetronomePlaying(false);
+    }
+
+    resetToRangeStart();
+    setCountInStartToken((prev) => prev + 1);
+    setIsCountInPlaying(true);
+    countInTimeoutRef.current = window.setTimeout(() => {
+      setIsCountInPlaying(false);
+      setIsPatternPlaying(true);
+    }, countInBarDurationMs);
+  };
+
+  const handleStopAll = () => {
+    clearCountIn();
+    stopAll();
   };
 
   // 保存当前正在编辑的 pattern（非草稿模式下）
@@ -423,6 +524,8 @@ function App() {
     if (isPatternPlaying) {
       setIsPatternPlaying(false);
     }
+
+    clearCountIn();
 
     // 停止节拍器播放
     if (isMetronomePlaying) {
@@ -488,6 +591,7 @@ function App() {
   };
 
   const handleDeletePattern = (patternId: string) => {
+    clearCountIn();
     const removeBgmAssociation = async () => {
       const config = getBgmConfig(patternId);
       if (config.fileId) {
@@ -650,6 +754,8 @@ function App() {
         isPlaying={isPatternPlaying}
         onBPMChange={handleBPMChange}
         isPatternPlaying={isMetronomePlaying}
+        isCountInPlaying={isCountInPlaying}
+        countInBeat={countInBeat}
         onPatternPlayToggle={toggleMetronomePlay}
         onTimeSignatureChange={handleMetronomeTimeSignatureChange}
         rateIndex={rateIndex}
@@ -661,7 +767,7 @@ function App() {
             <BottomPlayButton
               variant="inline"
               isPlaying={isPatternPlaying}
-              onClick={togglePatternPlay}
+              onClick={handlePatternPlayToggle}
               onLongPress={handleBottomPlayButtonLongPress}
               fullPracticeMode={isFullPracticeMode}
             />
@@ -684,12 +790,12 @@ function App() {
           onImportPattern={handleImportPattern}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
-          onStopAllPlaying={stopAll}
+          onStopAllPlaying={handleStopAll}
           onSelectDraft={handleSelectDraft}
           savedPatterns={savedPatterns}
           currentBeat={currentSubdivision}
           isPlaying={isPatternPlaying}
-          onPlayToggle={togglePatternPlay}
+          onPlayToggle={handlePatternPlayToggle}
           isDraftMode={isDraftMode}
           onNotationDoubleClick={handleNotationDoubleClick}
           bgmConfig={bgmConfig}
@@ -702,12 +808,14 @@ function App() {
           onBgmDelete={handleBgmDelete}
           masterVolume={masterVolume}
           onMasterVolumeChange={handleMasterVolumeChange}
+          isCountInEnabled={isCountInEnabled}
+          onCountInToggle={handleCountInToggle}
         />
       </main>
       {!isLandscapeMode && (
         <BottomPlayButton
           isPlaying={isPatternPlaying}
-          onClick={togglePatternPlay}
+          onClick={handlePatternPlayToggle}
           onLongPress={handleBottomPlayButtonLongPress}
           fullPracticeMode={isFullPracticeMode}
         />

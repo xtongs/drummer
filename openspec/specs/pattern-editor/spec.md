@@ -137,6 +137,31 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **AND** 控件两端对齐排列
 - **AND** 练习模式切换按钮显示在 Pattern Editor 操作区，位于保存按钮左侧
 
+### Requirement: 播放前计拍
+
+系统 SHALL 支持节奏型播放前的一小节计拍。
+
+#### Scenario: 计拍按钮位置
+
+- **GIVEN** Pattern Editor 操作区渲染
+- **WHEN** 显示计拍开关
+- **THEN** 计拍开关按钮 SHALL 显示在练习模式切换按钮左侧
+- **AND** 按钮图标为节拍器
+
+#### Scenario: 启用计拍后开始播放
+
+- **GIVEN** 用户启用计拍开关
+- **WHEN** 用户开始播放节奏型
+- **THEN** 系统 SHALL 先播放一小节计拍
+- **AND** 计拍完成后再开始节奏型与背景音乐播放
+- **AND** 计拍期间节拍指示器 SHALL 显示计拍进度
+
+#### Scenario: 计拍节奏设置
+
+- **GIVEN** 用户启用计拍开关
+- **WHEN** 系统播放计拍
+- **THEN** 计拍 SHALL 使用 range start 小节所属 pattern 的 BPM 与拍号
+
 #### Scenario: 控件样式
 
 - **GIVEN** 背景音乐控件渲染

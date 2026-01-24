@@ -62,6 +62,8 @@ interface PatternEditorProps {
   onBgmDelete: () => void;
   masterVolume: number;
   onMasterVolumeChange: (volumePct: number) => void;
+  isCountInEnabled: boolean;
+  onCountInToggle: () => void;
 }
 
 export function PatternEditor({
@@ -97,6 +99,8 @@ export function PatternEditor({
   onBgmDelete,
   masterVolume,
   onMasterVolumeChange,
+  isCountInEnabled,
+  onCountInToggle,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
@@ -292,6 +296,30 @@ export function PatternEditor({
         <div className="pattern-editor-actions-right">
           <button
             type="button"
+            className={`action-button count-in-toggle-button${
+              isCountInEnabled ? " active" : ""
+            }`}
+            onClick={onCountInToggle}
+            aria-label="Toggle count-in"
+            title="Toggle count-in"
+            aria-pressed={isCountInEnabled}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 4L6 20h12L12 4z" />
+              <line x1="12" y1="10" x2="12" y2="14" />
+            </svg>
+          </button>
+          <button
+            type="button"
             className={`action-button practice-toggle-button${
               isFullPracticeMode ? " active" : ""
             }`}
@@ -301,8 +329,8 @@ export function PatternEditor({
             aria-pressed={isFullPracticeMode}
           >
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -454,6 +482,21 @@ export function PatternEditor({
           </button>
         </div>
       </div>
+      {isFullPracticeMode && (
+        <BackgroundMusicControls
+          config={bgmConfig}
+          isLoading={bgmIsLoading}
+          isLoaded={bgmIsLoaded}
+          error={bgmError}
+          onUpload={onBgmUpload}
+          onOffsetChange={onBgmOffsetChange}
+          onVolumeChange={onBgmVolumeChange}
+          masterVolume={masterVolume}
+          onMasterVolumeChange={onMasterVolumeChange}
+          onDelete={onBgmDelete}
+          isPlaying={isPlaying}
+        />
+      )}
       <div className="pattern-editor-scrollable" ref={scrollContainerRef}>
         <DrumNotation
           pattern={pattern}
@@ -474,38 +517,7 @@ export function PatternEditor({
             scrollContainerRef={scrollContainerRef}
           />
         )}
-        {!isLandscapeMode && isFullPracticeMode && (
-          <BackgroundMusicControls
-            config={bgmConfig}
-            isLoading={bgmIsLoading}
-            isLoaded={bgmIsLoaded}
-            error={bgmError}
-            onUpload={onBgmUpload}
-            onOffsetChange={onBgmOffsetChange}
-            onVolumeChange={onBgmVolumeChange}
-            masterVolume={masterVolume}
-            onMasterVolumeChange={onMasterVolumeChange}
-            onDelete={onBgmDelete}
-            isPlaying={isPlaying}
-          />
-        )}
       </div>
-
-      {isLandscapeMode && isFullPracticeMode && (
-        <BackgroundMusicControls
-          config={bgmConfig}
-          isLoading={bgmIsLoading}
-          isLoaded={bgmIsLoaded}
-          error={bgmError}
-          onUpload={onBgmUpload}
-          onOffsetChange={onBgmOffsetChange}
-          onVolumeChange={onBgmVolumeChange}
-          masterVolume={masterVolume}
-          onMasterVolumeChange={onMasterVolumeChange}
-          onDelete={onBgmDelete}
-          isPlaying={isPlaying}
-        />
-      )}
     </div>
   );
 }

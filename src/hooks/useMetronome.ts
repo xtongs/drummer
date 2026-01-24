@@ -34,6 +34,7 @@ interface UseMetronomeOptions {
   timeSignature: [number, number]; // [beatsPerBar, noteValue]
   isPlaying: boolean;
   onBeatChange?: (beat: number) => void;
+  resetToken?: number;
 }
 
 export function useMetronome({
@@ -41,6 +42,7 @@ export function useMetronome({
   timeSignature,
   isPlaying,
   onBeatChange,
+  resetToken,
 }: UseMetronomeOptions) {
   const [currentBeat, setCurrentBeat] = useState(0);
   const [currentSubdivision, setCurrentSubdivision] = useState(0);
@@ -190,6 +192,16 @@ export function useMetronome({
       nextNoteTimeRef.current = ctx.currentTime;
     }
   }, [bpm, timeSignature, isPlaying]);
+
+  useEffect(() => {
+    currentSubdivisionRef.current = 0;
+    setCurrentSubdivision(0);
+    setCurrentBeat(0);
+    if (isPlaying && isRunningRef.current) {
+      const ctx = getAudioContext();
+      nextNoteTimeRef.current = ctx.currentTime;
+    }
+  }, [resetToken, isPlaying]);
 
   return {
     currentBeat,

@@ -14,6 +14,8 @@ interface MetronomeBarProps {
   isPlaying: boolean;
   onBPMChange: (bpm: number, shouldSave?: boolean) => void;
   isPatternPlaying?: boolean;
+  isCountInPlaying?: boolean;
+  countInBeat?: number;
   onPatternPlayToggle?: () => void;
   onTimeSignatureChange?: (timeSignature: [number, number]) => void;
   rateIndex: number;
@@ -29,6 +31,8 @@ export function MetronomeBar({
   isPlaying: _isPlaying,
   onBPMChange,
   isPatternPlaying = false,
+  isCountInPlaying = false,
+  countInBeat,
   onPatternPlayToggle,
   onTimeSignatureChange,
   rateIndex,
@@ -153,6 +157,9 @@ export function MetronomeBar({
     applyRateIndex(rateIndex + rates.length - 1);
   };
 
+  const displayBeat =
+    isCountInPlaying && countInBeat !== undefined ? countInBeat : currentBeat;
+
   return (
     <div className="metronome-bar">
       {/* 第一行：节拍指示器 | -按钮 | BPM数字 | +按钮 | 节奏型播放按钮 */}
@@ -161,7 +168,7 @@ export function MetronomeBar({
           className="beat-indicator-group"
           onClick={handleTimeSignatureClick}
         >
-          <BeatDots currentBeat={currentBeat} beatsPerBar={timeSignature[0]} />
+          <BeatDots currentBeat={displayBeat} beatsPerBar={timeSignature[0]} />
         </div>
         <div className="bpm-control-group">
           <button
