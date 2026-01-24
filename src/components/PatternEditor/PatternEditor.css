@@ -108,6 +108,11 @@
   box-shadow: none;
 }
 
+.save-current-button.active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
 .load-button {
   background: transparent;
   color: var(--color-text);

@@ -81,3 +81,13 @@
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
+
+.action-button.confirm-button.active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+.action-button.save-button.active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}

@@ -33,11 +33,16 @@ export function useSingleLongPress(options: UseSingleLongPressOptions) {
   const stopPress = useCallback(() => {
     isPressingRef.current = false;
 
+    // 移除 active 类
+    if (element) {
+      element.classList.remove("active");
+    }
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  }, []);
+  }, [element]);
 
   const startPress = useCallback(() => {
     if (isPressingRef.current) return;
@@ -45,13 +50,18 @@ export function useSingleLongPress(options: UseSingleLongPressOptions) {
     startTimeRef.current = Date.now();
     hasTriggeredLongPressRef.current = false;
 
+    // 添加 active 类来模拟 :active 伪类
+    if (element) {
+      element.classList.add("active");
+    }
+
     timeoutRef.current = setTimeout(() => {
       if (!isPressingRef.current) return;
 
       hasTriggeredLongPressRef.current = true;
       onLongPressRef.current();
     }, delay);
-  }, [delay]);
+  }, [delay, element]);
 
   const handlePressEnd = useCallback(() => {
     const wasPressed = isPressingRef.current;

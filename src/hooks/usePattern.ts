@@ -53,6 +53,8 @@ export interface PatternGridCopy {
   bars: number;
   timeSignature: [number, number];
   drums: Pattern["drums"];
+  bpm: number; // 被复制节奏型的全局 BPM
+  barBpmOverrides?: Record<number, number>;
 }
 
 export function usePattern(initialPattern: Pattern) {
@@ -65,6 +67,30 @@ export function usePattern(initialPattern: Pattern) {
       bpm,
       updatedAt: Date.now(),
     }));
+  }, []);
+
+  // 更新指定小节的BPM覆盖
+  const updateBarBpm = useCallback((barIndex: number, bpm: number | null) => {
+    setPattern((prev) => {
+      const newOverrides = { ...prev.barBpmOverrides };
+      
+      if (bpm === null) {
+        // 移除覆盖，使用全局 BPM
+        delete newOverrides[barIndex];
+      } else {
+        // 设置覆盖值
+        newOverrides[barIndex] = bpm;
+      }
+      
+      // 如果没有覆盖值了，移除整个字段
+      const hasOverrides = Object.keys(newOverrides).length > 0;
+      
+      return {
+        ...prev,
+        barBpmOverrides: hasOverrides ? newOverrides : undefined,
+        updatedAt: Date.now(),
+      };
+    });
   }, []);
 
   // 切换网格单元格状态：未激活 -> 正常 -> 未激活
@@ -238,10 +264,34 @@ export function usePattern(initialPattern: Pattern) {
         return newRow;
       });
 
+      // 更新 barBpmOverrides：插入位置后的索引都要 +1，并复制被复制小节的 BPM
+      let newOverrides: Record<number, number> | undefined;
+      if (prev.barBpmOverrides) {
+        newOverrides = {};
+        for (const [key, value] of Object.entries(prev.barBpmOverrides)) {
+          const oldIndex = parseInt(key, 10);
+          if (oldIndex >= insertIndex) {
+            // 插入位置后的索引 +1
+            newOverrides[oldIndex + 1] = value;
+          } else {
+            newOverrides[oldIndex] = value;
+          }
+        }
+        // 复制被复制小节的 BPM 到新小节
+        const copiedBpm = prev.barBpmOverrides[barToCopy];
+        if (copiedBpm !== undefined) {
+          newOverrides[insertIndex] = copiedBpm;
+        }
+        if (Object.keys(newOverrides).length === 0) {
+          newOverrides = undefined;
+        }
+      }
+
       return {
         ...prev,
         bars: prev.bars + 1,
         grid: newGrid,
+        barBpmOverrides: newOverrides,
         updatedAt: Date.now(),
       };
     });
@@ -283,10 +333,32 @@ export function usePattern(initialPattern: Pattern) {
         return newRow;
       });
 
+      // 更新 barBpmOverrides：删除该小节的覆盖，后续索引 -1
+      let newOverrides: Record<number, number> | undefined;
+      if (prev.barBpmOverrides) {
+        newOverrides = {};
+        for (const [key, value] of Object.entries(prev.barBpmOverrides)) {
+          const oldIndex = parseInt(key, 10);
+          if (oldIndex === barToRemove) {
+            // 跳过被删除的小节
+            continue;
+          } else if (oldIndex > barToRemove) {
+            // 删除位置后的索引 -1
+            newOverrides[oldIndex - 1] = value;
+          } else {
+            newOverrides[oldIndex] = value;
+          }
+        }
+        if (Object.keys(newOverrides).length === 0) {
+          newOverrides = undefined;
+        }
+      }
+
       return {
         ...prev,
         bars: prev.bars - 1,
         grid: newGrid,
+        barBpmOverrides: newOverrides,
         // 如果循环范围超出，需要调整
         loopRange:
           prev.loopRange && prev.loopRange[1] >= prev.bars - 1
@@ -324,7 +396,8 @@ export function usePattern(initialPattern: Pattern) {
 
         const [beatsPerBar] = prev.timeSignature;
         const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-        const insertOffset = Math.max(0, Math.min(prev.bars, barIndex)) * subdivisionsPerBar;
+        const insertIndex = Math.max(0, Math.min(prev.bars, barIndex));
+        const insertOffset = insertIndex * subdivisionsPerBar;
         const expectedLength = copy.bars * subdivisionsPerBar;
 
         if (copy.grid.some((row) => row.length !== expectedLength)) {
@@ -338,10 +411,50 @@ export function usePattern(initialPattern: Pattern) {
           return newRow;
         });
 
+        // 更新 barBpmOverrides：现有小节插入位置后的索引 +copy.bars，并合并复制的覆盖
+        // 如果目标节奏型的 BPM 和复制来源的 BPM 不同，则为所有复制的小节创建 BPM 覆盖
+        const bpmDiffers = copy.bpm !== prev.bpm;
+        let newOverrides: Record<number, number> | undefined;
+        
+        if (prev.barBpmOverrides || copy.barBpmOverrides || bpmDiffers) {
+          newOverrides = {};
+          
+          // 处理现有的覆盖
+          if (prev.barBpmOverrides) {
+            for (const [key, value] of Object.entries(prev.barBpmOverrides)) {
+              const oldIndex = parseInt(key, 10);
+              if (oldIndex >= insertIndex) {
+                // 插入位置后的索引 +copy.bars
+                newOverrides[oldIndex + copy.bars] = value;
+              } else {
+                newOverrides[oldIndex] = value;
+              }
+            }
+          }
+          
+          // 合并复制的覆盖（索引加上 insertIndex）
+          // 如果 BPM 不同且没有特殊覆盖，则使用复制来源的全局 BPM
+          for (let i = 0; i < copy.bars; i++) {
+            const copyBarBpm = copy.barBpmOverrides?.[i];
+            if (copyBarBpm !== undefined) {
+              // 有特殊覆盖，使用覆盖值
+              newOverrides[insertIndex + i] = copyBarBpm;
+            } else if (bpmDiffers) {
+              // 没有特殊覆盖但 BPM 不同，使用复制来源的全局 BPM
+              newOverrides[insertIndex + i] = copy.bpm;
+            }
+          }
+          
+          if (Object.keys(newOverrides).length === 0) {
+            newOverrides = undefined;
+          }
+        }
+
         return {
           ...prev,
           bars: prev.bars + copy.bars,
           grid: newGrid,
+          barBpmOverrides: newOverrides,
           updatedAt: Date.now(),
         };
       });
@@ -362,6 +475,7 @@ export function usePattern(initialPattern: Pattern) {
   return {
     pattern,
     updateBPM,
+    updateBarBpm,
     toggleCell,
     toggleGhost,
     cycleThirtySecond,

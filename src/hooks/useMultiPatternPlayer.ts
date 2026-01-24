@@ -125,11 +125,20 @@ export function useMultiPatternPlayer({
   const playbackRateRef = useRef(playbackRate);
   playbackRateRef.current = playbackRate;
 
-  // 计算指定 pattern 的 subdivision 时长（考虑 playbackRate）
-  const getSubdivisionDuration = useCallback((pattern: Pattern): number => {
+  // 计算指定 pattern 的 subdivision 时长（考虑 playbackRate 和每小节 BPM 覆盖）
+  const getSubdivisionDuration = useCallback((pattern: Pattern, subdivisionIndex?: number): number => {
+    // 获取该小节的 BPM（覆盖值或全局值）
+    let baseBPM = pattern.bpm;
+    if (subdivisionIndex !== undefined && pattern.barBpmOverrides) {
+      const [beatsPerBar] = pattern.timeSignature;
+      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+      const barIndex = Math.floor(subdivisionIndex / subdivisionsPerBar);
+      baseBPM = pattern.barBpmOverrides[barIndex] ?? pattern.bpm;
+    }
+    
     // 应用 playbackRate：rate 越小，BPM 越慢，duration 越长
     // 因为 rate 已经是累积倍率（如 0.9 表示减速到 90%），直接除以 rate
-    const effectiveBPM = pattern.bpm * playbackRateRef.current;
+    const effectiveBPM = baseBPM * playbackRateRef.current;
     const beatDuration =
       (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
     return beatDuration / SUBDIVISIONS_PER_BEAT;
@@ -280,7 +289,7 @@ export function useMultiPatternPlayer({
   // 播放单个 subdivision
   const playSubdivision = useCallback(
     (pattern: Pattern, subdivisionIndex: number, time: number) => {
-      const subDuration = getSubdivisionDuration(pattern);
+      const subDuration = getSubdivisionDuration(pattern, subdivisionIndex);
       const halfSubdivision = subDuration / 2;
 
       const triggerDrum = (
@@ -442,8 +451,8 @@ export function useMultiPatternPlayer({
 
       currentSubdivisionInStepRef.current = subInStep + 1;
 
-      // 使用当前步骤 pattern 的 BPM 计算下一个音符的时间
-      const subDuration = getSubdivisionDuration(step.pattern);
+      // 使用当前步骤 pattern 的 BPM（考虑小节覆盖）计算下一个音符的时间
+      const subDuration = getSubdivisionDuration(step.pattern, subInStep);
       nextNoteTimeRef.current += subDuration;
     }
   }, [playSubdivision, getSubdivisionDuration, getSubdivisionsPerBar]);

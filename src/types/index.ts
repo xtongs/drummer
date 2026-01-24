@@ -77,6 +77,7 @@ export interface Pattern {
   grid: CellState[][]; // [drumIndex][beatIndex] - 0=未激活, 1=正常, 2=鬼音, 3=倚音
   drums: DrumType[]; // 鼓件列表（固定顺序）
   loopRange?: LoopRange; // 循环播放范围，可选
+  barBpmOverrides?: Record<number, number>; // 每小节 BPM 覆盖（key: 0-based 小节索引, value: BPM）
   createdAt: number; // 创建时间戳
   updatedAt: number; // 更新时间戳
 }

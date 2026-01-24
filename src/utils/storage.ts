@@ -344,6 +344,22 @@ export function validatePattern(data: unknown): data is Pattern {
     }
   }
 
+  // 验证可选的 barBpmOverrides
+  if (pattern.barBpmOverrides !== undefined) {
+    if (typeof pattern.barBpmOverrides !== "object" || pattern.barBpmOverrides === null) {
+      return false;
+    }
+    for (const [key, value] of Object.entries(pattern.barBpmOverrides)) {
+      const barIndex = parseInt(key, 10);
+      if (isNaN(barIndex) || barIndex < 0) {
+        return false;
+      }
+      if (typeof value !== "number" || value < 20 || value > 300) {
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 

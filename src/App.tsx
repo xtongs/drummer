@@ -93,6 +93,8 @@ function App() {
   const countInTimeoutRef = useRef<number | null>(null);
   const [copiedPatternGrid, setCopiedPatternGrid] =
     useState<PatternGridCopy | null>(null);
+  // 小节 BPM 编辑模式
+  const [isBarBpmMode, setIsBarBpmMode] = useState(false);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -108,6 +110,7 @@ function App() {
   const {
     pattern,
     updateBPM,
+    updateBarBpm,
     toggleCell,
     toggleGhost,
     cycleThirtySecond,
@@ -152,7 +155,19 @@ function App() {
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
   // 这样 pattern.bpm 保持原始值，playbackRate 会在 useMultiPatternPlayer 中应用
+  // 如果处于小节 BPM 模式，只更新当前小节的 BPM 覆盖
   const handleBPMChange = (bpm: number, shouldSave = true) => {
+    if (isBarBpmMode && currentSubdivision !== undefined) {
+      // 小节 BPM 模式：更新当前小节的 BPM 覆盖
+      const [beatsPerBar] = pattern.timeSignature;
+      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+      const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
+      updateBarBpm(currentBarIndex, bpm);
+      // 同时更新显示的 BPM
+      setMetronomeBPM(bpm);
+      return;
+    }
+    
     setMetronomeBPM(bpm);
     if (shouldSave) {
       saveMetronomeBPM(bpm);
@@ -163,6 +178,30 @@ function App() {
   // 节拍器拍号改变（只影响节拍器，不影响节奏型）
   const handleMetronomeTimeSignatureChange = (timeSignature: TimeSignature) => {
     setMetronomeTimeSignature(timeSignature);
+  };
+
+  // 切换小节 BPM 覆盖：点击设置/清除当前小节的 BPM 覆盖
+  const handleBarBpmModeToggle = () => {
+    if (currentSubdivision === undefined) return;
+    
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+    const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
+    const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+    
+    if (hasOverride) {
+      // 当前小节有覆盖，点击清除该覆盖
+      updateBarBpm(currentBarIndex, null);
+      // 恢复全局 BPM 显示
+      setMetronomeBPM(pattern.bpm);
+      // 退出编辑模式
+      setIsBarBpmMode(false);
+    } else {
+      // 当前小节没有覆盖，立即用全局 BPM 设置该小节的覆盖
+      updateBarBpm(currentBarIndex, pattern.bpm);
+      // 进入编辑模式
+      setIsBarBpmMode(true);
+    }
   };
 
   // 选择草稿模式
@@ -178,8 +217,9 @@ function App() {
       setIsMetronomePlaying(false);
     }
 
-    // 重置 BPM rate
+    // 重置 BPM rate 和小节 BPM 模式
     setRateIndex(0);
+    setIsBarBpmMode(false);
 
     setIsDraftMode(true);
     setCurrentPatternId(undefined);
@@ -244,6 +284,38 @@ function App() {
   useEffect(() => {
     saveCrossPatternLoop(crossPatternLoop);
   }, [crossPatternLoop]);
+
+  // 计算当前小节是否有 BPM 覆盖（用于按钮 active 状态显示）
+  const currentBarHasOverride = (() => {
+    if (currentSubdivision === undefined || !pattern.barBpmOverrides) return false;
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+    const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
+    return pattern.barBpmOverrides[currentBarIndex] !== undefined;
+  })();
+
+  // 当游标移动且处于小节 BPM 模式或当前小节有覆盖时，更新显示的 BPM
+  useEffect(() => {
+    if (currentSubdivision === undefined) return;
+    
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+    const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
+    const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+    
+    // 如果处于小节 BPM 编辑模式或当前小节有覆盖，显示当前小节的 BPM
+    if (isBarBpmMode || hasOverride) {
+      const barBpm = pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
+      if (barBpm !== metronomeBPM) {
+        setMetronomeBPM(barBpm);
+      }
+    } else {
+      // 否则显示全局 BPM
+      if (pattern.bpm !== metronomeBPM) {
+        setMetronomeBPM(pattern.bpm);
+      }
+    }
+  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, metronomeBPM]);
 
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
   useVisibilityHandler({
@@ -416,6 +488,10 @@ function App() {
       bars: pattern.bars,
       timeSignature: pattern.timeSignature,
       drums: pattern.drums,
+      bpm: pattern.bpm,
+      barBpmOverrides: pattern.barBpmOverrides
+        ? { ...pattern.barBpmOverrides }
+        : undefined,
     });
   };
 
@@ -602,6 +678,9 @@ function App() {
     if (!isInCrossPatternRange) {
       setRateIndex(0);
     }
+
+    // 重置小节 BPM 模式
+    setIsBarBpmMode(false);
 
     setIsDraftMode(false);
     loadPattern(loadedPattern);
@@ -860,6 +939,8 @@ function App() {
           onMasterVolumeChange={handleMasterVolumeChange}
           isCountInEnabled={isCountInEnabled}
           onCountInToggle={handleCountInToggle}
+          onBarBpmModeToggle={handleBarBpmModeToggle}
+          currentBarHasOverride={currentBarHasOverride}
         />
       </main>
       {!isLandscapeMode && (

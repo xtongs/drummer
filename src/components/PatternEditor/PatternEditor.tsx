@@ -70,6 +70,8 @@ interface PatternEditorProps {
   onMasterVolumeChange: (volumePct: number) => void;
   isCountInEnabled: boolean;
   onCountInToggle: () => void;
+  onBarBpmModeToggle?: () => void;
+  currentBarHasOverride?: boolean;
 }
 
 export function PatternEditor({
@@ -113,6 +115,8 @@ export function PatternEditor({
   onMasterVolumeChange,
   isCountInEnabled,
   onCountInToggle,
+  onBarBpmModeToggle,
+  currentBarHasOverride = false,
 }: PatternEditorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastBarsRef = useRef(pattern.bars); // 跟踪上一次的小节数
@@ -360,6 +364,31 @@ export function PatternEditor({
               )}
             </div>
           )}
+          {onBarBpmModeToggle && (
+            <button
+              type="button"
+              className={`bar-control-button bar-bpm-button${currentBarHasOverride ? " active" : ""}`}
+              onClick={onBarBpmModeToggle}
+              aria-label="Toggle bar BPM mode"
+              aria-pressed={currentBarHasOverride}
+              title={currentBarHasOverride ? "点击清除当前小节BPM" : "进入小节BPM模式"}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {/* 节拍器图标 - 三角底座 + 摆锤 */}
+                <path d="M6 20 L12 4 L18 20 Z" />
+                <line x1="12" y1="16" x2="16" y2="6" />
+              </svg>
+            </button>
+          )}
         </div>
         <LoopRangeSelector
           currentPattern={pattern}
@@ -384,9 +413,8 @@ export function PatternEditor({
         <div className="pattern-editor-actions-right">
           <button
             type="button"
-            className={`action-button count-in-toggle-button${
-              isCountInEnabled ? " active" : ""
-            }`}
+            className={`action-button count-in-toggle-button${isCountInEnabled ? " active" : ""
+              }`}
             onClick={onCountInToggle}
             aria-label="Toggle count-in"
             title="Toggle count-in"
@@ -402,15 +430,15 @@ export function PatternEditor({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M12 4L6 20h12L12 4z" />
-              <line x1="12" y1="10" x2="12" y2="14" />
+              {/* 节拍器图标 - 三角底座 + 摆锤 */}
+              <path d="M6 20 L12 4 L18 20 Z" />
+              <line x1="12" y1="16" x2="16" y2="6" />
             </svg>
           </button>
           <button
             type="button"
-            className={`action-button practice-toggle-button${
-              isFullPracticeMode ? " active" : ""
-            }`}
+            className={`action-button practice-toggle-button${isFullPracticeMode ? " active" : ""
+              }`}
             onClick={handlePracticeModeToggle}
             aria-label="Toggle practice mode"
             title="Toggle practice mode"
