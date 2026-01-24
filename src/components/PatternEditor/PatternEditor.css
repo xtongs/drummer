@@ -23,6 +23,18 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.pattern-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.pattern-copy-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
 .pattern-editor-scrollable {
   display: flex;
   flex-direction: column;
@@ -233,6 +245,7 @@
   height: var(--button-size);
   padding: 0 6px;
   font-size: var(--font-size-xs);
+  font-weight: inherit;
   color: var(--color-text);
   background: var(--color-surface);
   border: 1px solid var(--color-secondary);

@@ -55,11 +55,11 @@
   pointer-events: none;
 }
 
-.bpm-control-group>* {
+.bpm-control-group > * {
   pointer-events: auto;
 }
 
-.bpm-control-group>* {
+.bpm-control-group > * {
   pointer-events: auto;
 }
 
@@ -69,8 +69,9 @@
   align-items: center;
   justify-content: center;
   /* 使用系统字体替代等宽字体，iOS Safari 数字对齐更好 */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    Arial, sans-serif;
 }
 
 .bpm-control-button {
@@ -82,8 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-xs);
   color: var(--color-text);
   background-color: transparent;
   border: none;
@@ -123,7 +123,6 @@
 
 .bpm-rate-label {
   font-size: 0.75rem;
-  font-weight: 600;
   line-height: 1;
   color: var(--color-text-secondary);
   opacity: 0.7;
@@ -131,8 +130,7 @@
 }
 
 .bpm-unit {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   letter-spacing: 0.1em;
 }

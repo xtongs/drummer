@@ -162,6 +162,38 @@ Pattern Editor 是 Drummer 的核心编辑界面，提供网格编辑器、鼓�
 - **WHEN** 系统播放计拍
 - **THEN** 计拍 SHALL 使用 range start 小节所属 pattern 的 BPM 与拍号
 
+### Requirement: 节奏型网格复制与粘贴
+
+系统 SHALL 提供节奏型网格的复制与前后插入粘贴功能。
+
+#### Scenario: 复制按钮显示
+
+- **GIVEN** 当前选中已保存的节奏型
+- **WHEN** Pattern Editor 渲染
+- **THEN** BarControls 后 SHALL 显示复制按钮
+
+#### Scenario: 复制与粘贴按钮切换
+
+- **GIVEN** 用户点击复制按钮
+- **WHEN** 复制完成
+- **THEN** 复制按钮 SHALL 隐藏
+- **AND** 显示向前/向后粘贴按钮
+- **AND** 粘贴完成后按钮 SHALL 恢复为复制按钮
+
+#### Scenario: 粘贴插入位置
+
+- **GIVEN** 用户在另一个已保存节奏型点击粘贴按钮
+- **WHEN** 点击向前粘贴
+- **THEN** 复制的网格 SHALL 插入到当前节奏型最前
+- **WHEN** 点击向后粘贴
+- **THEN** 复制的网格 SHALL 插入到当前节奏型最后
+
+#### Scenario: 兼容性限制
+
+- **GIVEN** 当前节奏型与复制源拍号不一致
+- **WHEN** 渲染粘贴按钮
+- **THEN** 粘贴按钮 SHALL 被禁用
+
 #### Scenario: 控件样式
 
 - **GIVEN** 背景音乐控件渲染

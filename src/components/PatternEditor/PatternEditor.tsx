@@ -52,6 +52,12 @@ interface PatternEditorProps {
   onPlayToggle?: () => void;
   isDraftMode: boolean;
   onNotationDoubleClick?: (subdivision: number) => void;
+  canCopyPattern: boolean;
+  hasCopiedPattern: boolean;
+  canPastePattern: boolean;
+  onCopyPattern: () => void;
+  onPastePatternBefore: () => void;
+  onPastePatternAfter: () => void;
   bgmConfig: BgmConfig;
   bgmIsLoading: boolean;
   bgmIsLoaded: boolean;
@@ -89,6 +95,12 @@ export function PatternEditor({
   onPlayToggle: _onPlayToggle,
   isDraftMode,
   onNotationDoubleClick,
+  canCopyPattern,
+  hasCopiedPattern,
+  canPastePattern,
+  onCopyPattern,
+  onPastePatternBefore,
+  onPastePatternAfter,
   bgmConfig,
   bgmIsLoading,
   bgmIsLoaded,
@@ -266,13 +278,89 @@ export function PatternEditor({
       className={`pattern-editor${isLandscapeMode ? " landscape-mode" : ""}`}
     >
       <div className="pattern-editor-controls">
-        <BarControls
-          bars={pattern.bars}
-          onAddBar={handleUserAddBar}
-          onRemoveBar={onRemoveBar}
-          canRemove={pattern.bars > 1}
-          currentBeat={currentBeat}
-        />
+        <div className="pattern-bar-tools">
+          <BarControls
+            bars={pattern.bars}
+            onAddBar={handleUserAddBar}
+            onRemoveBar={onRemoveBar}
+            canRemove={pattern.bars > 1}
+            currentBeat={currentBeat}
+          />
+          {canCopyPattern && (
+            <div className="pattern-copy-controls">
+              {!hasCopiedPattern ? (
+                <button
+                  type="button"
+                  className="pattern-tab"
+                  onClick={onCopyPattern}
+                  aria-label="Copy pattern grid"
+                  title="Copy pattern grid"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="9" y="9" width="10" height="10" rx="2" />
+                    <rect x="5" y="5" width="10" height="10" rx="2" />
+                  </svg>
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="pattern-tab"
+                    onClick={onPastePatternBefore}
+                    disabled={!canPastePattern}
+                    aria-label="Paste pattern before"
+                    title="Paste pattern before"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="12 5 5 12 12 19" />
+                      <line x1="19" y1="12" x2="5" y2="12" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="pattern-tab"
+                    onClick={onPastePatternAfter}
+                    disabled={!canPastePattern}
+                    aria-label="Paste pattern after"
+                    title="Paste pattern after"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="12 5 19 12 12 19" />
+                      <line x1="19" y1="12" x2="5" y2="12" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <LoopRangeSelector
           currentPattern={pattern}
           savedPatterns={savedPatterns}

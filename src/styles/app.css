@@ -19,6 +19,7 @@
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+  font-weight: 600;
   color: var(--color-text);
   background-color: var(--bg-color);
   -webkit-font-smoothing: antialiased;
@@ -116,7 +117,7 @@ body {
 }
 
 .loading-progress-text {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   text-align: center;
   white-space: nowrap;
@@ -170,7 +171,7 @@ body {
 /* 移动端优化 */
 @media (max-width: 768px) {
   body {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
   }
 }
 
@@ -178,6 +179,7 @@ body {
 button {
   font-family: inherit;
   font-size: inherit;
+  font-weight: inherit;
   border: none;
   background: none;
   cursor: pointer;

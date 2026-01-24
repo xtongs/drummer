@@ -11,7 +11,7 @@
 }
 
 .loop-range-text {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text);
 }
 
@@ -38,8 +38,7 @@
   justify-content: center;
   background: var(--color-primary);
   color: white;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-xs);
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -47,14 +46,13 @@
 }
 
 .loop-range-value {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text);
   text-align: center;
 }
 
 .loop-range-separator {
   color: var(--color-text-secondary);
-  font-weight: 600;
   margin: 0 var(--spacing-xs);
 }
 
@@ -65,9 +63,10 @@
   background: transparent;
   border: none;
   color: var(--color-text);
-  font-size: var(--font-size-sm);
+  height: var(--button-size);
+  font-size: var(--font-size-xs);
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0;
   cursor: pointer;
   text-align: center;

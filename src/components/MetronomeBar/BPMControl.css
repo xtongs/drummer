@@ -5,8 +5,7 @@
 }
 
 .bpm-label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-size: var(--font-size-xs);
   color: var(--color-text);
   white-space: nowrap;
 }
@@ -31,7 +30,6 @@
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-lg);
-  font-weight: bold;
   color: var(--color-text);
   background-color: transparent;
   border-radius: var(--border-radius-sm);
@@ -41,7 +39,6 @@
   width: 60px;
   text-align: center;
   font-size: var(--font-size-lg);
-  font-weight: 600;
   border: none;
   background-color: transparent;
   color: var(--color-text);

@@ -48,6 +48,7 @@ import {
 } from "./utils/constants";
 import type { TimeSignature } from "./types";
 import type { Pattern, CrossPatternLoop } from "./types";
+import type { PatternGridCopy } from "./hooks/usePattern";
 import type { BgmConfig } from "./utils/bgmStorage";
 import "./index.css";
 import { useLandscapeMode } from "./hooks/useLandscapeMode";
@@ -89,6 +90,8 @@ function App() {
   const [isCountInPlaying, setIsCountInPlaying] = useState(false);
   const [countInStartToken, setCountInStartToken] = useState(0);
   const countInTimeoutRef = useRef<number | null>(null);
+  const [copiedPatternGrid, setCopiedPatternGrid] =
+    useState<PatternGridCopy | null>(null);
   // 跨 Pattern 循环范围（从本地存储加载初始值）
   const [crossPatternLoop, setCrossPatternLoop] = useState<
     CrossPatternLoop | undefined
@@ -110,6 +113,7 @@ function App() {
     addBar,
     removeBar,
     clearGrid,
+    insertPatternGrid,
     loadPattern,
     resetPattern,
   } = usePattern(createEmptyPattern());
@@ -402,6 +406,41 @@ function App() {
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
     seekTo(subdivision);
+  };
+
+  const handleCopyPatternGrid = () => {
+    if (isDraftMode) return;
+    setCopiedPatternGrid({
+      grid: pattern.grid.map((row) => row.slice()),
+      bars: pattern.bars,
+      timeSignature: pattern.timeSignature,
+      drums: pattern.drums,
+    });
+  };
+
+  const canPastePatternGrid = (() => {
+    if (!copiedPatternGrid) return false;
+    return (
+      copiedPatternGrid.timeSignature[0] === pattern.timeSignature[0] &&
+      copiedPatternGrid.timeSignature[1] === pattern.timeSignature[1] &&
+      copiedPatternGrid.drums.length === pattern.drums.length
+    );
+  })();
+
+  const handlePastePatternGrid = (position: "before" | "after") => {
+    if (isDraftMode || !copiedPatternGrid || !canPastePatternGrid) return;
+
+    if (isPatternPlaying) {
+      setIsPatternPlaying(false);
+    }
+    if (isMetronomePlaying) {
+      setIsMetronomePlaying(false);
+    }
+    clearCountIn();
+
+    const insertIndex = position === "before" ? 0 : pattern.bars;
+    insertPatternGrid(insertIndex, copiedPatternGrid);
+    setCopiedPatternGrid(null);
   };
 
   const resolvePatternByName = (patternName: string): Pattern => {
@@ -798,6 +837,12 @@ function App() {
           onPlayToggle={handlePatternPlayToggle}
           isDraftMode={isDraftMode}
           onNotationDoubleClick={handleNotationDoubleClick}
+          canCopyPattern={!isDraftMode}
+          hasCopiedPattern={!!copiedPatternGrid}
+          canPastePattern={canPastePatternGrid}
+          onCopyPattern={handleCopyPatternGrid}
+          onPastePatternBefore={() => handlePastePatternGrid("before")}
+          onPastePatternAfter={() => handlePastePatternGrid("after")}
           bgmConfig={bgmConfig}
           bgmIsLoading={bgmIsLoading}
           bgmIsLoaded={bgmIsLoaded}

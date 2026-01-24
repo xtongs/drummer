@@ -48,6 +48,13 @@ const isThirtySecondState = (state: CellState) =>
   state === CELL_FIRST_32 ||
   state === CELL_SECOND_32;
 
+export interface PatternGridCopy {
+  grid: CellState[][];
+  bars: number;
+  timeSignature: [number, number];
+  drums: Pattern["drums"];
+}
+
 export function usePattern(initialPattern: Pattern) {
   const [pattern, setPattern] = useState<Pattern>(initialPattern);
 
@@ -303,6 +310,45 @@ export function usePattern(initialPattern: Pattern) {
     });
   }, []);
 
+  const insertPatternGrid = useCallback(
+    (barIndex: number, copy: PatternGridCopy) => {
+      setPattern((prev) => {
+        if (
+          copy.bars <= 0 ||
+          copy.grid.length !== prev.drums.length ||
+          copy.timeSignature[0] !== prev.timeSignature[0] ||
+          copy.timeSignature[1] !== prev.timeSignature[1]
+        ) {
+          return prev;
+        }
+
+        const [beatsPerBar] = prev.timeSignature;
+        const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+        const insertOffset = Math.max(0, Math.min(prev.bars, barIndex)) * subdivisionsPerBar;
+        const expectedLength = copy.bars * subdivisionsPerBar;
+
+        if (copy.grid.some((row) => row.length !== expectedLength)) {
+          return prev;
+        }
+
+        const newGrid = prev.grid.map((row, index) => {
+          const insertRow = copy.grid[index];
+          const newRow = [...row];
+          newRow.splice(insertOffset, 0, ...insertRow);
+          return newRow;
+        });
+
+        return {
+          ...prev,
+          bars: prev.bars + copy.bars,
+          grid: newGrid,
+          updatedAt: Date.now(),
+        };
+      });
+    },
+    []
+  );
+
   // 加载节奏型
   const loadPattern = useCallback((newPattern: Pattern) => {
     setPattern(newPattern);
@@ -322,6 +368,7 @@ export function usePattern(initialPattern: Pattern) {
     addBar,
     removeBar,
     clearGrid,
+    insertPatternGrid,
     loadPattern,
     resetPattern,
   };

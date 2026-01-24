@@ -13,8 +13,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-size: var(--font-size-xs);
   color: var(--color-text);
 }
 
@@ -29,8 +28,7 @@
   justify-content: center;
   background: var(--color-primary);
   color: white;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-xs);
   border-radius: var(--border-radius-sm);
   border: none;
   box-shadow: none;
