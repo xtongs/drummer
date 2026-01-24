@@ -87,7 +87,7 @@ export function PlayButton({
 
   return (
     <button
-      className="play-button"
+      className={"play-button" + (isPlaying ? " playing" : " paused")}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}

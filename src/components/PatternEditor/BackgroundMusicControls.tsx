@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { BgmConfig } from "../../utils/bgmStorage";
 import { useLongPress } from "../../hooks/useLongPress";
@@ -32,6 +32,8 @@ export function BackgroundMusicControls({
   isPlaying,
 }: BackgroundMusicControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isEditingOffset, setIsEditingOffset] = useState(false);
+  const [offsetInputValue, setOffsetInputValue] = useState("0");
   const applyVolumeDelta = (delta: number) => {
     const next = clampNumber((config.volumePct ?? 100) + delta, 0, 100);
     onVolumeChange(next);
@@ -87,8 +89,25 @@ export function BackgroundMusicControls({
   const negatedOffsetMs = -offsetMs;
   const offsetDisplay =
     Math.abs(negatedOffsetMs) >= 1000
-      ? `${(negatedOffsetMs / 1000).toFixed(2)}s`
+      ? `${(negatedOffsetMs / 1000).toFixed(3)}s`
       : `${negatedOffsetMs}ms`;
+  const offsetDisplayValue = Math.round(negatedOffsetMs).toString();
+
+  const enterOffsetEditMode = () => {
+    if (isPlaying) return;
+    setOffsetInputValue(offsetDisplayValue);
+    setIsEditingOffset(true);
+  };
+
+  const commitOffsetValue = () => {
+    const parsed = Number(offsetInputValue);
+    if (!Number.isFinite(parsed)) {
+      setIsEditingOffset(false);
+      return;
+    }
+    onOffsetChange(-parsed);
+    setIsEditingOffset(false);
+  };
 
   return (
     <div className="bgm-controls-container">
@@ -149,53 +168,57 @@ export function BackgroundMusicControls({
               />
             </>
           )}
-          <span className="bgm-file-name">{fileName || ""}</span>
-          <div className="bgm-control-group">
-            <button
-              type="button"
-              className="bgm-control-button"
-              aria-label="Decrease background music volume"
-              title="Decrease background music volume"
-              {...volumeDecreaseHandlers}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-            <div className="bgm-control-center">
-              <span className="bgm-control-value">{volumeDisplay}%</span>
-            </div>
-            <button
-              type="button"
-              className="bgm-control-button"
-              aria-label="Increase background music volume"
-              title="Increase background music volume"
-              {...volumeIncreaseHandlers}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-          </div>
+          {fileName && (
+            <>
+              <span className="bgm-file-name">{fileName || ""}</span>
+              <div className="bgm-control-group">
+                <button
+                  type="button"
+                  className="bgm-control-button"
+                  aria-label="Decrease background music volume"
+                  title="Decrease background music volume"
+                  {...volumeDecreaseHandlers}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+                <div className="bgm-control-center">
+                  <span className="bgm-control-value">{volumeDisplay}%</span>
+                </div>
+                <button
+                  type="button"
+                  className="bgm-control-button"
+                  aria-label="Increase background music volume"
+                  title="Increase background music volume"
+                  {...volumeIncreaseHandlers}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+              </div>
+            </>
+          )}
         </div>
         <div className="bgm-controls-right">
           <div className="bgm-control-group">
@@ -267,7 +290,33 @@ export function BackgroundMusicControls({
               </svg>
             </button>
             <div className="bgm-control-center">
-              <span className="bgm-control-value">{offsetDisplay}</span>
+              {isEditingOffset ? (
+                <input
+                  type="number"
+                  className="bgm-offset-input"
+                  value={offsetInputValue}
+                  onChange={(event) => setOffsetInputValue(event.target.value)}
+                  onBlur={commitOffsetValue}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      commitOffsetValue();
+                    } else if (event.key === "Escape") {
+                      setIsEditingOffset(false);
+                    }
+                  }}
+                  disabled={isPlaying}
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="bgm-offset-display"
+                  onClick={enterOffsetEditMode}
+                  disabled={isPlaying}
+                >
+                  <span className="bgm-control-value">{offsetDisplay}</span>
+                </button>
+              )}
             </div>
             <button
               type="button"

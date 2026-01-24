@@ -57,7 +57,7 @@
 }
 
 /* 优化播放按钮三角形的位置，使其视觉上更居中（向右微调1px补偿视觉偏差） */
-.bottom-play-button svg.play-icon {
+.bottom-play-button.paused svg.play-icon {
   transform: translateX(1px);
 }
 

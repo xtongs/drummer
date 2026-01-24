@@ -59,13 +59,32 @@ export function LoopRangeSelector({
 
     const expectedPatternName = isDraftMode ? "" : currentPattern.name;
 
-    // 检查循环范围的开始或结束是否在当前 pattern 上
-    const isCurrentPatternLoop =
-      crossPatternLoop.startPatternName === expectedPatternName ||
-      crossPatternLoop.endPatternName === expectedPatternName;
+    const comparePatternNames = (a: string, b: string): number => {
+      if (a === b) return 0;
+      if (a === "") return -1;
+      if (b === "") return 1;
+      return a.localeCompare(b);
+    };
 
-    // 如果循环范围完全不属于当前 pattern，更新到默认范围
-    if (!isCurrentPatternLoop) {
+    const isPatternWithinRange = (() => {
+      const { startPatternName, endPatternName } = crossPatternLoop;
+      if (startPatternName === endPatternName) {
+        return startPatternName === expectedPatternName;
+      }
+      if (
+        expectedPatternName === startPatternName ||
+        expectedPatternName === endPatternName
+      ) {
+        return true;
+      }
+      return (
+        comparePatternNames(startPatternName, expectedPatternName) < 0 &&
+        comparePatternNames(expectedPatternName, endPatternName) < 0
+      );
+    })();
+
+    // 如果循环范围完全不包含当前 pattern，更新到默认范围
+    if (!isPatternWithinRange) {
       onCrossPatternLoopChange({
         startPatternName: expectedPatternName,
         startBar: 0,

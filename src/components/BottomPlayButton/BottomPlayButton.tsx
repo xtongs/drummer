@@ -94,7 +94,7 @@ export function BottomPlayButton({
       className={`bottom-play-button-container${variant === "inline" ? " inline" : ""}`}
     >
       <button
-        className={`bottom-play-button${variant === "inline" ? " inline" : ""}`}
+        className={`bottom-play-button${variant === "inline" ? " inline" : isPlaying ? " playing" : " paused"}`}
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}

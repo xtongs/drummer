@@ -70,8 +70,7 @@
 
 .action-button {
   padding: 0;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-xs);
   border-radius: var(--border-radius-sm);
   border: none;
   cursor: pointer;
@@ -144,6 +143,7 @@
   padding: 2px 0;
   min-height: 28px;
   width: 100%;
+  font-size: var(--font-size-xs);
 }
 
 .bgm-controls-container {
@@ -194,8 +194,7 @@
   justify-content: center;
   background: var(--color-primary);
   color: white;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-xs);
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -227,9 +226,30 @@
   height: calc(var(--button-size) - 2px);
   background: var(--color-surface);
   border-radius: var(--border-radius-sm);
+  justify-content: center;
+  border: none;
+}
+
+.bgm-offset-display {
+  cursor: pointer;
   font-size: var(--font-size-xs);
   color: var(--color-text);
-  justify-content: center;
+  padding: 0;
+}
+
+.bgm-offset-input {
+  width: calc(var(--button-size) * 2);
+  height: var(--button-size);
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  /* 确保移动端可以选中文本 */
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .bgm-control-icon {
@@ -247,7 +267,6 @@
   font-size: var(--font-size-xs);
   color: var(--color-danger);
   width: 100%;
-  font-weight: 600;
 }
 
 /* 渲染器切换按钮 */

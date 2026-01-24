@@ -184,9 +184,6 @@ button {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--border-radius-sm);
   touch-action: manipulation;
-  min-height: 44px;
-  /* 触摸友好 */
-  min-width: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
