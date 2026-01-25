@@ -37,27 +37,27 @@
 ## 2. 测试任务
 
 ### 2.1 单元测试
-- [ ] 2.1.1 `patternBackup.test.ts`
-  - [ ] 测试 `exportPatternToZip()` 成功导出
-  - [ ] 测试导出包含 BGM 的节奏型
-  - [ ] 测试导出不含 BGM 的节奏型
-  - [ ] 测试 `importPatternFromZip()` 成功导入
-  - [ ] 测试导入带 BGM 的 ZIP
-  - [ ] 测试导入不带 BGM 的 ZIP
-  - [ ] 测试 `validateBackup()` 验证逻辑
-  - [ ] 测试无效 ZIP 文件的处理
-  - [ ] 测试损坏数据的处理
+- [x] 2.1.1 `patternBackup.test.ts`
+  - [x] 测试 `exportPatternToZip()` 成功导出
+  - [x] 测试导出包含 BGM 的节奏型
+  - [x] 测试导出不含 BGM 的节奏型
+  - [x] 测试 `importPatternFromZip()` 成功导入
+  - [x] 测试导入带 BGM 的 ZIP
+  - [x] 测试导入不带 BGM 的 ZIP
+  - [x] 测试 `validateBackup()` 验证逻辑
+  - [x] 测试无效 ZIP 文件的处理
+  - [x] 测试损坏数据的处理
 
 ### 2.2 集成测试
-- [ ] 2.2.1 PatternEditor 导出交互测试
-  - [ ] 测试长按保存按钮触发导出
-  - [ ] 测试导出文件名格式正确
-  - [ ] 测试错误处理
+- [x] 2.2.1 PatternEditor 导出交互测试
+  - [x] 测试长按保存按钮触发导出
+  - [x] 测试导出文件名格式正确
+  - [x] 测试错误处理
 
 ### 2.3 测试覆盖率
-- [ ] 2.3.1 确保测试覆盖率 >= 80%
-  - [ ] 运行 `bun run test:coverage`
-  - [ ] 补充遗漏的测试用例
+- [x] 2.3.1 确保测试覆盖率 >= 80%
+  - [x] 运行 `bun run test:coverage`
+  - [x] 补充遗漏的测试用例
 
 ## 3. 验证任务
 
@@ -65,6 +65,7 @@
   - [x] 修复 `useTheme.test.ts` 主题循环测试
   - [x] 修复 `MetronomeBar.test.tsx` BPM 变速测试
   - [x] 确认 337 个测试全部通过
+  - [x] 抑制 VexFlow 测试错误输出
 
 - [x] 3.2 通过类型检查
   - [x] 运行 `bun run typecheck`
@@ -72,32 +73,32 @@
 - [x] 3.3 通过构建测试
   - [x] 运行 `bun run build`
 
-- [ ] 3.4 新增测试通过
-  - [ ] 运行 `bun run test`
-  - [ ] 确保新增测试用例全部通过
+- [x] 3.4 新增测试通过
+  - [x] 运行 `bun run test`
+  - [x] 确保新增测试用例全部通过
 
-- [ ] 3.5 手动功能验证
-  - [ ] 测试导出功能（有 BGM）
-  - [ ] 测试导出功能（无 BGM）
-  - [ ] 测试导入功能（有 BGM）
-  - [ ] 测试导入功能（无 BGM）
-  - [ ] 测试文件名格式
+- [x] 3.5 手动功能验证
+  - [x] 测试导出功能（有 BGM）
+  - [x] 测试导出功能（无 BGM）
+  - [x] 测试导入功能（有 BGM）
+  - [x] 测试导入功能（无 BGM）
+  - [x] 测试文件名格式
 
-- [ ] 3.6 与规范对齐检查
-  - [ ] 更新 `specs/pattern-management/spec.md`
-  - [ ] 确保规范与实现一致
+- [x] 3.6 与规范对齐检查
+  - [x] 更新 `specs/pattern-management/spec.md`
+  - [x] 确保规范与实现一致
 
 ## 4. 文档任务
 
-- [ ] 4.1 更新功能规范
-  - [ ] 在 `specs/pattern-management/spec.md` 中添加导入导出行为说明
+- [x] 4.1 更新功能规范
+  - [x] 在 `specs/pattern-management/spec.md` 中添加导入导出行为说明
 
-- [ ] 4.2 更新 pre-commit hook
+- [x] 4.2 更新 pre-commit hook
   - [x] 添加测试检查到 `.husky/pre-commit`
   - [x] 确保测试失败时阻止 commit
 
 ## 5. 归档任务
 
-- [ ] 5.1 移动到 archive
-  - [ ] 所有任务完成后移动到 `archive/`
-  - [ ] 标记为已完成
+- [x] 5.1 移动到 archive
+  - [x] 所有任务完成后移动到 `archive/`
+  - [x] 标记为已完成
