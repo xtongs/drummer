@@ -97,13 +97,13 @@
 
 .save-button {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   box-shadow: none;
 }
 
 .save-current-button {
   background: var(--color-secondary);
-  color: white;
+  color: var(--color-text);
   border: 1px solid var(--color-secondary);
   box-shadow: none;
 }
@@ -121,7 +121,7 @@
 
 .delete-button {
   background-color: var(--color-danger);
-  color: white;
+  color: var(--color-text);
   border: none;
 }
 
@@ -208,7 +208,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   font-size: var(--font-size-xs);
   border: none;
   border-radius: var(--border-radius-sm);
@@ -226,7 +226,7 @@
   align-items: center;
   justify-content: center;
   background-color: var(--color-danger);
-  color: white;
+  color: var(--color-text);
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -308,7 +308,7 @@
 
 .renderer-toggle-button.active {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   border-color: var(--color-primary);
 }
 
@@ -326,13 +326,13 @@
 
 .practice-toggle-button.active {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   border-color: var(--color-primary);
 }
 
 .count-in-toggle-button.active {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   border-color: var(--color-primary);
 }
 

@@ -383,9 +383,10 @@ export function PatternEditor({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                {/* 节拍器图标 - 三角底座 + 摆锤 */}
-                <path d="M6 20 L12 4 L18 20 Z" />
-                <line x1="12" y1="16" x2="16" y2="6" />
+                {/* 码表图标 - 圆形外框 + 摆针 */}
+                <circle cx="12" cy="12" r="9" />
+                <line x1="12" y1="12" x2="16" y2="7" />
+                <circle cx="12" cy="12" r="1.5" />
               </svg>
             </button>
           )}

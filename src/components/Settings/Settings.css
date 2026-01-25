@@ -1,0 +1,86 @@
+.settings {
+  position: fixed;
+  padding-left: inherit;
+  padding-right: inherit;
+  bottom: calc(
+    var(--spacing-xs) + max(env(safe-area-inset-bottom), var(--spacing-xs))
+  );
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+  z-index: 99;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.updating {
+  opacity: 1;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.settings-theme-button {
+  left: var(--spacing-md);
+  cursor: pointer;
+  padding: var(--spacing-xs) 0;
+  border-radius: var(--border-radius-sm);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.settings-version-button {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.settings-config {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.settings-config-button {
+  right: var(--spacing-md);
+  cursor: pointer;
+  padding: var(--spacing-xs) 0;
+  border-radius: var(--border-radius-sm);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.settings-config-button:first-of-type {
+  right: calc(var(--spacing-md) + 50px);
+}
+
+.exporting {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

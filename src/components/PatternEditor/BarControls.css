@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   font-size: var(--font-size-xs);
   border-radius: var(--border-radius-sm);
   border: none;
@@ -43,6 +43,6 @@
 
 .bar-bpm-button.active {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-text);
   border-color: var(--color-primary);
 }

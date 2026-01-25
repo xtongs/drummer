@@ -4,7 +4,6 @@
   min-width: var(--grid-cell-size);
   min-height: var(--grid-cell-size);
   padding: var(--spacing-xs);
-  background-color: var(--color-bg);
   cursor: pointer;
   position: absolute;
   border-radius: 0 !important;
@@ -47,7 +46,8 @@
   border-right: none;
 }
 
-.grid-cell:hover {}
+.grid-cell:hover {
+}
 
 .grid-cell.active {
   box-shadow: none;
@@ -95,15 +95,19 @@
 
 /* 倚音样式 - 横向渐变：从左到右为鬼音绿色到正常绿色过渡 */
 .grid-cell.grace::before {
-  background: linear-gradient(to right,
-      rgba(80, 250, 123, 0.4) 0%,
-      rgba(80, 250, 123, 1) 100%);
+  background: linear-gradient(
+    to right,
+    rgba(80, 250, 123, 0.4) 0%,
+    rgba(80, 250, 123, 1) 100%
+  );
 }
 
 .grid-cell.grace.current-beat::before {
-  background: linear-gradient(to right,
-      rgba(80, 250, 123, 0.4) 0%,
-      rgba(80, 250, 123, 1) 100%);
+  background: linear-gradient(
+    to right,
+    rgba(80, 250, 123, 0.4) 0%,
+    rgba(80, 250, 123, 1) 100%
+  );
 }
 
 /* 32分显示辅助图形 */

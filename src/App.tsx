@@ -11,7 +11,7 @@ import { setMasterVolumeMultiplier } from "./utils/audioEngine";
 import { MetronomeBar } from "./components/MetronomeBar/MetronomeBar";
 import { PatternEditor } from "./components/PatternEditor/PatternEditor";
 import { BottomPlayButton } from "./components/BottomPlayButton/BottomPlayButton";
-import { VersionDisplay } from "./components/VersionDisplay/VersionDisplay";
+import { Settings } from "./components/Settings/Settings";
 import { useMultiPatternPlayer } from "./hooks/useMultiPatternPlayer";
 import { useFullPracticeMode } from "./hooks/useFullPracticeMode";
 import {
@@ -955,7 +955,7 @@ function App() {
           fullPracticeMode={isFullPracticeMode}
         />
       )}
-      <VersionDisplay />
+      <Settings />
     </div>
   );
 }

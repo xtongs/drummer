@@ -41,7 +41,7 @@
 .pattern-tab.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-text);
 }
 
 /* 草稿 Tab */
@@ -50,7 +50,7 @@
 }
 
 .pattern-tab.draft-tab.active {
-  color: white;
+  color: var(--color-text);
 }
 
 /* 导入输入框容器 */
@@ -90,7 +90,7 @@
 .action-button.confirm-button {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-text);
 }
 
 .action-button.confirm-button:hover {

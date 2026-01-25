@@ -1,7 +1,7 @@
 {
   "name": "drummer",
   "private": true,
-  "version": "1.9.5",
+  "version": "1.9.6",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -25,6 +25,7 @@
     "version:check": "node scripts/check-version-bump.mjs"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tone": "^15.1.22",
@@ -35,6 +36,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
+    "@types/jszip": "^3.4.1",
     "@types/node": "^25.0.9",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
