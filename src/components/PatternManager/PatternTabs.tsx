@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { Pattern } from "../../types";
 import { useSingleLongPress } from "../../hooks/useSingleLongPress";
-import {
-  readFromClipboard,
-  isClipboardReadSupported,
-} from "../../utils/clipboard";
+import { importPatternFromZip } from "../../utils/patternBackup";
 import "./PatternTabs.css";
 import "../PatternEditor/PatternEditor.css";
 
@@ -15,6 +12,10 @@ interface PatternTabsProps {
   onSelectDraft: () => void;
   onAddPattern: () => void;
   onImportPattern?: (jsonString: string) => void;
+  onImportPatternWithBgm?: (
+    patternJsonString: string,
+    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+  ) => void;
   isDraftMode: boolean;
 }
 
@@ -25,34 +26,59 @@ export function PatternTabs({
   onSelectDraft,
   onAddPattern,
   onImportPattern,
+  onImportPatternWithBgm,
   isDraftMode,
 }: PatternTabsProps) {
   const [isImportMode, setIsImportMode] = useState(false);
   const [importValue, setImportValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTabClick = (pattern: Pattern) => {
     onSelectPattern(pattern);
   };
 
-  // 长按处理：先尝试自动读取剪贴板，失败则进入手动输入模式
+  // 长按处理：打开文件选择器，导入 zip 文件
   const handleLongPressAdd = async () => {
-    // 如果支持剪贴板读取，先尝试自动读取
-    if (isClipboardReadSupported()) {
-      try {
-        const clipboardText = await readFromClipboard();
-        if (clipboardText && clipboardText.trim() && onImportPattern) {
-          onImportPattern(clipboardText.trim());
-          return;
-        }
-      } catch {
-        // 读取失败，继续进入手动输入模式
-      }
+    fileInputRef.current?.click();
+  };
+
+  // 处理文件选择
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".zip")) {
+      alert("Please select a valid pattern file (.zip format)");
+      return;
     }
 
-    // 不支持或读取失败，进入手动输入模式
-    setIsImportMode(true);
-    setImportValue("");
+    try {
+      const { pattern: importedPattern, bgmConfig } = await importPatternFromZip(file);
+
+      // 将导入的节奏型转换为 JSON 字符串
+      const jsonString = JSON.stringify(importedPattern);
+
+      // 优先使用新的 onImportPatternWithBgm 回调（包含 BGM 配置）
+      if (onImportPatternWithBgm) {
+        onImportPatternWithBgm(jsonString, bgmConfig);
+      } else if (onImportPattern) {
+        // 降级到旧的回调（不包含 BGM 配置）
+        onImportPattern(jsonString);
+      }
+
+      console.log("Pattern imported from zip file", { bgmConfig });
+    } catch (error) {
+      console.error("Failed to import pattern:", error);
+      alert(
+        "Failed to import pattern file. Please check the console for details.",
+      );
+    } finally {
+      // 清空input，允许重复选择同一个文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   // 确认导入
@@ -91,6 +117,15 @@ export function PatternTabs({
 
   return (
     <div className="pattern-tabs">
+      {/* 隐藏的文件输入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".zip"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
       {/* 草稿 Tab - 始终显示在最左边 */}
       <button
         className={`pattern-tab draft-tab ${isDraftMode ? "active" : ""}`}

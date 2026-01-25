@@ -33,7 +33,10 @@ function validateBackup(data: unknown): data is ConfigBackup {
   const backup = data as Partial<ConfigBackup>;
 
   // 验证基本字段
-  if (typeof backup.version !== "string" || typeof backup.exportedAt !== "number") {
+  if (
+    typeof backup.version !== "string" ||
+    typeof backup.exportedAt !== "number"
+  ) {
     return false;
   }
 
@@ -139,11 +142,14 @@ async function collectBgmFiles(): Promise<
       const uint8Array = new Uint8Array(arrayBuffer);
 
       // 将ArrayBuffer转换为Base64字符串
-      const binaryString = uint8Array.reduce((acc, byte) => acc + String.fromCharCode(byte), "");
+      const binaryString = uint8Array.reduce(
+        (acc, byte) => acc + String.fromCharCode(byte),
+        "",
+      );
       const base64Data = btoa(binaryString);
 
       console.log(
-        `[Config Backup] Exporting BGM: ${record.name}, Type: ${record.type}, Size: ${record.size}, ArrayBuffer byteLength: ${arrayBuffer.byteLength}`
+        `[Config Backup] Exporting BGM: ${record.name}, Type: ${record.type}, Size: ${record.size}, ArrayBuffer byteLength: ${arrayBuffer.byteLength}`,
       );
 
       return {
@@ -204,7 +210,7 @@ export async function exportConfig(): Promise<void> {
     const a = document.createElement("a");
     a.href = url;
 
-    // 生成文件名: drummer-config-YYYYMMDD-HHMMSS.zip
+    // 生成文件名
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
     const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
@@ -273,7 +279,7 @@ async function restoreBgmFiles(
     }
 
     console.log(
-      `[Config Backup] Restoring BGM: ${bgm.name}, Type: ${bgm.type}, Size: ${bgm.size}, Original byteLength: ${bgm.byteLength}, Decoded size: ${uint8Array.byteLength}`
+      `[Config Backup] Restoring BGM: ${bgm.name}, Type: ${bgm.type}, Size: ${bgm.size}, Original byteLength: ${bgm.byteLength}, Decoded size: ${uint8Array.byteLength}`,
     );
 
     // 确保MIME type有效，如果为空则尝试根据文件扩展名推断
@@ -285,7 +291,9 @@ async function restoreBgmFiles(
       else if (ext === "ogg") mimeType = "audio/ogg";
       else if (ext === "m4a" || ext === "mp4") mimeType = "audio/mp4";
       else mimeType = "audio/mpeg"; // 默认
-      console.log(`[Config Backup] No MIME type detected, inferred: ${mimeType}`);
+      console.log(
+        `[Config Backup] No MIME type detected, inferred: ${mimeType}`,
+      );
     }
 
     const blob = new Blob([uint8Array], { type: mimeType });

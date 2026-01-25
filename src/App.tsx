@@ -872,6 +872,61 @@ function App() {
     console.log("Pattern imported successfully");
   };
 
+  // 从 JSON 字符串导入 pattern 数据并创建新 tab（包含 BGM 配置）
+  const handleImportPatternWithBgm = (
+    jsonString: string,
+    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+  ) => {
+    const importedPattern = parsePatternFromJSON(jsonString);
+    if (!importedPattern) {
+      console.log("Invalid pattern data");
+      return;
+    }
+
+    const nextLetter = getNextPatternName(savedPatterns);
+    const now = Date.now();
+    const newPattern: Pattern = {
+      ...importedPattern,
+      id: generateId(),
+      name: nextLetter,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // 保存并切换到新 pattern
+    savePattern(newPattern);
+    setIsDraftMode(false);
+    loadPattern(newPattern);
+    setCurrentPatternId(newPattern.id);
+    setMetronomeBPM(newPattern.bpm);
+    saveMetronomeBPM(newPattern.bpm);
+    updateBPM(newPattern.bpm);
+    setSavedPatterns(loadPatterns());
+
+    // 如果有 BGM 配置，保存到新的 patternId
+    if (bgmConfig && bgmConfig.fileId) {
+      saveBgmConfig(newPattern.id, {
+        fileId: bgmConfig.fileId,
+        offsetMs: bgmConfig.offsetMs,
+        volumePct: bgmConfig.volumePct,
+        meta: bgmConfig.meta,
+      });
+      // 重新加载 BGM 配置
+      const newBgmConfig = getBgmConfig(newPattern.id);
+      setBgmConfig(newBgmConfig);
+    }
+
+    // 设置 range 为新节奏型的完整范围
+    setCrossPatternLoop({
+      startPatternName: newPattern.name,
+      startBar: 0,
+      endPatternName: newPattern.name,
+      endBar: newPattern.bars - 1,
+    });
+
+    console.log("Pattern imported successfully with BGM config");
+  };
+
   // 加载中显示加载界面
   if (isLoading) {
     const progressPercent = Math.round(
@@ -939,6 +994,7 @@ function App() {
           onSave={handleSave}
           onSaveCurrentPattern={handleSaveCurrentPattern}
           onImportPattern={handleImportPattern}
+          onImportPatternWithBgm={handleImportPatternWithBgm}
           onLoadFromSlot={handleLoadFromSlot}
           onDeletePattern={handleDeletePattern}
           onStopAllPlaying={handleStopAll}

@@ -12,7 +12,7 @@ vi.mock("../../hooks/useLongPress", () => ({
 }));
 
 describe("MetronomeBar - BPM 点击变速", () => {
-  it("左侧点击应该 next：rateIndex+1，BPM 按累积倍率变化", () => {
+  it("左侧点击应该 next：rateIndex+1", () => {
     const onBPMChange = vi.fn();
     const onRateIndexChange = vi.fn();
 
@@ -33,13 +33,10 @@ describe("MetronomeBar - BPM 点击变速", () => {
     fireEvent.click(screen.getByLabelText("BPM rate next"));
 
     expect(onRateIndexChange).toHaveBeenCalledWith(1);
-    expect(onBPMChange).toHaveBeenCalledTimes(1);
-    const [nextBpm, shouldSave] = onBPMChange.mock.calls[0];
-    expect(shouldSave).toBe(false);
-    expect(nextBpm).toBeCloseTo(90, 10);
+    expect(onBPMChange).not.toHaveBeenCalled();
   });
 
-  it("右侧点击应该 prev：从 0 wrap 到最后一个倍率，BPM 同步到 x0.5", () => {
+  it("右侧点击应该 prev：从 0 wrap 到最后一个倍率", () => {
     const onBPMChange = vi.fn();
     const onRateIndexChange = vi.fn();
 
@@ -61,13 +58,10 @@ describe("MetronomeBar - BPM 点击变速", () => {
 
     // rateIndex + (len - 1)
     expect(onRateIndexChange).toHaveBeenCalledWith(BPM_RATES.length - 1);
-    expect(onBPMChange).toHaveBeenCalledTimes(1);
-    const [prevBpm, shouldSave] = onBPMChange.mock.calls[0];
-    expect(shouldSave).toBe(false);
-    expect(prevBpm).toBeCloseTo(50, 10);
+    expect(onBPMChange).not.toHaveBeenCalled();
   });
 
-  it("右侧点击应该 prev：从 x0.9 回到原速（label 归零，但 rateIndex 可能为 6）", () => {
+  it("右侧点击应该 prev：从 x0.9 回到原速（rateIndex + len - 1）", () => {
     const onBPMChange = vi.fn();
     const onRateIndexChange = vi.fn();
 
@@ -88,9 +82,6 @@ describe("MetronomeBar - BPM 点击变速", () => {
     fireEvent.click(screen.getByLabelText("BPM rate prev"));
 
     expect(onRateIndexChange).toHaveBeenCalledWith(1 + BPM_RATES.length - 1);
-    expect(onBPMChange).toHaveBeenCalledTimes(1);
-    const [prevBpm, shouldSave] = onBPMChange.mock.calls[0];
-    expect(shouldSave).toBe(false);
-    expect(prevBpm).toBeCloseTo(100, 10);
+    expect(onBPMChange).not.toHaveBeenCalled();
   });
 });

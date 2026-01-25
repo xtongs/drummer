@@ -26,6 +26,7 @@ import {
   serializePatternToJSON,
   /* 临时注释: getNotationRenderer, setNotationRenderer, type NotationRenderer, */
 } from "../../utils/storage";
+import { exportPatternToZip } from "../../utils/patternBackup";
 import type { BgmConfig } from "../../utils/bgmStorage";
 import "./PatternEditor.css";
 
@@ -46,6 +47,10 @@ interface PatternEditorProps {
   onSave: () => void;
   onSaveCurrentPattern: () => void;
   onImportPattern?: (jsonString: string) => void;
+  onImportPatternWithBgm?: (
+    patternJsonString: string,
+    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+  ) => void;
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
   onStopAllPlaying?: () => void;
@@ -92,6 +97,7 @@ export function PatternEditor({
   onSave,
   onSaveCurrentPattern,
   onImportPattern,
+  onImportPatternWithBgm,
   onLoadFromSlot,
   onDeletePattern,
   onStopAllPlaying,
@@ -173,15 +179,17 @@ export function PatternEditor({
     exportValue,
     exportInputRef,
     cancelExport: handleCancelExport,
-    tryExportToClipboard,
   } = useExportMode(exportContent);
 
-  // 长按保存按钮处理：先尝试自动写入剪贴板，失败则进入手动复制模式
+  // 长按保存按钮处理：导出当前节奏型为 zip 文件（包括关联的 BGM）
   const handleLongPressSave = async () => {
     if (!currentPatternForExport) return;
-    const success = await tryExportToClipboard();
-    if (success) {
-      console.log("Pattern copied to clipboard");
+    try {
+      await exportPatternToZip(currentPatternForExport, bgmConfig);
+      console.log("Pattern exported to zip file");
+    } catch (error) {
+      console.error("Failed to export pattern:", error);
+      alert("Failed to export pattern. Please check the console for details.");
     }
   };
 
@@ -428,6 +436,7 @@ export function PatternEditor({
             onSelectDraft={onSelectDraft}
             onAddPattern={onSave}
             onImportPattern={onImportPattern}
+            onImportPatternWithBgm={onImportPatternWithBgm}
             isDraftMode={isDraftMode}
           />
         </div>

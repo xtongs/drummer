@@ -77,7 +77,39 @@ describe("useTheme", () => {
     act(() => {
       result.current.cycleTheme();
     });
-    expect(result.current.currentTheme.name).toBe("Monochrome");
+    expect(result.current.currentTheme.name).toBe("Monokai");
+
+    // Cycle to fifth theme
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Campbell");
+
+    // Continue cycling through remaining themes
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Solarized");
+
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Nord");
+
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Night");
+
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Rose");
+
+    act(() => {
+      result.current.cycleTheme();
+    });
+    expect(result.current.currentTheme.name).toBe("Yellow");
 
     // Cycle back to first theme
     act(() => {

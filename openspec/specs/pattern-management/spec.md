@@ -100,6 +100,72 @@ Pattern（节奏型）管理是 Drummer 的核心功能，负责节奏型的创�
 - **THEN** Pattern 的网格数据被复制到剪贴板
 - **AND** 可粘贴到其他应用或导入回本应用
 
+### Requirement: Pattern 导出为 ZIP
+
+系统 SHALL 允许用户将节奏型导出为 ZIP 文件，包含节奏型数据和关联的 BGM。
+
+#### Scenario: 导出包含 BGM 的节奏型
+
+- **GIVEN** 已加载一个 Pattern
+- **AND** 该 Pattern 已配置背景音乐（BGM）
+- **WHEN** 用户长按保存按钮（500ms）
+- **THEN** 系统创建 ZIP 文件并触发下载
+- **AND** ZIP 文件包含：
+  - `pattern.json` - 节奏型完整数据
+  - BGM 配置（fileId, offsetMs, volumePct, meta）
+  - BGM 音频文件（Base64 编码）
+- **AND** 文件名为 `{patternName}.zip`
+
+#### Scenario: 导出不含 BGM 的节奏型
+
+- **GIVEN** 已加载一个 Pattern
+- **AND** 该 Pattern 未配置背景音乐
+- **WHEN** 用户长按保存按钮（500ms）
+- **THEN** 系统创建 ZIP 文件并触发下载
+- **AND** ZIP 文件仅包含节奏型数据
+- **AND** 不包含 BGM 配置和音频文件
+
+### Requirement: Pattern 从 ZIP 导入
+
+系统 SHALL 允许用户从 ZIP 文件导入节奏型，自动恢复关联的 BGM。
+
+#### Scenario: 导入包含 BGM 的节奏型
+
+- **GIVEN** 用户选择一个有效的 ZIP 文件
+- **AND** ZIP 包含节奏型数据和 BGM
+- **WHEN** 用户长按添加按钮（500ms）并选择文件
+- **THEN** 系统解析 ZIP 文件
+- **AND** 验证数据结构完整性
+- **AND** 恢复 BGM 文件到 IndexedDB
+- **AND** 创建新的 Pattern（分配新的 ID 和名称）
+- **AND** 将 BGM 配置关联到新 Pattern
+- **AND** 自动切换到新导入的 Pattern
+
+#### Scenario: 导入不含 BGM 的节奏型
+
+- **GIVEN** 用户选择一个有效的 ZIP 文件
+- **AND** ZIP 仅包含节奏型数据
+- **WHEN** 用户长按添加按钮（500ms）并选择文件
+- **THEN** 系统解析 ZIP 文件
+- **AND** 创建新的 Pattern（分配新的 ID 和名称）
+- **AND** 自动切换到新导入的 Pattern
+- **AND** 不恢复任何 BGM 配置
+
+#### Scenario: 导入无效文件
+
+- **GIVEN** 用户选择文件
+- **WHEN** 文件不是有效的 ZIP 格式
+- **THEN** 显示错误提示："Please select a valid pattern file (.zip format)"
+- **AND** 不执行任何导入操作
+
+#### Scenario: 导入损坏数据
+
+- **GIVEN** 用户选择一个有效的 ZIP 文件
+- **WHEN** ZIP 内的数据结构无效或损坏
+- **THEN** 显示错误提示："Failed to import pattern file..."
+- **AND** 记录错误日志
+- **AND** 不修改现有数据
+
 ## 边界条件
 
 | 属性             | 最小值 | 最大值 | 默认值     |
