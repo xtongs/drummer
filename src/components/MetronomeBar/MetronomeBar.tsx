@@ -217,7 +217,7 @@ export function MetronomeBar({
                 onClick={handleBPMClickPrev}
                 aria-label="BPM rate prev"
               ></span>
-              {bpm % 1 === 0 ? Math.round(bpm) : bpm.toFixed(1)}
+              {Math.round(bpm * 10) / 10 === Math.round(bpm) ? Math.round(bpm) : (Math.round(bpm * 10) / 10).toFixed(1)}
             </span>
             {rateLabels[rateIndex % rateLabels.length] && (
               <span className="bpm-rate-label">

@@ -302,25 +302,30 @@ function App() {
   // 当游标移动且处于小节 BPM 模式或当前小节有覆盖时，更新显示的 BPM
   useEffect(() => {
     if (currentSubdivision === undefined) return;
-    
+
     const [beatsPerBar] = pattern.timeSignature;
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
     const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
     const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
-    
+
+    // 计算 rate 影响
+    const cumulativeRate = calculateCumulativeRate(rateIndex);
+
     // 如果处于小节 BPM 编辑模式或当前小节有覆盖，显示当前小节的 BPM
     if (isBarBpmMode || hasOverride) {
       const barBpm = pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
-      if (barBpm !== metronomeBPM) {
-        setMetronomeBPM(barBpm);
+      const adjustedBpm = barBpm * cumulativeRate;
+      if (adjustedBpm !== metronomeBPM) {
+        setMetronomeBPM(adjustedBpm);
       }
     } else {
-      // 否则显示全局 BPM
-      if (pattern.bpm !== metronomeBPM) {
-        setMetronomeBPM(pattern.bpm);
+      // 否则显示全局 BPM（应用 rate 后）
+      const adjustedBpm = pattern.bpm * cumulativeRate;
+      if (adjustedBpm !== metronomeBPM) {
+        setMetronomeBPM(adjustedBpm);
       }
     }
-  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, metronomeBPM]);
+  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, metronomeBPM, rateIndex]);
 
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
   useVisibilityHandler({
