@@ -166,7 +166,11 @@ function App() {
 
       // 如果处于小节 BPM 编辑模式，或者当前小节有 BPM 覆盖，更新该小节的 BPM
       if (isBarBpmMode || hasOverride) {
-        updateBarBpm(currentBarIndex, bpm);
+        // 只有在 shouldSave=true 时才更新 barBpmOverrides
+        // 切换 rate 时 (shouldSave=false) 不更新，保持原始 BPM
+        if (shouldSave) {
+          updateBarBpm(currentBarIndex, bpm);
+        }
         // 同时更新显示的 BPM
         setMetronomeBPM(bpm);
         return;
@@ -315,17 +319,13 @@ function App() {
     if (isBarBpmMode || hasOverride) {
       const barBpm = pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
       const adjustedBpm = barBpm * cumulativeRate;
-      if (adjustedBpm !== metronomeBPM) {
-        setMetronomeBPM(adjustedBpm);
-      }
+      setMetronomeBPM(adjustedBpm);
     } else {
       // 否则显示全局 BPM（应用 rate 后）
       const adjustedBpm = pattern.bpm * cumulativeRate;
-      if (adjustedBpm !== metronomeBPM) {
-        setMetronomeBPM(adjustedBpm);
-      }
+      setMetronomeBPM(adjustedBpm);
     }
-  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, metronomeBPM, rateIndex]);
+  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, rateIndex]);
 
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
   useVisibilityHandler({

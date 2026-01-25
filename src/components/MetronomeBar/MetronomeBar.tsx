@@ -5,7 +5,6 @@ import { BeatDots } from "./BeatDots";
 import { PlayButton } from "./PlayButton";
 import { useMetronome } from "../../hooks/useMetronome";
 import { useLongPress } from "../../hooks/useLongPress";
-import { calculateCumulativeRate } from "../../utils/constants";
 import "./MetronomeBar.css";
 
 interface MetronomeBarProps {
@@ -154,12 +153,8 @@ export function MetronomeBar({
 
   const applyRateIndex = (nextRateIndex: number) => {
     if (!rates.length) return;
-    const currentCumulativeRate = calculateCumulativeRate(rateIndex, rates);
-    const nextCumulativeRate = calculateCumulativeRate(nextRateIndex, rates);
-    const baseBPM = bpm / currentCumulativeRate;
-    const newBPM = baseBPM * nextCumulativeRate;
+    // 只更新 rateIndex，App 的 useEffect 会自动重新计算 BPM 显示
     onRateIndexChange(nextRateIndex);
-    onBPMChange(newBPM, false);
   };
 
   // 快速根据速率设置 BPM：左侧 next，右侧 prev

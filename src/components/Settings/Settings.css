@@ -12,7 +12,7 @@
   justify-content: space-between;
   font-size: 10px;
   color: var(--color-text-tertiary);
-  opacity: 0.6;
+  background-color: var(--bg-color);
   z-index: 99;
   user-select: none;
   -webkit-user-select: none;

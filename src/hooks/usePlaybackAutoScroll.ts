@@ -46,6 +46,7 @@ export function usePlaybackAutoScroll({
   const lastBarIndexRef = useRef<number | null>(null);
   // pattern 切换后，记录预期的起始位置，用于验证 currentBeat 是否已同步
   const expectedStartSubRef = useRef<number | null>(null);
+  const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4 / 2; // 右侧提前量
 
   // 执行滚动的函数
   const doScroll = useCallback((container: HTMLElement, targetLeft: number) => {
@@ -178,7 +179,6 @@ export function usePlaybackAutoScroll({
     const cursorPosition = currentBeat * cellSize;
     const scrollLeft = container.scrollLeft;
     const scrollRight = scrollLeft + container.clientWidth;
-    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4;
 
     const currentBarIndex = Math.floor(currentBeat / subdivisionsPerBar);
 
@@ -326,9 +326,6 @@ export function usePlaybackAutoScroll({
       // 已经对齐，不需要滚动
       return;
     }
-
-    // 计算右侧提前量（与自动滚动逻辑保持一致）
-    const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 2;
 
     // 检查游标是否已经接近右边界（考虑 rightLead）
     const cursorPosition = currentBeat * cellSize;
