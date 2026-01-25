@@ -45,7 +45,9 @@
   border-radius: 50%;
   cursor: grab;
   box-shadow: var(--shadow-md);
-  transition: left 0.1s ease, transform 0.1s ease;
+  transition:
+    left 0.1s ease,
+    transform 0.1s ease;
 }
 
 .bpm-slider-thumb:active {

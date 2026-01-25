@@ -94,7 +94,7 @@ export function BottomPlayButton({
       className={`bottom-play-button-container${variant === "inline" ? " inline" : ""}`}
     >
       <button
-        className={`bottom-play-button${variant === "inline" ? " inline" : isPlaying ? " playing" : " paused"}`}
+        className={`bottom-play-button${variant === "inline" ? " inline" : ""}${isPlaying ? " playing" : " paused"}`}
         onClick={handleClick}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -109,7 +109,7 @@ export function BottomPlayButton({
             <rect x="14" y="4" width="4" height="16" />
           </svg>
         ) : isPlaying && fullPracticeMode ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="6" width="12" height="12" />
           </svg>
         ) : (

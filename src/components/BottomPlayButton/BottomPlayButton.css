@@ -52,6 +52,11 @@
   box-shadow: none;
 }
 
+.bottom-play-button.inline svg {
+  width: 20px;
+  height: 20px;
+}
+
 .bottom-play-button:active {
   transform: scale(0.95);
 }
@@ -59,25 +64,4 @@
 /* 优化播放按钮三角形的位置，使其视觉上更居中（向右微调1px补偿视觉偏差） */
 .bottom-play-button.paused svg.play-icon {
   transform: translateX(1px);
-}
-
-@media (max-width: 768px) {
-  .bottom-play-button {
-    width: 56px;
-    height: 56px;
-    min-width: 56px;
-    min-height: 56px;
-  }
-
-  .bottom-play-button.inline {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  .bottom-play-button.inline svg {
-    width: 18px;
-    height: 18px;
-  }
 }

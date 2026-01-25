@@ -335,6 +335,3 @@
   color: var(--color-text);
   border-color: var(--color-primary);
 }
-
-@media (max-width: 768px) {
-}

@@ -134,9 +134,3 @@
   color: var(--color-text-secondary);
   letter-spacing: 0.1em;
 }
-
-@media (max-width: 768px) {
-  .metronome-row-top {
-    gap: var(--spacing-xs);
-  }
-}
