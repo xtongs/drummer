@@ -175,7 +175,7 @@ export function useBackgroundMusicPlayer({
       const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
       const effectiveBpm = barBpm * playbackRate;
       const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
-      const barDuration = beatDuration * SUBDIVISIONS_PER_BEAT * beatsPerBar;
+      const barDuration = beatDuration * beatsPerBar;
       totalSeconds += barDuration;
     }
 
