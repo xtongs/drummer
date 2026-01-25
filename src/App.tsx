@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { useBeforeUnloadWarning } from "./hooks/useBeforeUnloadWarning";
 import { useVisibilityHandler } from "./hooks/useVisibilityHandler";
@@ -443,6 +443,22 @@ function App() {
       setIsMetronomePlaying(false);
     }
   };
+  // 计算 BGM 的 rangeStartBar（用于正确计算时间偏移）
+  // 如果有跨 pattern 循环，使用起始 pattern 的 startBar；否则为 0
+  const rangeStartBar = useMemo(() => {
+    if (!crossPatternLoop) return 0;
+
+    const currentPatternName = isDraftMode ? "" : pattern.name;
+    // 如果当前 pattern 是起始 pattern，使用 crossPatternLoop.startBar
+    if (crossPatternLoop.startPatternName === currentPatternName) {
+      return crossPatternLoop.startBar;
+    }
+
+    // 如果当前 pattern 不是起始 pattern，说明 range 包含多个 patterns
+    // 对于这种情况，rangeStartBar 应该是 0（因为当前 pattern 从 bar 0 开始播放）
+    return 0;
+  }, [crossPatternLoop, isDraftMode, pattern.name]);
+
   const bgmPlayerState = useBackgroundMusicPlayer({
     isPlaying: isPatternPlaying,
     isFullPracticeMode,
@@ -451,6 +467,7 @@ function App() {
     currentSubdivision,
     pattern,
     patternStartToken,
+    rangeStartBar,
   });
 
   useEffect(() => {

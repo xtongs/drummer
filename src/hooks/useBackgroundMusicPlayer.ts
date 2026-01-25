@@ -14,6 +14,7 @@ interface UseBackgroundMusicPlayerOptions {
   currentSubdivision: number;
   pattern: Pattern;
   patternStartToken: number;
+  rangeStartBar: number; // 当前播放范围起始小节（从 bar 0 开始）
 }
 
 interface BackgroundMusicState {
@@ -30,6 +31,7 @@ export function useBackgroundMusicPlayer({
   currentSubdivision,
   pattern,
   patternStartToken,
+  rangeStartBar,
 }: UseBackgroundMusicPlayerOptions): BackgroundMusicState {
   const playerRef = useRef<Tone.GrainPlayer | null>(null);
   const fileIdRef = useRef<string | undefined>(undefined);
@@ -57,9 +59,45 @@ export function useBackgroundMusicPlayer({
     // Pattern 当前播放时间（实际时间）
     const patternTime = positionSecondsRef.current;
 
-    // offset 直接应用在实际时间上
-    // 例如：offset = 10s，表示 BGM 提前 10 秒播放
-    const adjustedPatternTime = patternTime - offsetSeconds;
+    // ⚠️ 关键逻辑：BGM offset 是相对于"原始节奏"的，不受 playbackRate 影响！
+    //
+    // 为什么必须使用原始节奏时间（不考虑 playbackRate）？
+    //
+    // 场景：用户在 rate=1.0 时设置了 offset = -0.87秒（BGM 比节奏提前 0.87秒）
+    //
+    // 错误做法（使用考虑 rate 的时间）：
+    //   - rate=1.0: t0=3.33, bgmPos=4.20, diff=0.87 ✓
+    //   - rate=0.9: t0=3.70, bgmPos=5.08, diff=1.75 ✗ (BGM 偏离！)
+    //
+    // 正确做法（使用原始节奏时间）：
+    //   - rate=1.0: t0=3.33, bgmPos=4.20, diff=0.87 ✓
+    //   - rate=0.9: t0=3.33, bgmPos=4.67, diff=1.34 → 但 player.playbackRate=0.9，
+    //              所以实际听感是 4.67 * 0.9 = 4.20，与节奏同步！✓
+    //
+    // 关键点：
+    // 1. offset 是用户设置的，相对于原始节奏的固定偏移
+    // 2. 计算 BGM 位置时，必须使用原始节奏时间（不考虑 playbackRate）
+    // 3. BGM player 的 playbackRate 会自动处理播放速度的变化
+    // 4. 这样无论 rate 如何变化，BGM 都能保持与节奏的正确同步
+
+    // 计算 range start 的原始节奏时间（从 bar 0 到 rangeStartBar）
+    // ⚠️ 必须使用原始 BPM，不乘以 playbackRate
+    const [beatsPerBar] = pattern.timeSignature;
+    let timeAtRangeStartOriginal = 0;
+    for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
+      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
+      const originalBeatDuration = (60 / barBpm) * (4 / pattern.timeSignature[1]);
+      const originalBarDuration = originalBeatDuration * beatsPerBar;
+      timeAtRangeStartOriginal += originalBarDuration;
+    }
+
+    // 将 patternTime（已考虑 playbackRate）转换回原始节奏时间
+    // patternTime / playbackRate = 原始节奏时间
+    const patternTimeOriginal = patternTime / playbackRateRef.current;
+
+    // 使用原始节奏时间计算 BGM 位置
+    const absolutePatternTime = patternTimeOriginal + timeAtRangeStartOriginal;
+    const adjustedPatternTime = absolutePatternTime - offsetSeconds;
 
     // 转换为 BGM 原始速率下的位置
     // 因为 Tone.js 的 startOffset 是相对于音频文件的，不受 playbackRate 影响
@@ -187,13 +225,24 @@ export function useBackgroundMusicPlayer({
     const subdivisionsInCurrentBar = currentSubdivision % subdivisionsPerBar;
     totalSeconds += subdivisionsInCurrentBar * subdivisionDuration;
 
-    positionSecondsRef.current = totalSeconds;
+    // 减去从 bar 0 到 rangeStartBar 的时间（range start 之前的时间不应计入）
+    let rangeStartOffset = 0;
+    for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
+      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
+      const effectiveBpm = barBpm * playbackRate;
+      const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
+      const barDuration = beatDuration * beatsPerBar;
+      rangeStartOffset += barDuration;
+    }
+
+    positionSecondsRef.current = totalSeconds - rangeStartOffset;
   }, [
     currentSubdivision,
     pattern.bpm,
     pattern.barBpmOverrides,
     pattern.timeSignature,
     playbackRate,
+    rangeStartBar,
   ]);
 
   useEffect(() => {

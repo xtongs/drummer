@@ -54,7 +54,7 @@ export const draculaTheme: Theme = {
     bgSecondary: "#21222c",
     text: "#f8f8f2",
     textSecondary: "#acb8dd",
-    textDim: "#9cacde",
+    textDim: "#596483",
     textTertiary: "#434b62",
     border: "#434b62",
     primary: "#bd93f9",
