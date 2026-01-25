@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import type { Pattern } from "../../types";
-import { useSingleLongPress } from "../../hooks/useSingleLongPress";
 import { importPatternFromZip } from "../../utils/patternBackup";
 import "./PatternTabs.css";
 import "../PatternEditor/PatternEditor.css";
@@ -14,7 +13,12 @@ interface PatternTabsProps {
   onImportPattern?: (jsonString: string) => void;
   onImportPatternWithBgm?: (
     patternJsonString: string,
-    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+    bgmConfig?: {
+      fileId?: string;
+      offsetMs: number;
+      volumePct: number;
+      meta?: { name: string; size: number; type: string };
+    },
   ) => void;
   isDraftMode: boolean;
 }
@@ -44,7 +48,9 @@ export function PatternTabs({
   };
 
   // 处理文件选择
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -54,7 +60,8 @@ export function PatternTabs({
     }
 
     try {
-      const { pattern: importedPattern, bgmConfig } = await importPatternFromZip(file);
+      const { pattern: importedPattern, bgmConfig } =
+        await importPatternFromZip(file);
 
       // 将导入的节奏型转换为 JSON 字符串
       const jsonString = JSON.stringify(importedPattern);
@@ -102,13 +109,6 @@ export function PatternTabs({
       inputRef.current.focus();
     }
   }, [isImportMode]);
-
-  // + 按钮的长按事件处理
-  const addButtonLongPressProps = useSingleLongPress({
-    delay: 500,
-    onLongPress: handleLongPressAdd,
-    onClick: onAddPattern,
-  });
 
   // 按名称排序（字母顺序）
   const sortedPatterns = [...patterns].sort((a, b) => {
@@ -208,25 +208,47 @@ export function PatternTabs({
           </button>
         </div>
       ) : (
-        <button
-          className="action-button save-button"
-          {...addButtonLongPressProps}
-          aria-label="Create New Pattern"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <>
+          <button
+            className="action-button save-button"
+            onClick={onAddPattern}
+            aria-label="Create New Pattern"
           >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+          <button
+            className="action-button load-button"
+            onClick={handleLongPressAdd}
+            aria-label="Load New Pattern"
+          >
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </button>
+        </>
       )}
     </div>
   );

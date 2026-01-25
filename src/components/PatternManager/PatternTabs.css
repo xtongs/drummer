@@ -103,7 +103,8 @@
   opacity: 0.8;
 }
 
-.action-button.save-button.active {
+.action-button.save-button.active,
+.action-button.load-button.active {
   transform: scale(0.95);
   opacity: 0.8;
 }

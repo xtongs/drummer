@@ -49,7 +49,12 @@ interface PatternEditorProps {
   onImportPattern?: (jsonString: string) => void;
   onImportPatternWithBgm?: (
     patternJsonString: string,
-    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+    bgmConfig?: {
+      fileId?: string;
+      offsetMs: number;
+      volumePct: number;
+      meta?: { name: string; size: number; type: string };
+    },
   ) => void;
   onLoadFromSlot: (pattern: Pattern) => void;
   onDeletePattern: (patternId: string) => void;
