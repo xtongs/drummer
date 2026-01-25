@@ -16,6 +16,7 @@ export function Settings() {
   const [isVisible, setIsVisible] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [isExporting, setIsExporting] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentTheme, cycleTheme } = useTheme();
 
@@ -33,13 +34,20 @@ export function Settings() {
 
   const handleRefresh = async () => {
     console.log("[Refresh] === handleRefresh started ===");
-    console.log("[Refresh] Current version:", VERSION, "Build time:", BUILD_TIME);
+    console.log(
+      "[Refresh] Current version:",
+      VERSION,
+      "Build time:",
+      BUILD_TIME,
+    );
     console.log("[Refresh] Set status: checking");
     setUpdateStatus("checking");
 
     try {
       if (!("serviceWorker" in navigator)) {
-        console.log("[Refresh] ❌ Browser doesn't support ServiceWorker, reloading page directly");
+        console.log(
+          "[Refresh] ❌ Browser doesn't support ServiceWorker, reloading page directly",
+        );
         window.location.reload();
         return;
       }
@@ -49,7 +57,9 @@ export function Settings() {
       const registration = await navigator.serviceWorker.getRegistration();
 
       if (!registration) {
-        console.log("[Refresh] ❌ No registration found, reloading page directly");
+        console.log(
+          "[Refresh] ❌ No registration found, reloading page directly",
+        );
         window.location.reload();
         return;
       }
@@ -62,7 +72,9 @@ export function Settings() {
 
       // 监听控制器变更 - 这是SW真正接管页面的信号
       const reloadOnControllerChange = () => {
-        console.log("[Refresh] 🔄 controllerchange event triggered! Reloading page...");
+        console.log(
+          "[Refresh] 🔄 controllerchange event triggered! Reloading page...",
+        );
         window.location.reload();
       };
       navigator.serviceWorker.addEventListener(
@@ -89,7 +101,9 @@ export function Settings() {
       // 设置超时，避免iOS上无限等待
       console.log("[Refresh] Set 10 second timeout");
       const timeoutId = setTimeout(() => {
-        console.log("[Refresh] ⏰ 10s timeout! Removing listener and reloading page");
+        console.log(
+          "[Refresh] ⏰ 10s timeout! Removing listener and reloading page",
+        );
         navigator.serviceWorker.removeEventListener(
           "controllerchange",
           reloadOnControllerChange,
@@ -99,11 +113,15 @@ export function Settings() {
 
       // 监听updatefound事件来检测新的SW开始安装
       const handleUpdateFound = () => {
-        console.log("[Refresh] 🎉 updatefound event triggered! New SW started installing");
+        console.log(
+          "[Refresh] 🎉 updatefound event triggered! New SW started installing",
+        );
         setUpdateStatus("downloading");
         const newWorker = registration.installing;
         if (!newWorker) {
-          console.log("[Refresh] ❌ updatefound triggered but installing is null");
+          console.log(
+            "[Refresh] ❌ updatefound triggered but installing is null",
+          );
           return;
         }
         console.log("[Refresh] New worker initial state:", newWorker.state);
@@ -116,7 +134,9 @@ export function Settings() {
           }
           // 当新SW安装完成（进入waiting状态），通知它跳过等待
           if (newWorker.state === "installed") {
-            console.log("[Refresh] New worker installation complete, set status: activating");
+            console.log(
+              "[Refresh] New worker installation complete, set status: activating",
+            );
             setUpdateStatus("activating");
             clearTimeout(timeoutId);
             console.log("[Refresh] Cleared timeout timer");
@@ -133,7 +153,9 @@ export function Settings() {
       console.log("[Refresh] ✓ Added updatefound listener");
 
       // 触发更新检查
-      console.log("[Refresh] Calling registration.update() to check for updates...");
+      console.log(
+        "[Refresh] Calling registration.update() to check for updates...",
+      );
       try {
         await registration.update();
         console.log("[Refresh] ✓ registration.update() completed");
@@ -149,7 +171,9 @@ export function Settings() {
         waitingAfterUpdate?.state || "null",
       );
       if (waitingAfterUpdate) {
-        console.log("[Refresh] ⚡ Found waiting worker after update(), activating directly");
+        console.log(
+          "[Refresh] ⚡ Found waiting worker after update(), activating directly",
+        );
         setUpdateStatus("activating");
         clearTimeout(timeoutId);
         console.log("[Refresh] Sending SKIP_WAITING message");
@@ -172,7 +196,9 @@ export function Settings() {
         );
         // 如果5秒内没有触发updatefound，说明可能没有新版本
         if (!registration.installing && !registration.waiting) {
-          console.log("[Refresh] 📌 Confirmed no update, set status: no-update");
+          console.log(
+            "[Refresh] 📌 Confirmed no update, set status: no-update",
+          );
           setUpdateStatus("no-update");
           clearTimeout(timeoutId);
           navigator.serviceWorker.removeEventListener(
@@ -186,7 +212,9 @@ export function Settings() {
             window.location.reload();
           }, 1000);
         } else {
-          console.log("[Refresh] Found installing or waiting, continuing to wait");
+          console.log(
+            "[Refresh] Found installing or waiting, continuing to wait",
+          );
         }
       }, 5000);
 
@@ -194,12 +222,16 @@ export function Settings() {
       registration.addEventListener(
         "updatefound",
         () => {
-          console.log("[Refresh] updatefound triggered, clearing no-update detection timer");
+          console.log(
+            "[Refresh] updatefound triggered, clearing no-update detection timer",
+          );
           clearTimeout(checkNoUpdate);
         },
         { once: true },
       );
-      console.log("[Refresh] === handleRefresh initialization complete, waiting for events ===");
+      console.log(
+        "[Refresh] === handleRefresh initialization complete, waiting for events ===",
+      );
     } catch (error) {
       console.error("[Refresh] ❌ Exception:", error);
       console.log("[Refresh] Reloading page due to exception");
@@ -232,7 +264,9 @@ export function Settings() {
       await exportConfig();
     } catch (error) {
       console.error("[Settings] Export failed:", error);
-      alert("Failed to export configuration. Please check the console for details.");
+      alert(
+        "Failed to export configuration. Please check the console for details.",
+      );
     } finally {
       setIsExporting(false);
     }
@@ -257,7 +291,9 @@ export function Settings() {
       await importConfig(file);
     } catch (error) {
       console.error("[Settings] Import failed:", error);
-      alert("Failed to import configuration. Please check the console for details.");
+      alert(
+        "Failed to import configuration. Please check the console for details.",
+      );
     } finally {
       // 清空input，允许重复选择同一个文件
       if (fileInputRef.current) {
@@ -273,43 +309,173 @@ export function Settings() {
   const isUpdating = updateStatus !== "idle";
 
   return (
-    <div className={`settings`}>
-      <div
-        className="settings-theme-button"
-        onClick={cycleTheme}
-        title="Click to cycle theme"
-      >
-        Theme: {currentTheme.name}
-      </div>
-      <div
-        className={`settings-version-button ${isUpdating ? "updating" : ""}`}
-        onClick={handleRefresh}
-      >
-        {getStatusText()}
-      </div>
-      <div className="settings-config">
-        <div
-          className="settings-config-button"
-          onClick={handleImportClick}
-          title="Load settings from a zip file"
-        >
-          Restore
+    <>
+      <div className={`settings`}>
+        <div className="settings-theme" onClick={cycleTheme}>
+          <button
+            type="button"
+            className="settings-theme-button"
+            title={`Current theme: ${currentTheme.name}. Click to cycle theme.`}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="13.5" cy="6.5" r=".5" />
+              <circle cx="17.5" cy="10.5" r=".5" />
+              <circle cx="8.5" cy="7.5" r=".5" />
+              <circle cx="6.5" cy="12.5" r=".5" />
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+            </svg>
+          </button>
+          {currentTheme.name}
         </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".zip"
-          style={{ display: "none" }}
-          onChange={handleImportFileChange}
-        />
-        <div
-          className={`settings-config-button ${isExporting ? "exporting" : ""}`}
-          onClick={handleExport}
-          title="Export all settings to a zip file"
-        >
-          Backup
+        <div className="settings-config">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".zip"
+            style={{ display: "none" }}
+            onChange={handleImportFileChange}
+          />
+          <button
+            type="button"
+            className="settings-config-button"
+            onClick={handleImportClick}
+            title="Load settings from a zip file"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={`settings-config-button ${isExporting ? "exporting" : ""}`}
+            onClick={handleExport}
+            title="Export all settings to a zip file"
+            disabled={isExporting}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="settings-config-button"
+            onClick={() => setIsAboutModalOpen(true)}
+            title="About"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
         </div>
       </div>
-    </div>
+
+      {isAboutModalOpen && (
+        <div
+          className="settings-modal-mask"
+          onClick={() => setIsAboutModalOpen(false)}
+        >
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-header">
+              <h2>Drummer - Beat Maker</h2>
+              <button
+                type="button"
+                className="settings-modal-close"
+                onClick={() => setIsAboutModalOpen(false)}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="settings-modal-content">
+              <p className="settings-modal-description">
+                A powerful beat maker and drum practice tool with pattern
+                editing, background music support, and customizable themes.
+              </p>
+              <div className="settings-modal-section">
+                <h3>Features</h3>
+                <ul>
+                  <li>Create and edit custom drum patterns</li>
+                  <li>Practice mode with adjustable tempo</li>
+                  <li>Background music integration</li>
+                  <li>Multiple instrument sounds</li>
+                  <li>Configurable time signatures</li>
+                  <li>Theme customization</li>
+                  <li>Export/Import settings</li>
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>How to Use</h3>
+                <ul>
+                  <li>Click cells to toggle beats on/off</li>
+                  <li>Use Play button to start/stop playback</li>
+                  <li>Adjust BPM with + / - buttons</li>
+                  <li>Click stopwatch icon for bar-specific tempo</li>
+                  <li>Switch between Edit and Practice modes</li>
+                  <li>Add background music from your library</li>
+                </ul>
+              </div>
+            </div>
+            <div
+              className={`settings-modal-version ${isUpdating ? "updating" : ""}`}
+              onClick={handleRefresh}
+            >
+              {getStatusText()}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
