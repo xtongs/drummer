@@ -155,19 +155,23 @@ function App() {
   // 当 BPM 改变时，同时更新节拍器和节奏型的 BPM
   // 如果 shouldSave=false（如切换 rate 时），只更新显示用的 metronomeBPM，不更新 pattern.bpm
   // 这样 pattern.bpm 保持原始值，playbackRate 会在 useMultiPatternPlayer 中应用
-  // 如果处于小节 BPM 模式，只更新当前小节的 BPM 覆盖
+  // 如果处于小节 BPM 模式，或者当前小节有 BPM 覆盖，只更新当前小节的 BPM 覆盖
   const handleBPMChange = (bpm: number, shouldSave = true) => {
-    if (isBarBpmMode && currentSubdivision !== undefined) {
-      // 小节 BPM 模式：更新当前小节的 BPM 覆盖
+    if (currentSubdivision !== undefined) {
       const [beatsPerBar] = pattern.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
       const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
-      updateBarBpm(currentBarIndex, bpm);
-      // 同时更新显示的 BPM
-      setMetronomeBPM(bpm);
-      return;
+      const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+
+      // 如果处于小节 BPM 编辑模式，或者当前小节有 BPM 覆盖，更新该小节的 BPM
+      if (isBarBpmMode || hasOverride) {
+        updateBarBpm(currentBarIndex, bpm);
+        // 同时更新显示的 BPM
+        setMetronomeBPM(bpm);
+        return;
+      }
     }
-    
+
     setMetronomeBPM(bpm);
     if (shouldSave) {
       saveMetronomeBPM(bpm);

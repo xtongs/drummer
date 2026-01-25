@@ -154,6 +154,8 @@
 
 .bgm-controls-container {
   margin-top: var(--spacing-sm);
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .bgm-controls {
@@ -170,6 +172,11 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+.bgm-controls-left {
+  flex: 1;
+  min-width: 0;
 }
 
 .bgm-file-input {

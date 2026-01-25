@@ -3,6 +3,22 @@
   align-items: center;
   gap: var(--spacing-xs);
   flex-shrink: 0;
+  width: 100%;
+}
+
+.pattern-tabs-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  overflow-x: auto;
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+  /* Hide scrollbar for IE, Edge */
+  -ms-overflow-style: none;
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.pattern-tabs-content::-webkit-scrollbar {
+  display: none;
 }
 
 .pattern-tab {

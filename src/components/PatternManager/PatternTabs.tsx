@@ -110,20 +110,22 @@ export function PatternTabs({
       </button>
 
       {/* 已保存的 Pattern Tabs */}
-      {sortedPatterns.map((pattern) => {
-        const active = !isDraftMode && pattern.id === currentPatternId;
+      <div className="pattern-tabs-content">
+        {sortedPatterns.map((pattern) => {
+          const active = !isDraftMode && pattern.id === currentPatternId;
 
-        return (
-          <button
-            key={pattern.id}
-            className={`pattern-tab ${active ? "active" : ""}`}
-            onClick={() => handleTabClick(pattern)}
-            aria-label={`Pattern ${pattern.name}`}
-          >
-            {pattern.name}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={pattern.id}
+              className={`pattern-tab ${active ? "active" : ""}`}
+              onClick={() => handleTabClick(pattern)}
+              aria-label={`Pattern ${pattern.name}`}
+            >
+              {pattern.name}
+            </button>
+          );
+        })}
+      </div>
 
       {/* 添加按钮 / 导入输入框 */}
       {isImportMode ? (
