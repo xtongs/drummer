@@ -234,8 +234,8 @@ export function PatternTabs({
             aria-label="Load New Pattern"
           >
             <svg
-              width="11"
-              height="11"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -243,9 +243,9 @@ export function PatternTabs({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
+              <path d="M12 3v12" />
+              <polyline points="8 7 12 3 16 7" />
+              <path d="M4 21h16v0" />
             </svg>
           </button>
         </>
