@@ -161,15 +161,37 @@ export function useBackgroundMusicPlayer({
   }, [bgmConfig.fileId]);
 
   useEffect(() => {
-    // 计算实际播放时间（考虑 playbackRate）
-    const effectiveBpm = pattern.bpm * playbackRate;
+    // 计算实际播放时间（考虑 playbackRate 和每小节 BPM 覆盖）
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+
+    // 累计计算从 bar 0 到 currentSubdivision 的总时间
+    // 每个小节使用自己的 BPM（基础 BPM 或特殊 BPM）
+    const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
+    let totalSeconds = 0;
+
+    for (let barIndex = 0; barIndex < currentBarIndex; barIndex++) {
+      // 获取该小节的 BPM
+      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
+      const effectiveBpm = barBpm * playbackRate;
+      const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
+      const barDuration = beatDuration * SUBDIVISIONS_PER_BEAT * beatsPerBar;
+      totalSeconds += barDuration;
+    }
+
+    // 加上当前小节内的时间
+    const currentBarBpm = pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
+    const effectiveBpm = currentBarBpm * playbackRate;
     const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
     const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
-    positionSecondsRef.current =
-      currentSubdivision * subdivisionDuration;
+    const subdivisionsInCurrentBar = currentSubdivision % subdivisionsPerBar;
+    totalSeconds += subdivisionsInCurrentBar * subdivisionDuration;
+
+    positionSecondsRef.current = totalSeconds;
   }, [
     currentSubdivision,
     pattern.bpm,
+    pattern.barBpmOverrides,
     pattern.timeSignature,
     playbackRate,
   ]);
