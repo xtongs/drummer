@@ -382,6 +382,31 @@ export function usePattern(initialPattern: Pattern) {
     });
   }, []);
 
+  // 清除指定小节
+  const clearBar = useCallback((cursorPosition: number) => {
+    setPattern((prev) => {
+      const [beatsPerBar] = prev.timeSignature;
+      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+      const barIndex = Math.floor(cursorPosition / subdivisionsPerBar);
+      const barStartIndex = barIndex * subdivisionsPerBar;
+      const barEndIndex = barStartIndex + subdivisionsPerBar;
+
+      const newGrid = prev.grid.map((row) => {
+        const newRow = [...row];
+        for (let i = barStartIndex; i < barEndIndex; i++) {
+          newRow[i] = CELL_OFF;
+        }
+        return newRow;
+      });
+
+      return {
+        ...prev,
+        grid: newGrid,
+        updatedAt: Date.now(),
+      };
+    });
+  }, []);
+
   const insertPatternGrid = useCallback(
     (barIndex: number, copy: PatternGridCopy) => {
       setPattern((prev) => {
@@ -482,6 +507,7 @@ export function usePattern(initialPattern: Pattern) {
     addBar,
     removeBar,
     clearGrid,
+    clearBar,
     insertPatternGrid,
     loadPattern,
     resetPattern,

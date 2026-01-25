@@ -117,6 +117,7 @@ function App() {
     addBar,
     removeBar,
     clearGrid,
+    clearBar,
     insertPatternGrid,
     loadPattern,
     resetPattern,
@@ -910,6 +911,7 @@ function App() {
           onAddBar={addBar}
           onRemoveBar={removeBar}
           onClearGrid={clearGrid}
+          onClearBar={clearBar}
           crossPatternLoop={crossPatternLoop}
           onCrossPatternLoopChange={setCrossPatternLoop}
           onSave={handleSave}

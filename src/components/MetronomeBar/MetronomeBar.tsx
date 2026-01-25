@@ -123,21 +123,33 @@ export function MetronomeBar({
   const max = 200;
 
   const handleDecrease = () => {
-    const newBPM = Math.round(Math.max(min, bpm - 1));
+    const newBPM = Math.round((Math.max(min, bpm - 1)) * 10) / 10;
     onBPMChange(newBPM);
   };
 
   const handleIncrease = () => {
-    const newBPM = Math.round(Math.min(max, bpm + 1));
+    const newBPM = Math.round((Math.min(max, bpm + 1)) * 10) / 10;
+    onBPMChange(newBPM);
+  };
+
+  const handleClickDecrease = () => {
+    const newBPM = Math.round((Math.max(min, bpm - 0.5)) * 10) / 10;
+    onBPMChange(newBPM);
+  };
+
+  const handleClickIncrease = () => {
+    const newBPM = Math.round((Math.min(max, bpm + 0.5)) * 10) / 10;
     onBPMChange(newBPM);
   };
 
   const decreasePressHandlers = useLongPress(handleDecrease, {
     shouldStop: () => bpm <= min,
+    clickCallback: handleClickDecrease,
   });
 
   const increasePressHandlers = useLongPress(handleIncrease, {
     shouldStop: () => bpm >= max,
+    clickCallback: handleClickIncrease,
   });
 
   const applyRateIndex = (nextRateIndex: number) => {
@@ -205,7 +217,7 @@ export function MetronomeBar({
                 onClick={handleBPMClickPrev}
                 aria-label="BPM rate prev"
               ></span>
-              {Math.round(bpm)}
+              {bpm % 1 === 0 ? Math.round(bpm) : bpm.toFixed(1)}
             </span>
             {rateLabels[rateIndex % rateLabels.length] && (
               <span className="bpm-rate-label">

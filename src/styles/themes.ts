@@ -130,8 +130,8 @@ export const gruvboxDarkTheme: Theme = {
     textDim: "#7c6f64",
     textTertiary: "#5a5047",
     border: "rgba(235, 219, 178, 0.2)",
-    primary: "#fe8019d9",
-    primaryHover: "#d65e0ebd",
+    primary: "#fe8019",
+    primaryHover: "#d65e0e",
     secondary: "#b8bb26",
     active: "#b8bb26",
     activeBg: "rgba(184, 187, 38, 0.2)",
@@ -196,7 +196,7 @@ export const monokaiTheme: Theme = {
 export const campbellTheme: Theme = {
   name: "Campbell",
   colors: {
-    bgColor: "#0c0c0c",
+    bgColor: "#000",
     cardBg: "#1f1f1f",
     bgSecondary: "#080808",
     text: "#cccccc",

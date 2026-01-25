@@ -193,6 +193,9 @@ export function saveMetronomeBPM(bpm: number): void {
  */
 export function loadMetronomeBPM(): number | null {
   try {
+    // 清理旧数据（如果存在）
+    localStorage.removeItem("metronome_bpm");
+
     const bpm = localStorage.getItem(METRONOME_BPM_KEY);
     if (bpm) {
       const parsed = parseInt(bpm, 10);

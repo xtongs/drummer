@@ -29,6 +29,9 @@ import {
 import type { BgmConfig } from "../../utils/bgmStorage";
 import "./PatternEditor.css";
 
+// 清除按钮长按延迟时间（毫秒）
+const CLEAR_BUTTON_LONG_PRESS_DELAY = 500;
+
 interface PatternEditorProps {
   pattern: Pattern;
   onCellClick: (drumIndex: number, beatIndex: number) => void;
@@ -37,6 +40,7 @@ interface PatternEditorProps {
   onAddBar: (cursorPosition?: number) => void;
   onRemoveBar: (cursorPosition?: number) => void;
   onClearGrid: () => void;
+  onClearBar: (cursorPosition: number) => void;
   crossPatternLoop: CrossPatternLoop | undefined;
   onCrossPatternLoopChange: (loop: CrossPatternLoop | undefined) => void;
   onSave: () => void;
@@ -82,6 +86,7 @@ export function PatternEditor({
   onAddBar,
   onRemoveBar,
   onClearGrid,
+  onClearBar,
   crossPatternLoop,
   onCrossPatternLoopChange,
   onSave,
@@ -196,6 +201,17 @@ export function PatternEditor({
     delay: 500,
     onLongPress: handleLongPressSave,
     onClick: onSaveCurrentPattern,
+  });
+
+  // 清除按钮的长按事件处理：单击清除单个小节，长按清除所有小节
+  const clearButtonLongPressProps = useSingleLongPress({
+    delay: CLEAR_BUTTON_LONG_PRESS_DELAY,
+    onLongPress: onClearGrid,
+    onClick: () => {
+      if (currentBeat !== undefined) {
+        onClearBar(currentBeat);
+      }
+    },
   });
 
   // 当用户点击+按钮增加小节数量时，如果满足条件，自动滚动到最新添加的小节位置
@@ -371,11 +387,15 @@ export function PatternEditor({
               onClick={onBarBpmModeToggle}
               aria-label="Toggle bar BPM mode"
               aria-pressed={currentBarHasOverride}
-              title={currentBarHasOverride ? "Clear current bar BPM" : "Enter bar BPM mode"}
+              title={
+                currentBarHasOverride
+                  ? "Clear current bar BPM"
+                  : "Enter bar BPM mode"
+              }
             >
               <svg
-                width="14"
-                height="14"
+                width="12"
+                height="12"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -414,8 +434,9 @@ export function PatternEditor({
         <div className="pattern-editor-actions-right">
           <button
             type="button"
-            className={`action-button count-in-toggle-button${isCountInEnabled ? " active" : ""
-              }`}
+            className={`action-button count-in-toggle-button${
+              isCountInEnabled ? " active" : ""
+            }`}
             onClick={onCountInToggle}
             aria-label="Toggle count-in"
             title="Toggle count-in"
@@ -438,8 +459,9 @@ export function PatternEditor({
           </button>
           <button
             type="button"
-            className={`action-button practice-toggle-button${isFullPracticeMode ? " active" : ""
-              }`}
+            className={`action-button practice-toggle-button${
+              isFullPracticeMode ? " active" : ""
+            }`}
             onClick={handlePracticeModeToggle}
             aria-label="Toggle practice mode"
             title="Toggle practice mode"
@@ -581,8 +603,8 @@ export function PatternEditor({
           )}
           <button
             className="action-button clear-button"
-            onClick={onClearGrid}
-            aria-label="Clear"
+            {...clearButtonLongPressProps}
+            aria-label="Clear (short press: clear current bar, long press: clear all)"
           >
             <svg
               width="14"
