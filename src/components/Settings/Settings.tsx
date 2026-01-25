@@ -468,6 +468,7 @@ export function Settings() {
               </div>
             </div>
             <div
+              key={`version-${updateStatus}`}
               className={`settings-modal-version ${isUpdating ? "updating" : ""}`}
               onClick={handleRefresh}
             >

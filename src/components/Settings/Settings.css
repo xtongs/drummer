@@ -189,11 +189,6 @@
     background-color 0.2s;
 }
 
-.settings-modal-version:hover {
-  color: var(--color-text-secondary);
-  background-color: var(--color-bg-hover);
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
