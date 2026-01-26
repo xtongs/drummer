@@ -18,7 +18,27 @@ export function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { currentTheme, cycleTheme } = useTheme();
+
+  // 重置超时定时器
+  const resetTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(false);
+    }, 10000); // 10秒后自动隐藏
+  };
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleShowVersion = () => {
@@ -31,6 +51,48 @@ export function Settings() {
       window.removeEventListener("show-version", handleShowVersion);
     };
   }, []);
+
+  // 当组件可见时，设置超时隐藏和交互监听
+  useEffect(() => {
+    if (!isVisible) {
+      // 如果组件不可见，清理所有监听器和定时器
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      return;
+    }
+
+    // 启动初始超时定时器
+    resetTimeout();
+
+    // 监听用户交互事件
+    const events = [
+      "mousemove",
+      "mousedown",
+      "touchstart",
+      "touchmove",
+      "keydown",
+      "click",
+    ];
+
+    const handleInteraction = () => {
+      resetTimeout();
+    };
+
+    events.forEach((event) => {
+      window.addEventListener(event, handleInteraction);
+    });
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, handleInteraction);
+      });
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isVisible]);
 
   const handleRefresh = async () => {
     console.log("[Refresh] === handleRefresh started ===");
