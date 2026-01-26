@@ -7,6 +7,7 @@ interface BottomPlayButtonProps {
   onLongPress?: () => void;
   variant?: "floating" | "inline";
   fullPracticeMode?: boolean; // 是否为完整练习模式
+  isCountInEnabled?: boolean; // 是否启用预备拍功能
 }
 
 export function BottomPlayButton({
@@ -15,6 +16,7 @@ export function BottomPlayButton({
   onLongPress,
   variant = "floating",
   fullPracticeMode = false,
+  isCountInEnabled = false,
 }: BottomPlayButtonProps) {
   const longPressTimerRef = useRef<number | null>(null);
   const hasLongPressedRef = useRef<boolean>(false);
@@ -76,13 +78,13 @@ export function BottomPlayButton({
       hasLongPressedRef.current = false;
       return;
     }
-    // 如果有 BGM 播放且当前未播放（即将开始），则先触发长按行为
-    if (fullPracticeMode && !isPlaying && onLongPress) {
-      onLongPress();
+    // 如果有 BGM 播放或者有countin开启，则点击变成停止行为，先触发长按行为
+    if ((fullPracticeMode || isCountInEnabled) && isPlaying && onLongPress) {
+      onClick();
       setTimeout(() => {
         hasLongPressedRef.current = false;
-        onClick();
-      }, 100);
+        onLongPress();
+      }, 300);
       return;
     } else {
       onClick();
@@ -103,15 +105,29 @@ export function BottomPlayButton({
         onTouchEnd={handleTouchEnd}
         aria-label={isPlaying ? "Pause Pattern" : "Play Pattern"}
       >
-        {isPlaying && !fullPracticeMode ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="4" width="4" height="16" />
-            <rect x="14" y="4" width="4" height="16" />
-          </svg>
-        ) : isPlaying && fullPracticeMode ? (
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="6" width="12" height="12" />
-          </svg>
+        {isPlaying ? (
+          <>
+            {fullPracticeMode || isCountInEnabled ? (
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <rect x="6" y="6" width="12" height="12" />
+              </svg>
+            ) : (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            )}
+          </>
         ) : (
           <svg
             width="24"

@@ -161,8 +161,11 @@ function App() {
     if (currentSubdivision !== undefined) {
       const [beatsPerBar] = pattern.timeSignature;
       const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
-      const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+      const currentBarIndex = Math.floor(
+        currentSubdivision / subdivisionsPerBar,
+      );
+      const hasOverride =
+        pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
 
       // 如果处于小节 BPM 编辑模式，或者当前小节有 BPM 覆盖，更新该小节的 BPM
       if (isBarBpmMode || hasOverride) {
@@ -192,12 +195,13 @@ function App() {
   // 切换小节 BPM 覆盖：点击设置/清除当前小节的 BPM 覆盖
   const handleBarBpmModeToggle = () => {
     if (currentSubdivision === undefined) return;
-    
+
     const [beatsPerBar] = pattern.timeSignature;
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
     const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
-    const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
-    
+    const hasOverride =
+      pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+
     if (hasOverride) {
       // 当前小节有覆盖，点击清除该覆盖
       updateBarBpm(currentBarIndex, null);
@@ -296,7 +300,8 @@ function App() {
 
   // 计算当前小节是否有 BPM 覆盖（用于按钮 active 状态显示）
   const currentBarHasOverride = (() => {
-    if (currentSubdivision === undefined || !pattern.barBpmOverrides) return false;
+    if (currentSubdivision === undefined || !pattern.barBpmOverrides)
+      return false;
     const [beatsPerBar] = pattern.timeSignature;
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
     const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
@@ -310,7 +315,8 @@ function App() {
     const [beatsPerBar] = pattern.timeSignature;
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
     const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
-    const hasOverride = pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
+    const hasOverride =
+      pattern.barBpmOverrides?.[currentBarIndex] !== undefined;
 
     // 计算 rate 影响
     const cumulativeRate = calculateCumulativeRate(rateIndex);
@@ -325,7 +331,14 @@ function App() {
       const adjustedBpm = pattern.bpm * cumulativeRate;
       setMetronomeBPM(adjustedBpm);
     }
-  }, [isBarBpmMode, currentSubdivision, pattern.timeSignature, pattern.barBpmOverrides, pattern.bpm, rateIndex]);
+  }, [
+    isBarBpmMode,
+    currentSubdivision,
+    pattern.timeSignature,
+    pattern.barBpmOverrides,
+    pattern.bpm,
+    rateIndex,
+  ]);
 
   // 页面可见性变化时暂停/恢复播放（切换应用、标签页、弹窗等）
   useVisibilityHandler({
@@ -505,6 +518,7 @@ function App() {
 
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
+    if (rateIndex !== 0) return; // 变速模式下禁用双击跳转
     seekTo(subdivision);
   };
 
@@ -617,7 +631,7 @@ function App() {
       setIsCountInPlaying(false);
       setMetronomeStartToken((prev) => prev + 1);
       setIsPatternPlaying(true);
-    }, countInBarDurationMs);
+    }, countInBarDurationMs - 50); // 提前50ms启动，避免延迟
   };
 
   const handleStopAll = () => {
@@ -875,7 +889,12 @@ function App() {
   // 从 JSON 字符串导入 pattern 数据并创建新 tab（包含 BGM 配置）
   const handleImportPatternWithBgm = (
     jsonString: string,
-    bgmConfig?: { fileId?: string; offsetMs: number; volumePct: number; meta?: { name: string; size: number; type: string } },
+    bgmConfig?: {
+      fileId?: string;
+      offsetMs: number;
+      volumePct: number;
+      meta?: { name: string; size: number; type: string };
+    },
   ) => {
     const importedPattern = parsePatternFromJSON(jsonString);
     if (!importedPattern) {
@@ -975,6 +994,7 @@ function App() {
               onClick={handlePatternPlayToggle}
               onLongPress={handleBottomPlayButtonLongPress}
               fullPracticeMode={isFullPracticeMode}
+              isCountInEnabled={isCountInEnabled}
             />
           ) : undefined
         }
@@ -1033,6 +1053,7 @@ function App() {
           onClick={handlePatternPlayToggle}
           onLongPress={handleBottomPlayButtonLongPress}
           fullPracticeMode={isFullPracticeMode}
+          isCountInEnabled={isCountInEnabled}
         />
       )}
       <Settings />

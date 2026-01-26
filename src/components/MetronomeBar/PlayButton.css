@@ -29,7 +29,11 @@
 }
 
 .play-button-count {
-  font-size: 18px;
+  /* 使用系统字体替代等宽字体，iOS Safari 数字对齐更好 */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: var(--font-size-sm);
   line-height: 1;
   color: var(--color-text);
 }
