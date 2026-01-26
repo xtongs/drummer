@@ -55,7 +55,8 @@
   --spacing-xl: 32px;
 
   /* 字体 - 经典终端字体 */
-  --font-family: "Consolas", "Monaco", "Courier New", "Menlo", "Fira Code",
+  --font-family:
+    "Consolas", "Monaco", "Courier New", "Menlo", "Fira Code",
     "Source Code Pro", monospace;
   --font-size-xs: 10px;
   --font-size-sm: 12px;
@@ -102,8 +103,13 @@
     calc((var(--app-max-width) - var(--spacing-md) * 2) * 20 / 369)
   );
 
-  /* 按钮大小 */
-  --button-size: 24px;
+  /* 按钮大小（响应式）
+   * 基准：375px 视口宽度下 buttonSize = 24px
+   * 比例：24 / 375 ≈ 6.4vw
+   * 最大值：28px（在大屏幕时）
+   * 使用 clamp() 限制最小值 24px，最大值 28px
+   */
+  --button-size: clamp(24px, 6.4vw, 28px);
 
   /* 节拍分隔线 */
   --beat-divider-color: #bd93f9; /* Dracula 紫色 */

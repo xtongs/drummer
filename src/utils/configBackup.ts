@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { getAllBgmFiles, saveBgmFileFromBase64, clearAllBgmFiles } from "./bgmStorage";
 
 /**
  * 配置导出数据结构
@@ -17,9 +18,6 @@ export interface ConfigBackup {
   }>;
 }
 
-const BGM_DB_NAME = "drummer-bgm-files";
-const BGM_DB_VERSION = 1;
-const BGM_STORE_NAME = "bgm-files";
 const BACKUP_VERSION = "1.0.0";
 
 /**
@@ -73,25 +71,6 @@ function validateBackup(data: unknown): data is ConfigBackup {
 }
 
 /**
- * 打开BGM数据库
- */
-async function openBgmDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(BGM_DB_NAME, BGM_DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(BGM_STORE_NAME)) {
-        db.createObjectStore(BGM_STORE_NAME, { keyPath: "id" });
-      }
-    };
-  });
-}
-
-/**
  * 收集所有localStorage数据
  */
 function collectLocalStorage(): Record<string, string> {
@@ -119,21 +98,11 @@ async function collectBgmFiles(): Promise<
     name: string;
     size: number;
     type: string;
-    data: string; // 改为 Base64 字符串
+    data: string; // Base64 字符串
     byteLength: number; // 保存原始字节长度
   }>
 > {
-  const db = await openBgmDB();
-  const transaction = db.transaction(BGM_STORE_NAME, "readonly");
-  const store = transaction.objectStore(BGM_STORE_NAME);
-
-  const records = await new Promise<any[]>((resolve, reject) => {
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-
-  db.close();
+  const records = await getAllBgmFiles();
 
   // 将每个blob转换为Base64字符串（确保正确序列化）
   const bgmFiles = await Promise.all(
@@ -147,10 +116,6 @@ async function collectBgmFiles(): Promise<
         "",
       );
       const base64Data = btoa(binaryString);
-
-      console.log(
-        `[Config Backup] Exporting BGM: ${record.name}, Type: ${record.type}, Size: ${record.size}, ArrayBuffer byteLength: ${arrayBuffer.byteLength}`,
-      );
 
       return {
         id: record.id,
@@ -171,19 +136,11 @@ async function collectBgmFiles(): Promise<
  */
 export async function exportConfig(): Promise<void> {
   try {
-    console.log("[Config Backup] Starting configuration export...");
-
     // Collect localStorage data
-    console.log("[Config Backup] Collecting localStorage data...");
     const localStorageData = collectLocalStorage();
-    console.log(
-      `[Config Backup] Found ${Object.keys(localStorageData).length} localStorage items`,
-    );
 
     // Collect IndexedDB data
-    console.log("[Config Backup] Collecting BGM files...");
     const bgmFiles = await collectBgmFiles();
-    console.log(`[Config Backup] Found ${bgmFiles.length} BGM files`);
 
     // 构建备份数据
     const backup: ConfigBackup = {
@@ -194,18 +151,15 @@ export async function exportConfig(): Promise<void> {
     };
 
     // 创建ZIP文件
-    console.log("[Config Backup] Creating ZIP file...");
     const zip = new JSZip();
 
     // 添加配置JSON（包含所有数据，BGM以Base64格式嵌入）
     zip.file("config.json", JSON.stringify(backup, null, 2));
 
     // 生成ZIP blob
-    console.log("[Config Backup] Generating ZIP file...");
     const zipBlob = await zip.generateAsync({ type: "blob" });
 
     // 下载文件
-    console.log("[Config Backup] Triggering download...");
     const url = URL.createObjectURL(zipBlob);
     const a = document.createElement("a");
     a.href = url;
@@ -220,8 +174,6 @@ export async function exportConfig(): Promise<void> {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    console.log("[Config Backup] Export complete!");
   } catch (error) {
     console.error("[Config Backup] Export failed:", error);
     throw error;
@@ -239,14 +191,11 @@ function restoreLocalStorage(data: Record<string, string>): void {
   for (const [key, value] of Object.entries(data)) {
     localStorage.setItem(key, value);
   }
-
-  console.log(
-    `[Config Backup] Restored ${Object.keys(data).length} localStorage items`,
-  );
 }
 
 /**
  * 恢复BGM文件到IndexedDB
+ * 返回旧 fileId 到新 fileId 的映射
  */
 async function restoreBgmFiles(
   bgmFiles: Array<{
@@ -257,31 +206,15 @@ async function restoreBgmFiles(
     data: string; // Base64 编码的数据
     byteLength: number; // 原始字节长度
   }>,
-): Promise<void> {
-  const db = await openBgmDB();
-  const transaction = db.transaction(BGM_STORE_NAME, "readwrite");
-  const store = transaction.objectStore(BGM_STORE_NAME);
-
+): Promise<Map<string, string>> {
   // 清空现有数据
-  await new Promise<void>((resolve, reject) => {
-    const request = store.clear();
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  await clearAllBgmFiles();
+
+  // 创建旧 ID 到新 ID 的映射
+  const idMap = new Map<string, string>();
 
   // 恢复BGM文件
   for (const bgm of bgmFiles) {
-    // 从Base64字符串解码回ArrayBuffer
-    const binaryString = atob(bgm.data);
-    const uint8Array = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      uint8Array[i] = binaryString.charCodeAt(i);
-    }
-
-    console.log(
-      `[Config Backup] Restoring BGM: ${bgm.name}, Type: ${bgm.type}, Size: ${bgm.size}, Original byteLength: ${bgm.byteLength}, Decoded size: ${uint8Array.byteLength}`,
-    );
-
     // 确保MIME type有效，如果为空则尝试根据文件扩展名推断
     let mimeType = bgm.type;
     if (!mimeType || mimeType === "") {
@@ -291,31 +224,49 @@ async function restoreBgmFiles(
       else if (ext === "ogg") mimeType = "audio/ogg";
       else if (ext === "m4a" || ext === "mp4") mimeType = "audio/mp4";
       else mimeType = "audio/mpeg"; // 默认
-      console.log(
-        `[Config Backup] No MIME type detected, inferred: ${mimeType}`,
-      );
     }
 
-    const blob = new Blob([uint8Array], { type: mimeType });
+    // 使用统一的 saveBgmFileFromBase64 函数保存文件
+    // 会生成新的 fileId
+    const { id: newFileId } = await saveBgmFileFromBase64(
+      bgm.data,
+      bgm.name,
+      mimeType,
+    );
 
-    const record = {
-      id: bgm.id,
-      blob: blob,
-      name: bgm.name,
-      size: bgm.size,
-      type: mimeType,
-      createdAt: Date.now(),
-    };
-
-    await new Promise<void>((resolve, reject) => {
-      const request = store.put(record);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    // 保存映射关系
+    idMap.set(bgm.id, newFileId);
   }
 
-  db.close();
-  console.log(`[Config Backup] Restored ${bgmFiles.length} BGM files`);
+  return idMap;
+}
+
+/**
+ * 更新 localStorage 中的 BGM 配置，使用新的 fileId
+ */
+function updateBgmConfigIds(idMap: Map<string, string>): void {
+  const BGM_CONFIG_KEY = "drummer-bgm-config";
+  const raw = localStorage.getItem(BGM_CONFIG_KEY);
+  if (!raw) return;
+
+  try {
+    const configMap = JSON.parse(raw) as Record<string, { fileId?: string }>;
+    let updated = false;
+
+    for (const config of Object.values(configMap)) {
+      if (config.fileId && idMap.has(config.fileId)) {
+        // 更新为新的 fileId
+        config.fileId = idMap.get(config.fileId);
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      localStorage.setItem(BGM_CONFIG_KEY, JSON.stringify(configMap));
+    }
+  } catch {
+    // Ignore parsing errors
+  }
 }
 
 /**
@@ -323,14 +274,10 @@ async function restoreBgmFiles(
  */
 export async function importConfig(file: File): Promise<void> {
   try {
-    console.log("[Config Backup] Starting configuration import...");
-
     // Read ZIP file
-    console.log("[Config Backup] Reading ZIP file...");
     const zip = await JSZip.loadAsync(file);
 
     // Read configuration file
-    console.log("[Config Backup] Parsing configuration file...");
     const configFile = zip.file("config.json");
     if (!configFile) {
       throw new Error("Invalid configuration file: missing config.json");
@@ -346,24 +293,14 @@ export async function importConfig(file: File): Promise<void> {
 
     const backup: ConfigBackup = parsedData;
 
-    console.log(`[Config Backup] Configuration version: ${backup.version}`);
-    console.log(
-      `[Config Backup] Exported at: ${new Date(backup.exportedAt).toLocaleString()}`,
-    );
-    console.log(
-      `[Config Backup] localStorage items: ${Object.keys(backup.localStorage).length}`,
-    );
-    console.log(`[Config Backup] BGM files: ${backup.bgmFiles.length}`);
-
     // 恢复localStorage数据
-    console.log("[Config Backup] Restoring localStorage data...");
     restoreLocalStorage(backup.localStorage);
 
-    // 恢复BGM文件
-    console.log("[Config Backup] Restoring BGM files...");
-    await restoreBgmFiles(backup.bgmFiles);
+    // 恢复BGM文件，获取旧 ID 到新 ID 的映射
+    const idMap = await restoreBgmFiles(backup.bgmFiles);
 
-    console.log("[Config Backup] Import complete!");
+    // 更新 localStorage 中的 BGM 配置，使用新的 fileId
+    updateBgmConfigIds(idMap);
 
     // 刷新页面
     window.location.reload();

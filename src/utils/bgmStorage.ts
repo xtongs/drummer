@@ -19,7 +19,7 @@ export interface BgmConfig {
 
 const DEFAULT_BGM_VOLUME = 100;
 
-interface BgmFileRecord extends BgmFileMeta {
+export interface BgmFileRecord extends BgmFileMeta {
   id: string;
   blob: Blob;
   createdAt: number;
@@ -60,14 +60,24 @@ export async function saveBgmFile(file: File): Promise<{ id: string; meta: BgmFi
     createdAt: Date.now(),
   };
 
-  await new Promise<void>((resolve, reject) => {
-    const request = store.put(record);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(new Error("Transaction aborted"));
+      const request = store.put(record);
+      request.onerror = () => reject(request.error);
+    });
 
-  db.close();
-  return { id, meta: { name: record.name, size: record.size, type: record.type } };
+    // 延迟关闭数据库，确保数据完全持久化
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    db.close();
+    return { id, meta: { name: record.name, size: record.size, type: record.type } };
+  } catch (error) {
+    db.close();
+    throw error;
+  }
 }
 
 export async function getBgmFile(id: string): Promise<BgmFileRecord | null> {
@@ -91,12 +101,76 @@ export async function deleteBgmFile(id: string): Promise<void> {
   const store = transaction.objectStore(BGM_STORE_NAME);
 
   await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
     const request = store.delete(id);
-    request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
 
   db.close();
+}
+
+/**
+ * 获取所有 BGM 文件记录
+ */
+export async function getAllBgmFiles(): Promise<BgmFileRecord[]> {
+  const db = await openBgmDB();
+  const transaction = db.transaction(BGM_STORE_NAME, "readonly");
+  const store = transaction.objectStore(BGM_STORE_NAME);
+
+  const result = await new Promise<BgmFileRecord[]>((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  db.close();
+  return result;
+}
+
+/**
+ * 清空所有 BGM 文件
+ */
+export async function clearAllBgmFiles(): Promise<void> {
+  const db = await openBgmDB();
+  const transaction = db.transaction(BGM_STORE_NAME, "readwrite");
+  const store = transaction.objectStore(BGM_STORE_NAME);
+
+  await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    const request = store.clear();
+    request.onerror = () => reject(request.error);
+  });
+
+  db.close();
+}
+
+/**
+ * 从 Base64 数据保存 BGM 文件（用于导入）
+ */
+export async function saveBgmFileFromBase64(
+  base64Data: string,
+  fileName: string,
+  mimeType: string,
+): Promise<{ id: string; meta: BgmFileMeta }> {
+  // 从Base64字符串解码回ArrayBuffer
+  const binaryString = atob(base64Data);
+  const uint8Array = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    uint8Array[i] = binaryString.charCodeAt(i);
+  }
+
+  const blob = new Blob([uint8Array], { type: mimeType });
+
+  // 创建一个 File 对象
+  const file = new File([blob], fileName, {
+    type: mimeType,
+    lastModified: Date.now(),
+  });
+
+  // 使用统一的 saveBgmFile 函数保存文件
+  return saveBgmFile(file);
 }
 
 function loadBgmConfigMap(): Record<string, BgmConfig> {

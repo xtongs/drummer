@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import type { Pattern } from "../types";
 import type { BgmConfig } from "./bgmStorage";
-import { getBgmFile } from "./bgmStorage";
+import { getBgmFile, saveBgmFileFromBase64 } from "./bgmStorage";
 
 /**
  * 单个节奏型备份数据结构
@@ -22,28 +22,6 @@ export interface PatternBackup {
 }
 
 const BACKUP_VERSION = "1.0.0";
-const BGM_DB_NAME = "drummer-bgm-files";
-const BGM_DB_VERSION = 1;
-const BGM_STORE_NAME = "bgm-files";
-
-/**
- * 打开BGM数据库
- */
-async function openBgmDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(BGM_DB_NAME, BGM_DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(BGM_STORE_NAME)) {
-        db.createObjectStore(BGM_STORE_NAME, { keyPath: "id" });
-      }
-    };
-  });
-}
 
 /**
  * 验证备份数据结构
@@ -124,12 +102,11 @@ export async function exportPatternToZip(
   bgmConfig?: BgmConfig,
 ): Promise<void> {
   try {
-    console.log("[Pattern Backup] Starting pattern export...");
-
     // 收集BGM文件（如果有配置）
     let bgmFile: PatternBackup["bgmFile"] | undefined;
+    let finalBgmConfig: BgmConfig | undefined = bgmConfig;
+
     if (bgmConfig?.fileId) {
-      console.log("[Pattern Backup] Collecting BGM file...");
       const record = await getBgmFile(bgmConfig.fileId);
       if (record) {
         const arrayBuffer = await record.blob.arrayBuffer();
@@ -142,10 +119,6 @@ export async function exportPatternToZip(
         );
         const base64Data = btoa(binaryString);
 
-        console.log(
-          `[Pattern Backup] Exporting BGM: ${record.name}, Type: ${record.type}, Size: ${record.size}, ArrayBuffer byteLength: ${arrayBuffer.byteLength}`,
-        );
-
         bgmFile = {
           id: record.id,
           name: record.name,
@@ -153,6 +126,12 @@ export async function exportPatternToZip(
           type: record.type,
           data: base64Data,
           byteLength: arrayBuffer.byteLength,
+        };
+      } else {
+        // 文件不存在，清除无效的 fileId，但保留其他配置（offset, volume）
+        finalBgmConfig = {
+          offsetMs: bgmConfig.offsetMs,
+          volumePct: bgmConfig.volumePct,
         };
       }
     }
@@ -162,23 +141,20 @@ export async function exportPatternToZip(
       version: BACKUP_VERSION,
       exportedAt: Date.now(),
       pattern: pattern,
-      bgmConfig: bgmConfig,
+      bgmConfig: finalBgmConfig,
       bgmFile: bgmFile,
     };
 
     // 创建ZIP文件
-    console.log("[Pattern Backup] Creating ZIP file...");
     const zip = new JSZip();
 
     // 添加配置JSON（包含所有数据，BGM以Base64格式嵌入）
     zip.file("pattern.json", JSON.stringify(backup, null, 2));
 
     // 生成ZIP blob
-    console.log("[Pattern Backup] Generating ZIP file...");
     const zipBlob = await zip.generateAsync({ type: "blob" });
 
     // 下载文件
-    console.log("[Pattern Backup] Triggering download...");
     const url = URL.createObjectURL(zipBlob);
     const a = document.createElement("a");
     a.href = url;
@@ -190,8 +166,6 @@ export async function exportPatternToZip(
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    console.log("[Pattern Backup] Export complete!");
   } catch (error) {
     console.error("[Pattern Backup] Export failed:", error);
     throw error;
@@ -205,14 +179,10 @@ export async function importPatternFromZip(
   file: File,
 ): Promise<{ pattern: Pattern; bgmConfig?: BgmConfig }> {
   try {
-    console.log("[Pattern Backup] Starting pattern import...");
-
     // Read ZIP file
-    console.log("[Pattern Backup] Reading ZIP file...");
     const zip = await JSZip.loadAsync(file);
 
     // Read configuration file
-    console.log("[Pattern Backup] Parsing pattern file...");
     const patternFile = zip.file("pattern.json");
     if (!patternFile) {
       throw new Error("Invalid pattern file: missing pattern.json");
@@ -228,26 +198,20 @@ export async function importPatternFromZip(
 
     const backup: PatternBackup = parsedData;
 
-    console.log(`[Pattern Backup] Backup version: ${backup.version}`);
-    console.log(
-      `[Pattern Backup] Exported at: ${new Date(backup.exportedAt).toLocaleString()}`,
-    );
-    console.log(`[Pattern Backup] Pattern: ${backup.pattern.name}`);
+    // 准备 BGM 配置（如果有）
+    let updatedBgmConfig: BgmConfig | undefined;
 
-    // 如果有BGM文件，恢复到IndexedDB
-    if (backup.bgmFile) {
-      console.log("[Pattern Backup] Restoring BGM file...");
-
+    // 检查 BGM 配置和文件的一致性
+    if (backup.bgmConfig && !backup.bgmFile) {
+      // 清除无效的 BGM 配置
+      updatedBgmConfig = undefined;
+    } else if (backup.bgmFile) {
       // 从Base64字符串解码回ArrayBuffer
       const binaryString = atob(backup.bgmFile.data);
       const uint8Array = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         uint8Array[i] = binaryString.charCodeAt(i);
       }
-
-      console.log(
-        `[Pattern Backup] Restoring BGM: ${backup.bgmFile.name}, Type: ${backup.bgmFile.type}, Size: ${backup.bgmFile.size}, Original byteLength: ${backup.bgmFile.byteLength}, Decoded size: ${uint8Array.byteLength}`,
-      );
 
       // 确保MIME type有效
       let mimeType = backup.bgmFile.type;
@@ -258,41 +222,27 @@ export async function importPatternFromZip(
         else if (ext === "ogg") mimeType = "audio/ogg";
         else if (ext === "m4a" || ext === "mp4") mimeType = "audio/mp4";
         else mimeType = "audio/mpeg";
-        console.log(
-          `[Pattern Backup] No MIME type detected, inferred: ${mimeType}`,
-        );
       }
 
-      const blob = new Blob([uint8Array], { type: mimeType });
+      // 使用统一的 saveBgmFileFromBase64 函数保存文件
+      const { id: newFileId, meta } = await saveBgmFileFromBase64(
+        backup.bgmFile.data,
+        backup.bgmFile.name,
+        mimeType,
+      );
 
-      const db = await openBgmDB();
-      const transaction = db.transaction(BGM_STORE_NAME, "readwrite");
-      const store = transaction.objectStore(BGM_STORE_NAME);
-
-      const record = {
-        id: backup.bgmFile.id,
-        blob: blob,
-        name: backup.bgmFile.name,
-        size: backup.bgmFile.size,
-        type: mimeType,
-        createdAt: Date.now(),
+      // 创建新的 bgmConfig 对象，使用新的 fileId 和更新的 meta 信息
+      updatedBgmConfig = {
+        fileId: newFileId,
+        offsetMs: backup.bgmConfig?.offsetMs ?? 0,
+        volumePct: backup.bgmConfig?.volumePct ?? 100,
+        meta: meta,
       };
-
-      await new Promise<void>((resolve, reject) => {
-        const request = store.put(record);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-
-      db.close();
-      console.log("[Pattern Backup] BGM file restored");
     }
-
-    console.log("[Pattern Backup] Import complete!");
 
     return {
       pattern: backup.pattern,
-      bgmConfig: backup.bgmConfig,
+      bgmConfig: updatedBgmConfig,
     };
   } catch (error) {
     console.error("[Pattern Backup] Import failed:", error);

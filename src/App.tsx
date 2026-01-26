@@ -882,8 +882,6 @@ function App() {
       endPatternName: newPattern.name,
       endBar: newPattern.bars - 1,
     });
-
-    console.log("Pattern imported successfully");
   };
 
   // 从 JSON 字符串导入 pattern 数据并创建新 tab（包含 BGM 配置）
@@ -942,8 +940,6 @@ function App() {
       endPatternName: newPattern.name,
       endBar: newPattern.bars - 1,
     });
-
-    console.log("Pattern imported successfully with BGM config");
   };
 
   // 加载中显示加载界面
