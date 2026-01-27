@@ -191,11 +191,6 @@ button {
   -webkit-touch-callout: none;
   -webkit-user-drag: none;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
 }
 
 button:not(.grid-cell):active {
