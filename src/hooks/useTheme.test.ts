@@ -22,7 +22,7 @@ describe("useTheme", () => {
   });
 
   it("loads saved theme from localStorage", () => {
-    localStorage.setItem("drummer_theme", "One");
+    localStorage.setItem("drummer-theme", "One");
 
     const { result } = renderHook(() => useTheme());
 
@@ -125,13 +125,13 @@ describe("useTheme", () => {
       result.current.cycleTheme();
     });
 
-    expect(localStorage.getItem("drummer_theme")).toBe("One");
+    expect(localStorage.getItem("drummer-theme")).toBe("One");
 
     act(() => {
       result.current.cycleTheme();
     });
 
-    expect(localStorage.getItem("drummer_theme")).toBe("Gruvbox");
+    expect(localStorage.getItem("drummer-theme")).toBe("Gruvbox");
   });
 
   it("handles localStorage errors gracefully", () => {
@@ -155,7 +155,7 @@ describe("useTheme", () => {
   });
 
   it("handles invalid saved theme name", () => {
-    localStorage.setItem("drummer_theme", "NonexistentTheme");
+    localStorage.setItem("drummer-theme", "NonexistentTheme");
 
     const { result } = renderHook(() => useTheme());
 

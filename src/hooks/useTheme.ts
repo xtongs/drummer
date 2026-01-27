@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { themes, applyTheme, type Theme } from "../styles/themes";
 
-const THEME_STORAGE_KEY = "drummer_theme";
+const THEME_STORAGE_KEY = "drummer-theme";
 const DEFAULT_THEME_NAME = "Dracula";
 
 /**

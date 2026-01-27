@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { VERSION, BUILD_TIME } from "../../version";
 import { useTheme } from "../../hooks/useTheme";
 import { exportConfig, importConfig } from "../../utils/configBackup";
@@ -14,22 +14,39 @@ type UpdateStatus =
 
 export function Settings() {
   const [isVisible, setIsVisible] = useState(false);
+  const [showFirstTimeHint, setShowFirstTimeHint] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [isExporting, setIsExporting] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { currentTheme, cycleTheme } = useTheme();
 
   // 重置超时定时器
-  const resetTimeout = () => {
+  const resetTimeout = useCallback(() => {
+    if (isAboutModalOpen) {
+      // modal 打开时不启动自动隐藏
+      return;
+    }
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => {
       setIsVisible(false);
+      // 检查是否是首次加载后的隐藏
+      const hasShownFirstTime = localStorage.getItem("drummer-first-shown");
+      if (!hasShownFirstTime) {
+        setShowFirstTimeHint(true);
+        localStorage.setItem("drummer-first-shown", "true");
+
+        // 10秒后自动隐藏提示
+        hintTimeoutRef.current = setTimeout(() => {
+          setShowFirstTimeHint(false);
+        }, 10000);
+      }
     }, 10000); // 10秒后自动隐藏
-  };
+  }, [isAboutModalOpen]);
 
   // 清理定时器
   useEffect(() => {
@@ -37,12 +54,26 @@ export function Settings() {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (hintTimeoutRef.current) {
+        clearTimeout(hintTimeoutRef.current);
+      }
     };
+  }, []);
+
+  // 首次加载检测
+  useEffect(() => {
+    const hasVisitedBefore = localStorage.getItem("drummer-visited");
+    if (!hasVisitedBefore) {
+      // 首次访问，显示 settings
+      setIsVisible(true);
+      localStorage.setItem("drummer-visited", "true");
+    }
   }, []);
 
   useEffect(() => {
     const handleShowVersion = () => {
       setIsVisible(true);
+      setShowFirstTimeHint(false);
     };
 
     window.addEventListener("show-version", handleShowVersion);
@@ -92,7 +123,7 @@ export function Settings() {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isVisible]);
+  }, [isVisible, resetTimeout]);
 
   const handleRefresh = async () => {
     console.log("[Refresh] === handleRefresh started ===");
@@ -368,6 +399,11 @@ export function Settings() {
 
   return (
     <>
+      {showFirstTimeHint && (
+        <div className="settings-first-hint visible">
+          Tap 5 times quickly to show settings
+        </div>
+      )}
       <div className={`settings ${isVisible ? "visible" : "hidden"}`}>
         <div className="settings-theme" onClick={cycleTheme}>
           <button
@@ -497,32 +533,537 @@ export function Settings() {
               </button>
             </div>
             <div className="settings-modal-content">
+              <h3 className="settings-modal-subtitle">Features & Usage</h3>
               <p className="settings-modal-description">
-                A powerful beat maker and drum practice tool with pattern
-                editing, background music support, and customizable themes.
+                A step-by-step guide for first-time users. Read top to bottom to
+                learn the full workflow and discover hidden gestures.
               </p>
               <div className="settings-modal-section">
-                <h3>Features</h3>
+                <h3>Top Bar: Metronome and Tempo</h3>
                 <ul>
-                  <li>Create and edit custom drum patterns</li>
-                  <li>Practice mode with adjustable tempo</li>
-                  <li>Background music integration</li>
-                  <li>Multiple instrument sounds</li>
-                  <li>Configurable time signatures</li>
-                  <li>Theme customization</li>
-                  <li>Export/Import settings</li>
+                  <li>
+                    <strong>Beat dots</strong>: click to cycle time signatures
+                    (4/4, 3/4, 2/4, 6/8, 5/4, 7/8).
+                  </li>
+                  <li>
+                    <strong>Tempo</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>{" "}
+                    /{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>
+                    : click for 0.5 BPM steps, press and hold to keep changing.
+                  </li>
+                  <li>
+                    <strong>BPM number</strong>: tap the left/right side of the
+                    digits to cycle speed rates (a rate label appears).
+                  </li>
+                  <li>
+                    <strong>Play</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="6 3 18 12 6 21" />
+                      </svg>
+                    </span>
+                    : start or stop playback. Long-press to reset the loop
+                    counter to 0.
+                  </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>How to Use</h3>
+                <h3>Patterns, Bars, and Loop Range</h3>
                 <ul>
-                  <li>Click cells to toggle beats on/off</li>
-                  <li>Use Play button to start/stop playback</li>
-                  <li>Adjust BPM with + / - buttons</li>
-                  <li>Click stopwatch icon for bar-specific tempo</li>
-                  <li>Switch between Edit and Practice modes</li>
-                  <li>Add background music from your library</li>
+                  <li>
+                    <strong>Tabs</strong>: the circle is Draft; letter tabs are
+                    saved patterns. Click a tab to load it.
+                  </li>
+                  <li>
+                    <strong>New pattern</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>
+                    : save the current draft as a new pattern tab.
+                  </li>
+                  <li>
+                    <strong>Import pattern</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3v12" />
+                        <polyline points="8 7 12 3 16 7" />
+                        <path d="M4 21h16v0" />
+                      </svg>
+                    </span>
+                    : load a pattern zip file.
+                  </li>
+                  <li>
+                    <strong>Bars</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>{" "}
+                    /{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>
+                    : remove or add a bar (uses your cursor position when
+                    possible).
+                  </li>
+                  <li>
+                    <strong>Loop range</strong>: choose start/end pattern and
+                    bar; press and hold the +/- buttons to move faster.
+                  </li>
+                  <li>
+                    <strong>Per-bar BPM</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <line x1="12" y1="12" x2="16" y2="7" />
+                        <circle cx="12" cy="12" r="1.5" />
+                      </svg>
+                    </span>
+                    : click to set or clear BPM for the current bar.
+                  </li>
+                  <li>
+                    <strong>Copy/Paste</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="9" y="9" width="10" height="10" rx="2" />
+                        <rect x="5" y="5" width="10" height="10" rx="2" />
+                      </svg>
+                    </span>{" "}
+                    then{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="12 5 5 12 12 19" />
+                        <line x1="19" y1="12" x2="5" y2="12" />
+                      </svg>
+                    </span>{" "}
+                    /{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="12 5 19 12 12 19" />
+                        <line x1="19" y1="12" x2="5" y2="12" />
+                      </svg>
+                    </span>
+                    : duplicate a whole pattern grid before or after.
+                  </li>
                 </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>Grid Editor and Notation</h3>
+                <ul>
+                  <li>
+                    <strong>Single click/tap</strong>: toggle a cell on or off.
+                  </li>
+                  <li>
+                    <strong>Double-click/tap</strong>: cycle 32nd-note states
+                    (double, first, second, back to normal).
+                  </li>
+                  <li>
+                    <strong>Long-press on an active cell</strong>: cycle note
+                    type (normal to ghost to grace) when supported.
+                  </li>
+                  <li>
+                    <strong>Notation view</strong>: double-click/tap to jump the
+                    playhead (disabled when a rate label is active).
+                  </li>
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>Action Buttons (Right Side)</h3>
+                <ul>
+                  <li>
+                    <strong>Count-in</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 20 L12 4 L18 20 Z" />
+                        <line x1="12" y1="16" x2="16" y2="6" />
+                      </svg>
+                    </span>
+                    : toggle a one-bar count-in before playback.
+                  </li>
+                  <li>
+                    <strong>Practice mode</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                      </svg>
+                    </span>
+                    : show background music and volume controls.
+                  </li>
+                  <li>
+                    <strong>Play (bottom)</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="6 3 18 12 6 21" />
+                      </svg>
+                    </span>
+                    : tap to play/pause. Long-press to stop and jump to the loop
+                    start.
+                  </li>
+                  <li>
+                    <strong>Save current</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+                    </span>
+                    : save edits to the current pattern. Long-press to export a
+                    pattern zip (includes BGM).
+                  </li>
+                  <li>
+                    <strong>Delete</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </span>
+                    : remove the current pattern.
+                  </li>
+                  <li>
+                    <strong>Clear</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </span>
+                    : short press clears the current bar, long-press clears all
+                    bars.
+                  </li>
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>Background Music (Practice Mode)</h3>
+                <ul>
+                  <li>
+                    <strong>Upload</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3v12" />
+                        <polyline points="8 7 12 3 16 7" />
+                        <path d="M4 21h16v0" />
+                      </svg>
+                    </span>
+                    : add an MP3 file, or{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </span>{" "}
+                    to delete it.
+                  </li>
+                  <li>
+                    <strong>Volume</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>{" "}
+                    /{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>
+                    : click or press-and-hold to adjust. Click the % number to
+                    mute/unmute.
+                  </li>
+                  <li>
+                    <strong>Offset</strong>: click the ms/s value to type an
+                    exact offset (disabled while playing).
+                  </li>
+                  <li>
+                    <strong>Pattern volume</strong>: the right-side controls
+                    adjust drum volume (same +/- and mute behavior).
+                  </li>
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>Settings and About</h3>
+                <ul>
+                  <li>
+                    <strong>Theme</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="13.5" cy="6.5" r=".5" />
+                        <circle cx="17.5" cy="10.5" r=".5" />
+                        <circle cx="8.5" cy="7.5" r=".5" />
+                        <circle cx="6.5" cy="12.5" r=".5" />
+                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+                      </svg>
+                    </span>
+                    : click to cycle themes.
+                  </li>
+                  <li>
+                    <strong>Backup and Restore</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </span>{" "}
+                    /{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    </span>
+                    : import or export all settings as a zip file.
+                  </li>
+                  <li>
+                    <strong>Settings</strong>{" "}
+                    <span className="settings-icon">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </span>
+                    : open this.
+                  </li>
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>Other Settings</h3>
+                <p className="settings-modal-placeholder">
+                  More feature toggles will appear here.
+                </p>
               </div>
             </div>
             <div

@@ -28,6 +28,35 @@
   pointer-events: none;
 }
 
+.settings-first-hint {
+  position: fixed;
+  height: var(--button-size);
+  padding-left: inherit;
+  padding-right: inherit;
+  bottom: calc(
+    var(--spacing-xs) + max(env(safe-area-inset-bottom), var(--spacing-xs))
+  );
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  z-index: 100;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.settings-first-hint.visible {
+  opacity: 1;
+}
+
 .settings.visible {
   opacity: 1;
   pointer-events: auto;
@@ -170,6 +199,14 @@
   margin: 0 0 var(--spacing-md) 0;
   color: var(--color-text-secondary);
   line-height: 1.6;
+  font-weight: 600;
+}
+
+.settings-modal-subtitle {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .settings-modal-section {
@@ -185,9 +222,31 @@
 
 .settings-modal-section ul {
   margin: 0;
-  padding-left: var(--spacing-md);
+  padding-left: 0;
+  list-style: none;
   color: var(--color-text-secondary);
   line-height: 1.8;
+}
+
+.settings-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
+.settings-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.settings-modal-placeholder {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .settings-modal-version {
