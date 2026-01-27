@@ -23,6 +23,7 @@ export function BottomPlayButton({
   const LONG_PRESS_DURATION = 500;
 
   const handleMouseDown = () => {
+    if (isPlaying) return;
     if (!onLongPress) return;
     hasLongPressedRef.current = false;
 
@@ -48,6 +49,7 @@ export function BottomPlayButton({
   };
 
   const handleTouchStart = () => {
+    if (isPlaying) return;
     if (!onLongPress) return;
     hasLongPressedRef.current = false;
 

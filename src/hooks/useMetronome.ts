@@ -61,6 +61,7 @@ export function useMetronome({
   const currentSubdivisionRef = useRef<number>(0);
   const schedulerIntervalRef = useRef<number | null>(null);
   const isRunningRef = useRef<boolean>(false);
+  const activeTimeoutsRef = useRef<Set<number>>(new Set());
 
   // 调度器函数 - 使用 ref 获取最新值
   const scheduler = useCallback(() => {
@@ -102,26 +103,40 @@ export function useMetronome({
         // 通知外部 beat 变化
         const callback = onBeatChangeRef.current;
         if (callback) {
-          setTimeout(() => callback(beatNumber), delayMs);
+          const timeoutId = window.setTimeout(
+            () => callback(beatNumber),
+            delayMs,
+          ) as unknown as number;
+          activeTimeoutsRef.current.add(timeoutId);
         }
       }
 
       // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
       const subIdx = subdivisionIndex;
       const beatNum = beatNumber;
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
+        // 从 set 中移除已执行的 timeout
+        activeTimeoutsRef.current.delete(timeoutId as unknown as number);
+
         const now = Date.now();
         if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
           requestAnimationFrame(() => {
             lastAnimationUpdateTime = Date.now();
-            setCurrentSubdivision(subIdx);
-            setCurrentBeat(beatNum);
+            // 检查是否仍在运行，避免停止后的更新
+            if (isRunningRef.current) {
+              setCurrentSubdivision(subIdx);
+              setCurrentBeat(beatNum);
+            }
           });
         } else {
-          setCurrentSubdivision(subIdx);
-          setCurrentBeat(beatNum);
+          // 检查是否仍在运行，避免停止后的更新
+          if (isRunningRef.current) {
+            setCurrentSubdivision(subIdx);
+            setCurrentBeat(beatNum);
+          }
         }
       }, Math.max(0, delayMs));
+      activeTimeoutsRef.current.add(timeoutId as unknown as number);
 
       // 移动到下一个 subdivision
       currentSubdivisionRef.current =
@@ -167,6 +182,11 @@ export function useMetronome({
       clearInterval(schedulerIntervalRef.current);
       schedulerIntervalRef.current = null;
     }
+    // 清除所有待执行的 setTimeout 回调
+    activeTimeoutsRef.current.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    activeTimeoutsRef.current.clear();
     releaseWakeLock();
   }, []);
 
@@ -197,6 +217,11 @@ export function useMetronome({
     currentSubdivisionRef.current = 0;
     setCurrentSubdivision(0);
     setCurrentBeat(0);
+    // 清除所有待执行的 setTimeout 回调
+    activeTimeoutsRef.current.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    activeTimeoutsRef.current.clear();
     if (isPlaying && isRunningRef.current) {
       const ctx = getAudioContext();
       nextNoteTimeRef.current = ctx.currentTime;

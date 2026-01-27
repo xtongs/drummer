@@ -18,6 +18,19 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+}
+
+.settings.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .updating {

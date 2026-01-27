@@ -58,11 +58,14 @@
   --font-family:
     "Consolas", "Monaco", "Courier New", "Menlo", "Fira Code",
     "Source Code Pro", monospace;
+  --font-family-alt:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    Arial, sans-serif;
   --font-size-xs: 10px;
   --font-size-sm: 12px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 24px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
 
   /* 圆角 */
   --border-radius-sm: 2px;

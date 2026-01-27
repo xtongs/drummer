@@ -3,8 +3,8 @@
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-  --thumb-size: 20px;
-  --thumb-radius: 10px;
+  --thumb-size: 22px;
+  --thumb-radius: 50%;
 }
 
 .bpm-slider-track {

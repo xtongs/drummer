@@ -212,7 +212,20 @@ export function MetronomeBar({
                 onClick={handleBPMClickPrev}
                 aria-label="BPM rate prev"
               ></span>
-              {Math.round(bpm * 10) / 10 === Math.round(bpm) ? Math.round(bpm) : (Math.round(bpm * 10) / 10).toFixed(1)}
+              {(() => {
+                const rounded = Math.round(bpm * 10) / 10;
+                const hasDecimal = rounded !== Math.round(bpm);
+                const integerPart = Math.floor(rounded);
+                const decimalPart = hasDecimal ? String(rounded).split('.')[1] : null;
+                return (
+                  <>
+                    <span className="bpm-value-integer">{integerPart}</span>
+                    {decimalPart && (
+                      <span className="bpm-value-decimal">.{decimalPart}</span>
+                    )}
+                  </>
+                );
+              })()}
             </span>
             {rateLabels[rateIndex % rateLabels.length] && (
               <span className="bpm-rate-label">

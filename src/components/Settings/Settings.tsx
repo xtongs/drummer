@@ -364,15 +364,11 @@ export function Settings() {
     }
   };
 
-  if (!isVisible) {
-    return null;
-  }
-
   const isUpdating = updateStatus !== "idle";
 
   return (
     <>
-      <div className={`settings`}>
+      <div className={`settings ${isVisible ? "visible" : "hidden"}`}>
         <div className="settings-theme" onClick={cycleTheme}>
           <button
             type="button"
