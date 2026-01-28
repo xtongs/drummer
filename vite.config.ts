@@ -80,4 +80,18 @@ export default defineConfig({
     allowedHosts: true,
   },
   base: "/drummer/",
+  build: {
+    chunkSizeWarningLimit: 1200, // 调整阈值以适应VexFlow库
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 将React和ReactDOM分离到单独的chunk
+          "react-vendor": ["react", "react-dom"],
+          // 将音频和图形库分离
+          "audio-libs": ["tone"],
+          "graphics-libs": ["vexflow"],
+        },
+      },
+    },
+  },
 });

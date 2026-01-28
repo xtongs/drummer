@@ -33,6 +33,8 @@ export function useBackgroundMusicPlayer({
   patternStartToken,
   rangeStartBar,
 }: UseBackgroundMusicPlayerOptions): BackgroundMusicState {
+  const beatsPerBar = pattern.timeSignature[0];
+  const beatUnit = pattern.timeSignature[1];
   const playerRef = useRef<Tone.GrainPlayer | null>(null);
   const fileIdRef = useRef<string | undefined>(undefined);
   const [state, setState] = useState<BackgroundMusicState>({
@@ -40,7 +42,6 @@ export function useBackgroundMusicPlayer({
     isLoaded: false,
     error: null,
   });
-  const [isLoaded, setIsLoaded] = useState(false);
   const playbackRateRef = useRef(playbackRate);
   playbackRateRef.current = playbackRate;
   const positionSecondsRef = useRef(0);
@@ -82,12 +83,10 @@ export function useBackgroundMusicPlayer({
 
     // 计算 range start 的原始节奏时间（从 bar 0 到 rangeStartBar）
     // ⚠️ 必须使用原始 BPM，不乘以 playbackRate
-    const [beatsPerBar] = pattern.timeSignature;
     let timeAtRangeStartOriginal = 0;
     for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
       const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
-      const originalBeatDuration =
-        (60 / barBpm) * (4 / pattern.timeSignature[1]);
+      const originalBeatDuration = (60 / barBpm) * (4 / beatUnit);
       const originalBarDuration = originalBeatDuration * beatsPerBar;
       timeAtRangeStartOriginal += originalBarDuration;
     }
@@ -130,7 +129,8 @@ export function useBackgroundMusicPlayer({
     bgmConfig.offsetMs,
     pattern.barBpmOverrides,
     pattern.bpm,
-    pattern.timeSignature,
+    beatUnit,
+    beatsPerBar,
     rangeStartBar,
   ]);
 
@@ -140,7 +140,6 @@ export function useBackgroundMusicPlayer({
     const loadPlayer = async () => {
       if (!bgmConfig.fileId) {
         fileIdRef.current = undefined;
-        setIsLoaded(false);
         if (playerRef.current) {
           playerRef.current.stop();
           playerRef.current.dispose();
@@ -155,7 +154,6 @@ export function useBackgroundMusicPlayer({
       }
 
       setState({ isLoading: true, isLoaded: false, error: null });
-      setIsLoaded(false);
       try {
         const record = await getBgmFile(bgmConfig.fileId);
         if (!record) {
@@ -188,11 +186,9 @@ export function useBackgroundMusicPlayer({
         player.volume.value = Tone.gainToDb(normalized);
         playerRef.current = player;
         fileIdRef.current = bgmConfig.fileId;
-        setIsLoaded(true);
         setState({ isLoading: false, isLoaded: true, error: null });
       } catch (error) {
         if (!isCancelled) {
-          setIsLoaded(false);
           setState({
             isLoading: false,
             isLoaded: false,
@@ -214,7 +210,6 @@ export function useBackgroundMusicPlayer({
 
   useEffect(() => {
     // 计算实际播放时间（考虑 playbackRate 和每小节 BPM 覆盖）
-    const [beatsPerBar] = pattern.timeSignature;
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
 
     // 累计计算从 bar 0 到 currentSubdivision 的总时间
@@ -226,7 +221,7 @@ export function useBackgroundMusicPlayer({
       // 获取该小节的 BPM
       const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
       const effectiveBpm = barBpm * playbackRate;
-      const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
+      const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
       const barDuration = beatDuration * beatsPerBar;
       totalSeconds += barDuration;
     }
@@ -235,7 +230,7 @@ export function useBackgroundMusicPlayer({
     const currentBarBpm =
       pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
     const effectiveBpm = currentBarBpm * playbackRate;
-    const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
+    const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
     const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
     const subdivisionsInCurrentBar = currentSubdivision % subdivisionsPerBar;
     totalSeconds += subdivisionsInCurrentBar * subdivisionDuration;
@@ -245,7 +240,7 @@ export function useBackgroundMusicPlayer({
     for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
       const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
       const effectiveBpm = barBpm * playbackRate;
-      const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
+      const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
       const barDuration = beatDuration * beatsPerBar;
       rangeStartOffset += barDuration;
     }
@@ -255,9 +250,10 @@ export function useBackgroundMusicPlayer({
     currentSubdivision,
     pattern.bpm,
     pattern.barBpmOverrides,
-    pattern.timeSignature,
+    beatUnit,
     playbackRate,
     rangeStartBar,
+    beatsPerBar,
   ]);
 
   useEffect(() => {
@@ -285,7 +281,7 @@ export function useBackgroundMusicPlayer({
       !isPlaying ||
       !isFullPracticeMode ||
       !bgmConfig.fileId ||
-      !isLoaded
+      !state.isLoaded
     ) {
       lastOffsetRef.current = bgmConfig.offsetMs ?? 0;
       return;
@@ -302,7 +298,7 @@ export function useBackgroundMusicPlayer({
     bgmConfig.offsetMs,
     isPlaying,
     isFullPracticeMode,
-    isLoaded,
+    state.isLoaded,
     bgmConfig.fileId,
     startFromCurrentPosition,
   ]);
@@ -337,13 +333,18 @@ export function useBackgroundMusicPlayer({
     isFullPracticeMode,
     bgmConfig.fileId,
     bgmConfig.offsetMs,
-    isLoaded,
+    state.isLoaded,
     patternStartToken,
     startFromCurrentPosition,
   ]);
 
   useEffect(() => {
-    if (!isPlaying || !isFullPracticeMode || !bgmConfig.fileId || !isLoaded) {
+    if (
+      !isPlaying ||
+      !isFullPracticeMode ||
+      !bgmConfig.fileId ||
+      !state.isLoaded
+    ) {
       lastSubdivisionRef.current = currentSubdivision;
       return;
     }
@@ -364,7 +365,7 @@ export function useBackgroundMusicPlayer({
     isPlaying,
     isFullPracticeMode,
     bgmConfig.fileId,
-    isLoaded,
+    state.isLoaded,
     startFromCurrentPosition,
   ]);
 

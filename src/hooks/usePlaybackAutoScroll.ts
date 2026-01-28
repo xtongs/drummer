@@ -1,4 +1,10 @@
-import { useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import {
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import type { Pattern, CrossPatternLoop } from "../types";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import { smoothScrollTo } from "../utils/animation";
@@ -46,7 +52,20 @@ export function usePlaybackAutoScroll({
   const lastBarIndexRef = useRef<number | null>(null);
   // pattern 切换后，记录预期的起始位置，用于验证 currentBeat 是否已同步
   const expectedStartSubRef = useRef<number | null>(null);
-  const rightLead = (cellSize * SUBDIVISIONS_PER_BEAT) / 4 / 2; // 右侧提前量
+  const beatsPerBar = pattern.timeSignature[0];
+  const subdivisionsPerBar = useMemo(
+    () => beatsPerBar * SUBDIVISIONS_PER_BEAT,
+    [beatsPerBar],
+  );
+  const totalSubdivisions = useMemo(
+    () => pattern.bars * subdivisionsPerBar,
+    [pattern.bars, subdivisionsPerBar],
+  );
+  const patternBars = pattern.bars;
+  const rightLead = useMemo(
+    () => (cellSize * SUBDIVISIONS_PER_BEAT) / 8,
+    [cellSize],
+  ); // 右侧提前量
 
   // 执行滚动的函数
   const doScroll = useCallback((container: HTMLElement, targetLeft: number) => {
@@ -94,8 +113,6 @@ export function usePlaybackAutoScroll({
         }
       }
 
-      const [beatsPerBar] = pattern.timeSignature;
-      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
       const targetLeft = startBar * subdivisionsPerBar * cellSize;
 
       // 记录预期的起始位置（第一个小节末尾），用于验证 currentBeat 是否已同步
@@ -115,7 +132,7 @@ export function usePlaybackAutoScroll({
     pattern.id,
     pattern.name,
     cellSize,
-    pattern.timeSignature,
+    subdivisionsPerBar,
     scrollContainerRef,
     crossPatternLoop,
     isDraftMode,
@@ -139,10 +156,6 @@ export function usePlaybackAutoScroll({
     }
 
     // 计算小节相关数据
-    const [beatsPerBar] = pattern.timeSignature;
-    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-    const totalSubdivisions = pattern.bars * subdivisionsPerBar;
-
     // 检查 currentBeat 是否在当前 pattern 的有效范围内
     // 如果超出范围，说明 pattern 和 currentBeat 状态还未同步，跳过本次滚动
     if (currentBeat >= totalSubdivisions) {
@@ -210,7 +223,7 @@ export function usePlaybackAutoScroll({
       // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
       // 确定当前 pattern 在 range 中的范围
       let rangeStartBar = 0;
-      let rangeEndBar = pattern.bars - 1;
+      let rangeEndBar = patternBars - 1;
 
       if (crossPatternLoop) {
         // 检查当前 pattern 是否是 range 的开始 pattern
@@ -249,12 +262,13 @@ export function usePlaybackAutoScroll({
     isPlaying,
     rightLead,
     doScroll,
-    pattern.timeSignature,
-    pattern.bars,
+    subdivisionsPerBar,
+    totalSubdivisions,
     pattern.name,
     crossPatternLoop,
     isDraftMode,
     scrollContainerRef,
+    patternBars,
   ]);
 
   // 当停止播放或切换 pattern 时，重置滚动状态
@@ -280,10 +294,6 @@ export function usePlaybackAutoScroll({
     }
 
     // 计算小节相关数据
-    const [beatsPerBar] = pattern.timeSignature;
-    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-    const totalSubdivisions = pattern.bars * subdivisionsPerBar;
-
     // 检查 currentBeat 是否在当前 pattern 的有效范围内
     // 如果超出范围，说明 pattern 和 currentBeat 状态还未同步，跳过本次滚动
     if (currentBeat >= totalSubdivisions) {
@@ -337,7 +347,7 @@ export function usePlaybackAutoScroll({
       // 如果游标已经在接近右边界，滚动到下一个小节
       // 确定当前 pattern 在 range 中的范围
       let rangeStartBar = 0;
-      let rangeEndBar = pattern.bars - 1;
+      let rangeEndBar = patternBars - 1;
 
       if (crossPatternLoop) {
         const isStartPattern = isDraftMode
@@ -376,8 +386,9 @@ export function usePlaybackAutoScroll({
     currentBeat,
     cellSize,
     rightLead,
-    pattern.timeSignature,
-    pattern.bars,
+    subdivisionsPerBar,
+    totalSubdivisions,
+    patternBars,
     pattern.name,
     crossPatternLoop,
     isDraftMode,
