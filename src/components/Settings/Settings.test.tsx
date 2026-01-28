@@ -123,8 +123,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
 
       expect(kickBButton).toHaveClass("active");
 
@@ -133,8 +134,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Snare")
         .filter((el) => el.textContent === "Snare");
       const snareSection = snareButtons[0]?.closest(".sample-selection-item");
-      const snareCButton =
-        snareSection?.querySelectorAll(".sample-variant-button")[2];
+      const snareCButton = snareSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[2];
 
       expect(snareCButton).toHaveClass("active");
     });
@@ -152,8 +154,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
 
       fireEvent.click(kickBButton!);
 
@@ -170,8 +173,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
 
       fireEvent.click(kickBButton!);
 
@@ -188,8 +192,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
 
       fireEvent.click(kickBButton!);
 
@@ -221,8 +226,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
 
       fireEvent.click(kickBButton!);
 
@@ -246,8 +252,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickButtons_list =
-        kickSection?.querySelectorAll(".sample-variant-button");
+      const kickButtons_list = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      );
 
       // 初始状态: A 是 active
       expect(kickButtons_list?.[0]).toHaveClass("active");
@@ -274,8 +281,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickBButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[1];
+      const kickBButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[1];
       fireEvent.click(kickBButton!);
 
       // 选择 Snare 的 C
@@ -283,8 +291,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Snare")
         .filter((el) => el.textContent === "Snare");
       const snareSection = snareButtons[0]?.closest(".sample-selection-item");
-      const snareCButton =
-        snareSection?.querySelectorAll(".sample-variant-button")[2];
+      const snareCButton = snareSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[2];
       fireEvent.click(snareCButton!);
 
       expect(storage.setSampleVariant).toHaveBeenCalledWith("Kick", "B");
@@ -308,8 +317,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickVariantButtons =
-        kickSection?.querySelectorAll(".sample-variant-button");
+      const kickVariantButtons = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      );
 
       expect(kickVariantButtons?.[0]).not.toHaveClass("active");
       expect(kickVariantButtons?.[1]).toHaveClass("active");
@@ -320,8 +330,9 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Snare")
         .filter((el) => el.textContent === "Snare");
       const snareSection = snareButtons[0]?.closest(".sample-selection-item");
-      const snareVariantButtons =
-        snareSection?.querySelectorAll(".sample-variant-button");
+      const snareVariantButtons = snareSection?.querySelectorAll(
+        ".sample-variant-button",
+      );
 
       expect(snareVariantButtons?.[0]).not.toHaveClass("active");
       expect(snareVariantButtons?.[1]).not.toHaveClass("active");
@@ -371,13 +382,11 @@ describe("Settings 采样选择功能", () => {
         .getAllByText("Kick")
         .filter((el) => el.textContent === "Kick");
       const kickSection = kickButtons[0]?.closest(".sample-selection-item");
-      const kickAButton =
-        kickSection?.querySelectorAll(".sample-variant-button")[0];
+      const kickAButton = kickSection?.querySelectorAll(
+        ".sample-variant-button",
+      )[0];
 
-      expect(kickAButton).toHaveAttribute(
-        "title",
-        "Select A variant for Kick",
-      );
+      expect(kickAButton).toHaveAttribute("title", "Select A variant for Kick");
     });
   });
 });

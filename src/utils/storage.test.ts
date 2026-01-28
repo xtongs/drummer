@@ -434,9 +434,9 @@ describe("Storage 工具函数", () => {
     describe("saveSampleSelection / loadSampleSelection", () => {
       it("应该保存并加载采样选择映射", () => {
         const selection = {
-          Kick: "B",
-          Snare: "C",
-          "Hi-Hat Closed": "A",
+          Kick: "B" as const,
+          Snare: "C" as const,
+          "Hi-Hat Closed": "A" as const,
         };
         saveSampleSelection(selection);
 
@@ -477,8 +477,8 @@ describe("Storage 工具函数", () => {
 
       it("应该支持部分鼓件的采样选择", () => {
         const selection = {
-          Kick: "C",
-          Snare: "B",
+          Kick: "C" as const,
+          Snare: "B" as const,
         };
         saveSampleSelection(selection);
 
