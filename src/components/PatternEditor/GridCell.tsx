@@ -118,7 +118,7 @@ export function GridCell({
         setIsPressing(false);
       }, LONG_PRESS_DURATION);
     },
-    [isActive, onToggleGhost, drumType, cellState, isThirtySecond]
+    [isActive, onToggleGhost, drumType, cellState, isThirtySecond],
   );
 
   const handlePointerUp = useCallback(() => {
@@ -199,16 +199,13 @@ export function GridCell({
 
   return (
     <button
-      className={`grid-cell ${isActive ? "active" : ""} ${isGhost ? "ghost" : ""
-        } ${isGrace ? "grace" : ""
-        } ${isThirtySecond ? "thirty-second" : ""
-        } ${isDouble32 ? "double-32" : ""
-        } ${isFirst32 ? "first-32" : ""
-        } ${isSecond32 ? "second-32" : ""
-        } ${isCurrentBeat ? "current-beat" : ""
-        } ${isAlternateBeat ? "alt-beat" : ""
-        } ${isPressing ? "pressing" : ""
-        }`}
+      className={`grid-cell ${isActive ? "active" : ""} ${isGhost ? "ghost" : ""} ${
+        isGrace ? "grace" : ""
+      } ${isThirtySecond ? "thirty-second" : ""} ${isDouble32 ? "double-32" : ""} ${
+        isFirst32 ? "first-32" : ""
+      } ${isSecond32 ? "second-32" : ""} ${isCurrentBeat ? "current-beat" : ""} ${
+        isAlternateBeat ? "alt-beat" : ""
+      } ${isPressing ? "pressing" : ""}`}
       style={style}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -216,13 +213,18 @@ export function GridCell({
       onPointerCancel={handlePointerLeave}
       type="button"
       aria-label={
-        isGrace ? "Grace note" : isGhost ? "Ghost note" : isActive ? "Active" : "Inactive"
+        isGrace
+          ? "Grace note"
+          : isGhost
+            ? "Ghost note"
+            : isActive
+              ? "Active"
+              : "Inactive"
       }
     >
       {isThirtySecond && (
         <div
-          className={`cell-32-dots ${isDouble32 ? "double" : isFirst32 ? "first" : "second"
-            }`}
+          className={`cell-32-dots ${isDouble32 ? "double" : isFirst32 ? "first" : "second"}`}
           aria-hidden="true"
         >
           {(isDouble32 || isFirst32) && <span className="dot left" />}

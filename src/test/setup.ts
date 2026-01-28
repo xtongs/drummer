@@ -33,13 +33,16 @@ beforeEach(() => {
         return true; // 假装写入成功
       }
       return originalStderrWrite.call(process.stderr, buffer, encodingOrCb, cb);
-    }
+    },
   );
 
   // 抑制全局错误（window.onerror）
   globalThis.onerror = (message, source, lineno, colno, error) => {
     const messageStr = String(message);
-    if (isVexFlowError(messageStr) || (error && isVexFlowError(error.message))) {
+    if (
+      isVexFlowError(messageStr) ||
+      (error && isVexFlowError(error.message))
+    ) {
       return true; // 阻止错误继续传播
     } else if (originalOnError) {
       return originalOnError(message, source, lineno, colno, error);
@@ -60,14 +63,16 @@ beforeEach(() => {
   // 抑制 VexFlow 相关的错误（测试环境中 SVG 可能不可用）
   vi.spyOn(console, "error").mockImplementation((...args) => {
     // 将所有参数转换为字符串进行检查
-    const allArgsStr = args.map((arg: unknown) => {
-      if (typeof arg === "string") return arg;
-      try {
-        return JSON.stringify(arg);
-      } catch {
-        return String(arg);
-      }
-    }).join(" ");
+    const allArgsStr = args
+      .map((arg: unknown) => {
+        if (typeof arg === "string") return arg;
+        try {
+          return JSON.stringify(arg);
+        } catch {
+          return String(arg);
+        }
+      })
+      .join(" ");
 
     // 检查是否包含 VexFlow 相关的关键词
     const vexflowKeywords = [
@@ -92,14 +97,16 @@ beforeEach(() => {
   });
 
   vi.spyOn(console, "warn").mockImplementation((...args) => {
-    const allArgsStr = args.map((arg: unknown) => {
-      if (typeof arg === "string") return arg;
-      try {
-        return JSON.stringify(arg);
-      } catch {
-        return String(arg);
-      }
-    }).join(" ");
+    const allArgsStr = args
+      .map((arg: unknown) => {
+        if (typeof arg === "string") return arg;
+        try {
+          return JSON.stringify(arg);
+        } catch {
+          return String(arg);
+        }
+      })
+      .join(" ");
 
     // 抑制 VexFlow 相关的警告
     const vexflowKeywords = [
@@ -137,7 +144,11 @@ const mockAudioContext = {
     disconnect: vi.fn(),
     start: vi.fn(),
     stop: vi.fn(),
-    frequency: { value: 0, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+    frequency: {
+      value: 0,
+      setValueAtTime: vi.fn(),
+      exponentialRampToValueAtTime: vi.fn(),
+    },
     type: "sine",
   })),
   createGain: vi.fn(() => ({
@@ -182,8 +193,14 @@ const mockAudioContext = {
 };
 
 // 模拟 AudioContext
-vi.stubGlobal("AudioContext", vi.fn(() => mockAudioContext));
-vi.stubGlobal("webkitAudioContext", vi.fn(() => mockAudioContext));
+vi.stubGlobal(
+  "AudioContext",
+  vi.fn(() => mockAudioContext),
+);
+vi.stubGlobal(
+  "webkitAudioContext",
+  vi.fn(() => mockAudioContext),
+);
 
 // Mock localStorage
 const createLocalStorageMock = () => {
@@ -210,26 +227,35 @@ const localStorageMock = createLocalStorageMock();
 vi.stubGlobal("localStorage", localStorageMock);
 
 // Mock fetch for audio samples
-vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-  ok: true,
-  arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(1024)),
-}));
+vi.stubGlobal(
+  "fetch",
+  vi.fn().mockResolvedValue({
+    ok: true,
+    arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(1024)),
+  }),
+);
 
 // Mock Audio element
-vi.stubGlobal("Audio", vi.fn(() => ({
-  play: vi.fn().mockResolvedValue(undefined),
-  pause: vi.fn(),
-  load: vi.fn(),
-  preload: "auto",
-  volume: 1,
-  src: "",
-})));
+vi.stubGlobal(
+  "Audio",
+  vi.fn(() => ({
+    play: vi.fn().mockResolvedValue(undefined),
+    pause: vi.fn(),
+    load: vi.fn(),
+    preload: "auto",
+    volume: 1,
+    src: "",
+  })),
+);
 
 // Mock requestAnimationFrame
-vi.stubGlobal("requestAnimationFrame", vi.fn((callback: FrameRequestCallback) => {
-  setTimeout(() => callback(Date.now()), 16);
-  return 1;
-}));
+vi.stubGlobal(
+  "requestAnimationFrame",
+  vi.fn((callback: FrameRequestCallback) => {
+    setTimeout(() => callback(Date.now()), 16);
+    return 1;
+  }),
+);
 
 vi.stubGlobal("cancelAnimationFrame", vi.fn());
 

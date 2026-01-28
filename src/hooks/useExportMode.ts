@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  copyToClipboard,
-  isClipboardWriteSupported,
-} from "../utils/clipboard";
+import { copyToClipboard, isClipboardWriteSupported } from "../utils/clipboard";
 
 interface UseExportModeReturn {
   /** 是否处于导出模式 */

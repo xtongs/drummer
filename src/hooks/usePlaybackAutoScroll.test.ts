@@ -56,7 +56,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     expect(smoothScrollTo).not.toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     expect(smoothScrollTo).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     expect(smoothScrollTo).not.toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe("usePlaybackAutoScroll", () => {
           isDraftMode: false,
           isPlaying: true,
         }),
-      { initialProps: { currentBeat: 5 } }
+      { initialProps: { currentBeat: 5 } },
     );
 
     vi.clearAllMocks();
@@ -127,7 +127,7 @@ describe("usePlaybackAutoScroll", () => {
       mockContainer,
       320,
       150,
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -148,7 +148,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     // 左侧滚动使用平滑滚动
@@ -156,7 +156,7 @@ describe("usePlaybackAutoScroll", () => {
       mockContainer,
       0,
       150,
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -177,7 +177,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     // 左侧滚动使用平滑滚动
@@ -185,7 +185,7 @@ describe("usePlaybackAutoScroll", () => {
       mockContainer,
       320,
       150,
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -209,7 +209,7 @@ describe("usePlaybackAutoScroll", () => {
           isDraftMode: false,
           isPlaying: true,
         }),
-      { initialProps: { pattern: patternA, currentBeat: 20 } }
+      { initialProps: { pattern: patternA, currentBeat: 20 } },
     );
 
     // 清除之前的调用
@@ -236,7 +236,7 @@ describe("usePlaybackAutoScroll", () => {
           isDraftMode: false,
           isPlaying,
         }),
-      { initialProps: { isPlaying: true } }
+      { initialProps: { isPlaying: true } },
     );
 
     // 停止播放
@@ -259,7 +259,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: false,
-      })
+      }),
     );
 
     expect(typeof result.current.doScroll).toBe("function");
@@ -277,7 +277,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: false,
-      })
+      }),
     );
 
     expect(result.current.scrollContainerRef).toBe(scrollContainerRef);
@@ -299,7 +299,7 @@ describe("usePlaybackAutoScroll", () => {
         crossPatternLoop: undefined,
         isDraftMode: false,
         isPlaying: true,
-      })
+      }),
     );
 
     expect(smoothScrollTo).not.toHaveBeenCalled();

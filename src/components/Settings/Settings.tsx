@@ -173,7 +173,9 @@ export function Settings() {
       navigator.serviceWorker.addEventListener(
         "controllerchange",
         reloadOnControllerChange,
-        { once: true },
+        {
+          once: true,
+        },
       );
       console.log("[Refresh] ✓ Added controllerchange listener");
 

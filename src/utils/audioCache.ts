@@ -60,12 +60,12 @@ function serializableToAudioBuffer(
     length: number;
     sampleRate: number;
     channelData: Float32Array[];
-  }
+  },
 ): AudioBuffer {
   const buffer = ctx.createBuffer(
     data.numberOfChannels,
     data.length,
-    data.sampleRate
+    data.sampleRate,
   );
 
   for (let i = 0; i < data.numberOfChannels; i++) {
@@ -81,7 +81,7 @@ function serializableToAudioBuffer(
  */
 export async function cacheAudioBuffer(
   name: string,
-  buffer: AudioBuffer
+  buffer: AudioBuffer,
 ): Promise<void> {
   try {
     const db = await openDB();
@@ -106,7 +106,7 @@ export async function cacheAudioBuffer(
  */
 export async function getCachedAudioBuffer(
   ctx: AudioContext,
-  name: string
+  name: string,
 ): Promise<AudioBuffer | null> {
   try {
     const db = await openDB();
@@ -229,7 +229,7 @@ export async function checkAndUpdateCacheVersion(): Promise<void> {
     const currentVersion = await getCacheVersion();
     if (currentVersion !== CURRENT_CACHE_VERSION) {
       console.log(
-        `Cache version mismatch. Expected: ${CURRENT_CACHE_VERSION}, Found: ${currentVersion}. Clearing cache...`
+        `Cache version mismatch. Expected: ${CURRENT_CACHE_VERSION}, Found: ${currentVersion}. Clearing cache...`,
       );
       await clearAudioCache();
       await setCacheVersion(CURRENT_CACHE_VERSION);

@@ -64,7 +64,7 @@ describe("BGM 同步逻辑", () => {
   describe("patternTime 转换为原始节奏时间", () => {
     it("应该将 patternTime（已考虑 playbackRate）除以 playbackRate 得到原始节奏时间", () => {
       // 场景：patternTime = 3.70 秒（rate=0.9 时的实际播放时间）
-      const patternTime = 3.70;
+      const patternTime = 3.7;
       const playbackRate = 0.9;
 
       // 转换为原始节奏时间
@@ -107,7 +107,8 @@ describe("BGM 同步逻辑", () => {
       const patternTimeOriginal = patternTime / playbackRate;
 
       // 计算 BGM 位置
-      const absolutePatternTime = patternTimeOriginal + timeAtRangeStartOriginal;
+      const absolutePatternTime =
+        patternTimeOriginal + timeAtRangeStartOriginal;
       const adjustedPatternTime = absolutePatternTime - offsetSeconds;
       const desiredBgmPosition = adjustedPatternTime / playbackRate;
 
@@ -134,7 +135,8 @@ describe("BGM 同步逻辑", () => {
       const patternTimeOriginal = patternTime / playbackRate;
 
       // 计算 BGM 位置
-      const absolutePatternTime = patternTimeOriginal + timeAtRangeStartOriginal;
+      const absolutePatternTime =
+        patternTimeOriginal + timeAtRangeStartOriginal;
       const adjustedPatternTime = absolutePatternTime - offsetSeconds;
       const desiredBgmPosition = adjustedPatternTime / playbackRate;
 
@@ -167,7 +169,8 @@ describe("BGM 同步逻辑", () => {
       const patternTime = 0;
       const patternTimeOriginal = patternTime / playbackRate;
 
-      const absolutePatternTime = patternTimeOriginal + timeAtRangeStartOriginal;
+      const absolutePatternTime =
+        patternTimeOriginal + timeAtRangeStartOriginal;
       const adjustedPatternTime = absolutePatternTime - offsetSeconds;
       const desiredBgmPosition = adjustedPatternTime / playbackRate;
 

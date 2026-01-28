@@ -9,6 +9,12 @@ module.exports = {
   ignorePatterns: ["dist", ".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
   plugins: ["react-refresh", "@typescript-eslint"],
+  overrides: [
+    {
+      files: ["scripts/**/*.mjs"],
+      env: { node: true, es2020: true },
+    },
+  ],
   rules: {
     "react-refresh/only-export-components": [
       "warn",

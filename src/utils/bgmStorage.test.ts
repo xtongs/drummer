@@ -8,7 +8,12 @@ describe("bgmStorage config", () => {
 
   it("returns default config when none exists", () => {
     const config = getBgmConfig("pattern-1");
-    expect(config).toEqual({ fileId: undefined, offsetMs: 0, volumePct: 100, meta: undefined });
+    expect(config).toEqual({
+      fileId: undefined,
+      offsetMs: 0,
+      volumePct: 100,
+      meta: undefined,
+    });
   });
 
   it("saves and loads config by pattern id", () => {
@@ -26,7 +31,11 @@ describe("bgmStorage config", () => {
   });
 
   it("deletes config by pattern id", () => {
-    saveBgmConfig("pattern-1", { fileId: "bgm-1", offsetMs: 0, volumePct: 100 });
+    saveBgmConfig("pattern-1", {
+      fileId: "bgm-1",
+      offsetMs: 0,
+      volumePct: 100,
+    });
     deleteBgmConfig("pattern-1");
     const config = getBgmConfig("pattern-1");
     expect(config.fileId).toBeUndefined();

@@ -21,7 +21,7 @@ export function LoopRangeSelector({
   const lastBarsRef = useRef(currentPattern.bars);
   // 按名称排序的 patterns
   const sortedPatterns = [...savedPatterns].sort((a, b) =>
-    a.name.localeCompare(b.name)
+    a.name.localeCompare(b.name),
   );
 
   // 获取 pattern 的小节数
@@ -92,14 +92,20 @@ export function LoopRangeSelector({
         endBar: currentPattern.bars - 1,
       });
     }
-  }, [isDraftMode, currentPattern.name, crossPatternLoop, onCrossPatternLoopChange, currentPattern.bars]);
+  }, [
+    isDraftMode,
+    currentPattern.name,
+    crossPatternLoop,
+    onCrossPatternLoopChange,
+    currentPattern.bars,
+  ]);
 
   // 比较两个位置的先后顺序
   const comparePositions = (
     patternName1: string,
     bar1: number,
     patternName2: string,
-    bar2: number
+    bar2: number,
   ): number => {
     if (patternName1 === patternName2) {
       return bar1 - bar2;
@@ -171,7 +177,7 @@ export function LoopRangeSelector({
         updatedLoop.startPatternName,
         updatedLoop.startBar,
         updatedLoop.endPatternName,
-        updatedLoop.endBar
+        updatedLoop.endBar,
       ) > 0
     ) {
       // 如果开始位置超过结束位置，将结束位置调整为开始位置
@@ -188,9 +194,9 @@ export function LoopRangeSelector({
   // 获取可选的 patterns 列表（草稿模式用空字符串表示）
   const patternOptions = isDraftMode
     ? [
-      { name: "", label: "○" },
-      ...sortedPatterns.map((p) => ({ name: p.name, label: p.name })),
-    ]
+        { name: "", label: "○" },
+        ...sortedPatterns.map((p) => ({ name: p.name, label: p.name })),
+      ]
     : sortedPatterns.map((p) => ({ name: p.name, label: p.name }));
 
   const handleStartPatternChange = (newPatternName: string) => {
@@ -203,7 +209,7 @@ export function LoopRangeSelector({
         newPatternName,
         newStartBar,
         loop.endPatternName,
-        loop.endBar
+        loop.endBar,
       ) > 0
     ) {
       // 如果新的开始位置超过了结束位置，调整结束位置
@@ -232,7 +238,7 @@ export function LoopRangeSelector({
         loop.startPatternName,
         loop.startBar,
         newPatternName,
-        newEndBar
+        newEndBar,
       ) > 0
     ) {
       // 如果新的结束位置早于开始位置，调整开始位置
@@ -270,7 +276,7 @@ export function LoopRangeSelector({
         loop.startPatternName,
         newStartBar,
         loop.endPatternName,
-        loop.endBar
+        loop.endBar,
       ) <= 0
     ) {
       onCrossPatternLoopChange({
@@ -290,7 +296,7 @@ export function LoopRangeSelector({
         loop.startPatternName,
         loop.startBar,
         loop.endPatternName,
-        newEndBar
+        newEndBar,
       ) <= 0
     ) {
       onCrossPatternLoopChange({
@@ -318,7 +324,7 @@ export function LoopRangeSelector({
       loop.startPatternName,
       loop.startBar + 1,
       loop.endPatternName,
-      loop.endBar
+      loop.endBar,
     ) <= 0;
   const canDecreaseEndBar =
     loop.endBar > 0 &&
@@ -326,7 +332,7 @@ export function LoopRangeSelector({
       loop.startPatternName,
       loop.startBar,
       loop.endPatternName,
-      loop.endBar - 1
+      loop.endBar - 1,
     ) <= 0;
   const canIncreaseEndBar =
     loop.endBar < getPatternBars(loop.endPatternName) - 1;

@@ -143,7 +143,9 @@ export function createStaveNote(
   if (durationToken.dots === 1) addDotToAllSafe(note);
 
   // 标记每个鼓的 ghost 状态（按索引顺序对应 allKeys）
-  const ghostDrums = event.drums.filter(d => d.kind === "ghost").map(d => d.drum);
+  const ghostDrums = event.drums
+    .filter((d) => d.kind === "ghost")
+    .map((d) => d.drum);
   if (ghostDrums.length > 0) {
     (note as unknown as { _ghostDrums: DrumType[] })._ghostDrums = ghostDrums;
   }
@@ -378,7 +380,10 @@ export function splitNotesByBeat(
   const barUnits32 = barSubdivisions * 2;
   const beatUnits32 = Math.floor(barUnits32 / beatsPerBar);
 
-  const result: NoteWithMeta[][] = Array.from({ length: beatsPerBar }, () => []);
+  const result: NoteWithMeta[][] = Array.from(
+    { length: beatsPerBar },
+    () => [],
+  );
 
   for (const item of items) {
     const startUnits32 =

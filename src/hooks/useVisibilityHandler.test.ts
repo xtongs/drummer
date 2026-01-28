@@ -15,7 +15,7 @@ describe("useVisibilityHandler", () => {
   // 辅助函数：获取 visibilitychange 事件处理程序
   const getVisibilityHandler = (): ((event: Event) => void) => {
     const call = addEventListenerSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === "visibilitychange"
+      (c: unknown[]) => c[0] === "visibilitychange",
     );
     return call?.[1] as (event: Event) => void;
   };
@@ -71,12 +71,12 @@ describe("useVisibilityHandler", () => {
         isPatternPlaying: false,
         setIsMetronomePlaying,
         setIsPatternPlaying,
-      })
+      }),
     );
 
     expect(addEventListenerSpy).toHaveBeenCalledWith(
       "visibilitychange",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -90,14 +90,14 @@ describe("useVisibilityHandler", () => {
         isPatternPlaying: false,
         setIsMetronomePlaying,
         setIsPatternPlaying,
-      })
+      }),
     );
 
     unmount();
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       "visibilitychange",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -112,7 +112,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: false,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();
@@ -131,7 +131,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: true,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();
@@ -150,7 +150,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: true,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();
@@ -172,7 +172,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: false,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();
@@ -197,7 +197,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: true,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();
@@ -222,7 +222,7 @@ describe("useVisibilityHandler", () => {
           isPatternPlaying: false,
           setIsMetronomePlaying,
           setIsPatternPlaying,
-        })
+        }),
       );
 
       visibilityHandler = getVisibilityHandler();

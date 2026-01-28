@@ -36,7 +36,7 @@ describe("useLongPress", () => {
     it("应该在长按后触发回调", () => {
       const callback = vi.fn();
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 500 })
+        useLongPress(callback, { delay: 500 }),
       );
 
       act(() => {
@@ -59,7 +59,7 @@ describe("useLongPress", () => {
     it("应该以指定间隔重复触发回调", () => {
       const callback = vi.fn();
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 500, interval: 100 })
+        useLongPress(callback, { delay: 500, interval: 100 }),
       );
 
       act(() => {
@@ -87,7 +87,7 @@ describe("useLongPress", () => {
     it("应该在鼠标离开时停止", () => {
       const callback = vi.fn();
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 500, interval: 100 })
+        useLongPress(callback, { delay: 500, interval: 100 }),
       );
 
       act(() => {
@@ -122,7 +122,7 @@ describe("useLongPress", () => {
       };
 
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 100, interval: 50, shouldStop })
+        useLongPress(callback, { delay: 100, interval: 50, shouldStop }),
       );
 
       act(() => {
@@ -148,7 +148,7 @@ describe("useLongPress", () => {
     it("应该支持触摸开始和结束", () => {
       const callback = vi.fn();
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 500 })
+        useLongPress(callback, { delay: 500 }),
       );
 
       const touchEvent = {} as React.TouchEvent;
@@ -171,7 +171,7 @@ describe("useLongPress", () => {
     it("应该支持触摸取消", () => {
       const callback = vi.fn();
       const { result } = renderHook(() =>
-        useLongPress(callback, { delay: 500 })
+        useLongPress(callback, { delay: 500 }),
       );
 
       const touchEvent = {} as React.TouchEvent;

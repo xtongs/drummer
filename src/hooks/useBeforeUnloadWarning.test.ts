@@ -9,7 +9,7 @@ describe("useBeforeUnloadWarning", () => {
   // 辅助函数：获取 beforeunload 事件处理程序
   const getBeforeUnloadHandler = (): EventListener => {
     const call = addEventListenerSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === "beforeunload"
+      (c: unknown[]) => c[0] === "beforeunload",
     );
     return call?.[1] as EventListener;
   };
@@ -29,7 +29,7 @@ describe("useBeforeUnloadWarning", () => {
 
     expect(addEventListenerSpy).toHaveBeenCalledWith(
       "beforeunload",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -40,7 +40,7 @@ describe("useBeforeUnloadWarning", () => {
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       "beforeunload",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -49,7 +49,10 @@ describe("useBeforeUnloadWarning", () => {
       renderHook(() => useBeforeUnloadWarning(true, false));
 
       const handler = getBeforeUnloadHandler();
-      const event = { preventDefault: vi.fn(), returnValue: "" } as unknown as BeforeUnloadEvent;
+      const event = {
+        preventDefault: vi.fn(),
+        returnValue: "",
+      } as unknown as BeforeUnloadEvent;
 
       handler(event);
 
@@ -61,7 +64,10 @@ describe("useBeforeUnloadWarning", () => {
       renderHook(() => useBeforeUnloadWarning(false, true));
 
       const handler = getBeforeUnloadHandler();
-      const event = { preventDefault: vi.fn(), returnValue: "" } as unknown as BeforeUnloadEvent;
+      const event = {
+        preventDefault: vi.fn(),
+        returnValue: "",
+      } as unknown as BeforeUnloadEvent;
 
       handler(event);
 
@@ -73,7 +79,10 @@ describe("useBeforeUnloadWarning", () => {
       renderHook(() => useBeforeUnloadWarning(false, false));
 
       const handler = getBeforeUnloadHandler();
-      const event = { preventDefault: vi.fn(), returnValue: "initial" } as unknown as BeforeUnloadEvent;
+      const event = {
+        preventDefault: vi.fn(),
+        returnValue: "initial",
+      } as unknown as BeforeUnloadEvent;
 
       handler(event);
 
@@ -86,13 +95,16 @@ describe("useBeforeUnloadWarning", () => {
       const { rerender } = renderHook(
         ({ isMetronomePlaying, isPatternPlaying }) =>
           useBeforeUnloadWarning(isMetronomePlaying, isPatternPlaying),
-        { initialProps: { isMetronomePlaying: true, isPatternPlaying: false } }
+        { initialProps: { isMetronomePlaying: true, isPatternPlaying: false } },
       );
 
       const handler = getBeforeUnloadHandler();
 
       // 先测试播放状态
-      let event = { preventDefault: vi.fn(), returnValue: "" } as unknown as BeforeUnloadEvent;
+      let event = {
+        preventDefault: vi.fn(),
+        returnValue: "",
+      } as unknown as BeforeUnloadEvent;
       handler(event);
       expect(event.preventDefault).toHaveBeenCalled();
       expect(event.returnValue).toBe("");
@@ -101,7 +113,10 @@ describe("useBeforeUnloadWarning", () => {
       rerender({ isMetronomePlaying: false, isPatternPlaying: false });
 
       // 再次触发事件，应该不阻止
-      event = { preventDefault: vi.fn(), returnValue: "initial" } as unknown as BeforeUnloadEvent;
+      event = {
+        preventDefault: vi.fn(),
+        returnValue: "initial",
+      } as unknown as BeforeUnloadEvent;
       handler(event);
       expect(event.preventDefault).not.toHaveBeenCalled();
       expect(event.returnValue).toBe("initial");

@@ -40,8 +40,8 @@ vi.mock("./vexflowNotation", async (importOriginal) => {
   return {
     ...actual,
     DRUM_TO_VEXFLOW: {
-      "Kick": { keys: ["f/4"], isLowerVoice: true },
-      "Snare": { keys: ["c/5"], isLowerVoice: false },
+      Kick: { keys: ["f/4"], isLowerVoice: true },
+      Snare: { keys: ["c/5"], isLowerVoice: false },
       "Hi-Hat Open": { keys: ["g/5/x"], isLowerVoice: false },
       "Hi-Hat Closed": { keys: ["g/5"], isLowerVoice: false },
       "Crash 1": { keys: ["b/5/x"], isLowerVoice: false },
@@ -57,13 +57,17 @@ describe("vexflowRenderer utils", () => {
   describe("getExistingXShift", () => {
     it("应该返回 getXShift() 的值", () => {
       mockStaveNote.getXShift.mockReturnValue(10);
-      const result = getExistingXShift(mockStaveNote as unknown as import("vexflow").StaveNote);
+      const result = getExistingXShift(
+        mockStaveNote as unknown as import("vexflow").StaveNote,
+      );
       expect(result).toBe(10);
     });
 
     it("当 getXShift() 未定义时返回 0", () => {
       mockStaveNote.getXShift.mockReturnValue(undefined);
-      const result = getExistingXShift(mockStaveNote as unknown as import("vexflow").StaveNote);
+      const result = getExistingXShift(
+        mockStaveNote as unknown as import("vexflow").StaveNote,
+      );
       expect(result).toBe(0);
     });
   });
@@ -111,32 +115,44 @@ describe("vexflowRenderer utils", () => {
   describe("isBeamable", () => {
     it("八分音符应该可以用符杠连接", () => {
       mockStaveNote.getDuration.mockReturnValue("8");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(true);
     });
 
     it("十六分音符应该可以用符杠连接", () => {
       mockStaveNote.getDuration.mockReturnValue("16");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(true);
     });
 
     it("四分音符不应该用符杠连接", () => {
       mockStaveNote.getDuration.mockReturnValue("4");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(false);
     });
 
     it("二分音符不应该用符杠连接", () => {
       mockStaveNote.getDuration.mockReturnValue("2");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(false);
     });
 
     it("八分休止符应该可以用符杠连接", () => {
       mockStaveNote.getDuration.mockReturnValue("8r");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(true);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(true);
     });
 
     it("无效的 duration 应该返回 false", () => {
       mockStaveNote.getDuration.mockReturnValue("invalid");
-      expect(isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote)).toBe(false);
+      expect(
+        isBeamable(mockStaveNote as unknown as import("vexflow").StaveNote),
+      ).toBe(false);
     });
   });
 
@@ -144,9 +160,7 @@ describe("vexflowRenderer utils", () => {
     const barStartSub = 0;
     const barSubdivisions = 16; // 4/4 拍，一小节 16 个 16 分音符
 
-    const createMockItem = (
-      startUnits32InBar: number,
-    ): NoteWithMeta => ({
+    const createMockItem = (startUnits32InBar: number): NoteWithMeta => ({
       note: mockStaveNote as unknown as import("vexflow").StaveNote,
       event: {
         subdivision: Math.floor(startUnits32InBar / 2),
@@ -187,7 +201,10 @@ describe("vexflowRenderer utils", () => {
         createMockItem(0),
         {
           ...createMockItem(4),
-          note: { ...mockStaveNote, getDuration: () => "4" } as unknown as import("vexflow").StaveNote,
+          note: {
+            ...mockStaveNote,
+            getDuration: () => "4",
+          } as unknown as import("vexflow").StaveNote,
         },
       ];
 
@@ -243,7 +260,10 @@ describe("vexflowRenderer utils", () => {
       duration: string,
       isRest: boolean = false,
     ): NoteWithMeta => ({
-      note: { ...mockStaveNote, getDuration: () => duration } as unknown as import("vexflow").StaveNote,
+      note: {
+        ...mockStaveNote,
+        getDuration: () => duration,
+      } as unknown as import("vexflow").StaveNote,
       event: {
         subdivision: 0,
         subPosition: 0 as 0 | 1,
@@ -259,7 +279,7 @@ describe("vexflowRenderer utils", () => {
       const items = [
         createMockItem("8"),
         createMockItem("8"),
-        createMockItem("16"),  // 十六分音符
+        createMockItem("16"), // 十六分音符
         createMockItem("8"),
       ];
 
@@ -269,7 +289,7 @@ describe("vexflowRenderer utils", () => {
     it("当有三十二分音符时应该返回 true", () => {
       const items = [
         createMockItem("8"),
-        createMockItem("32"),  // 三十二分音符
+        createMockItem("32"), // 三十二分音符
       ];
 
       expect(hasSixteenthOrShorter(items)).toBe(true);
@@ -287,10 +307,7 @@ describe("vexflowRenderer utils", () => {
     });
 
     it("当只有四分音符时应该返回 false", () => {
-      const items = [
-        createMockItem("4"),
-        createMockItem("4"),
-      ];
+      const items = [createMockItem("4"), createMockItem("4")];
 
       expect(hasSixteenthOrShorter(items)).toBe(false);
     });
@@ -298,7 +315,7 @@ describe("vexflowRenderer utils", () => {
     it("应该忽略休止符", () => {
       const items = [
         createMockItem("8"),
-        createMockItem("16r", true),  // 十六分休止符应该被忽略
+        createMockItem("16r", true), // 十六分休止符应该被忽略
         createMockItem("8"),
       ];
 
@@ -313,7 +330,7 @@ describe("vexflowRenderer utils", () => {
       const items = [
         createMockItem("4"),
         createMockItem("8"),
-        createMockItem("16"),  // 有一个十六分音符
+        createMockItem("16"), // 有一个十六分音符
         createMockItem("8"),
       ];
 
@@ -327,7 +344,10 @@ describe("vexflowRenderer utils", () => {
       duration: string,
       isRest: boolean = false,
     ): NoteWithMeta => ({
-      note: { ...mockStaveNote, getDuration: () => duration } as unknown as import("vexflow").StaveNote,
+      note: {
+        ...mockStaveNote,
+        getDuration: () => duration,
+      } as unknown as import("vexflow").StaveNote,
       event: {
         subdivision: Math.floor(startUnits32InBar / 2),
         subPosition: (startUnits32InBar % 2) as 0 | 1,
@@ -343,7 +363,7 @@ describe("vexflowRenderer utils", () => {
     it("应该正确检测前半小节的十六分音符", () => {
       const items = [
         createMockItem(0, "16"), // 前半小节
-        createMockItem(8, "8"),  // 前半小节
+        createMockItem(8, "8"), // 前半小节
       ];
       const [firstHalf, secondHalf] = hasSixteenthByHalfBar(items, 16);
       expect(firstHalf).toBe(true);
@@ -352,7 +372,7 @@ describe("vexflowRenderer utils", () => {
 
     it("应该正确检测后半小节的十六分音符", () => {
       const items = [
-        createMockItem(16, "8"),  // 后半小节
+        createMockItem(16, "8"), // 后半小节
         createMockItem(20, "16"), // 后半小节
       ];
       const [firstHalf, secondHalf] = hasSixteenthByHalfBar(items, 16);
@@ -378,9 +398,7 @@ describe("vexflowRenderer utils", () => {
   });
 
   describe("splitNotesByHalfBar", () => {
-    const createMockItem = (
-      startUnits32InBar: number,
-    ): NoteWithMeta => ({
+    const createMockItem = (startUnits32InBar: number): NoteWithMeta => ({
       note: mockStaveNote as unknown as import("vexflow").StaveNote,
       event: {
         subdivision: Math.floor(startUnits32InBar / 2),
@@ -409,11 +427,7 @@ describe("vexflowRenderer utils", () => {
     });
 
     it("应该处理所有音符都在前半小节的情况", () => {
-      const items = [
-        createMockItem(0),
-        createMockItem(4),
-        createMockItem(8),
-      ];
+      const items = [createMockItem(0), createMockItem(4), createMockItem(8)];
 
       const [firstHalf, secondHalf] = splitNotesByHalfBar(items, 16);
 
@@ -422,10 +436,7 @@ describe("vexflowRenderer utils", () => {
     });
 
     it("应该处理所有音符都在后半小节的情况", () => {
-      const items = [
-        createMockItem(16),
-        createMockItem(20),
-      ];
+      const items = [createMockItem(16), createMockItem(20)];
 
       const [firstHalf, secondHalf] = splitNotesByHalfBar(items, 16);
 
@@ -441,9 +452,7 @@ describe("vexflowRenderer utils", () => {
   });
 
   describe("splitNotesByBeat", () => {
-    const createMockItem = (
-      startUnits32InBar: number,
-    ): NoteWithMeta => ({
+    const createMockItem = (startUnits32InBar: number): NoteWithMeta => ({
       note: mockStaveNote as unknown as import("vexflow").StaveNote,
       event: {
         subdivision: Math.floor(startUnits32InBar / 2),
@@ -461,11 +470,11 @@ describe("vexflowRenderer utils", () => {
       // 4/4 拍，每拍 8 units32
       // 音符分布：第1拍有2个，第2拍有1个，第3拍有2个，第4拍有0个
       const items = [
-        createMockItem(0),   // 第1拍
-        createMockItem(2),   // 第1拍
-        createMockItem(8),   // 第2拍
-        createMockItem(16),  // 第3拍
-        createMockItem(18),  // 第3拍
+        createMockItem(0), // 第1拍
+        createMockItem(2), // 第1拍
+        createMockItem(8), // 第2拍
+        createMockItem(16), // 第3拍
+        createMockItem(18), // 第3拍
       ];
 
       const result = splitNotesByBeat(items, 16, 4);
@@ -480,10 +489,10 @@ describe("vexflowRenderer utils", () => {
       // 半小节有2拍（4/4拍时）
       // 第1拍有2个十六分音符，第2拍有2个十六分音符
       const items = [
-        createMockItem(0),   // 第1拍位置0
-        createMockItem(2),   // 第1拍位置2
-        createMockItem(8),   // 第2拍位置0
-        createMockItem(10),  // 第2拍位置2
+        createMockItem(0), // 第1拍位置0
+        createMockItem(2), // 第1拍位置2
+        createMockItem(8), // 第2拍位置0
+        createMockItem(10), // 第2拍位置2
       ];
 
       const result = splitNotesByBeat(items, 16, 4);
@@ -502,11 +511,7 @@ describe("vexflowRenderer utils", () => {
     });
 
     it("应该处理所有音符都在同一拍的情况", () => {
-      const items = [
-        createMockItem(0),
-        createMockItem(2),
-        createMockItem(4),
-      ];
+      const items = [createMockItem(0), createMockItem(2), createMockItem(4)];
 
       const result = splitNotesByBeat(items, 16, 4);
 
@@ -564,7 +569,13 @@ describe("vexflowRenderer utils", () => {
         {
           subdivision: 0,
           subPosition: 0 as const,
-          drums: [{ drum: "Snare" as const, cellState: CELL_NORMAL, kind: "normal" as const }],
+          drums: [
+            {
+              drum: "Snare" as const,
+              cellState: CELL_NORMAL,
+              kind: "normal" as const,
+            },
+          ],
           is32nd: false,
           kind: "normal" as const,
         },

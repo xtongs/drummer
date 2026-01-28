@@ -143,7 +143,7 @@ export function useSingleLongPress(options: UseSingleLongPressOptions) {
       e.preventDefault();
       startPress();
     },
-    [startPress]
+    [startPress],
   );
 
   const handleMouseUp = useCallback(() => {

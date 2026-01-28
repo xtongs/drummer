@@ -1,124 +1,133 @@
 import { useCallback, useRef, useEffect } from "react";
 
 interface UseLongPressOptions {
-    delay?: number;
-    interval?: number;
-    shouldStop?: () => boolean;
-    clickCallback?: () => void;
+  delay?: number;
+  interval?: number;
+  shouldStop?: () => boolean;
+  clickCallback?: () => void;
 }
 
 export function useLongPress(
-    callback: () => void,
-    options: UseLongPressOptions = {}
+  callback: () => void,
+  options: UseLongPressOptions = {},
 ) {
-    const { delay = 500, interval = 100, shouldStop, clickCallback } = options;
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const isPressingRef = useRef(false);
-    const startTimeRef = useRef<number>(0);
-    const hasTriggeredRef = useRef(false);
-    const callbackRef = useRef(callback);
+  const { delay = 500, interval = 100, shouldStop, clickCallback } = options;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isPressingRef = useRef(false);
+  const startTimeRef = useRef<number>(0);
+  const hasTriggeredRef = useRef(false);
+  const callbackRef = useRef(callback);
 
-    callbackRef.current = callback;
+  callbackRef.current = callback;
 
-    const stopPress = useCallback(() => {
-        isPressingRef.current = false;
+  const stopPress = useCallback(() => {
+    isPressingRef.current = false;
 
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const startPress = useCallback(() => {
+    if (isPressingRef.current) return;
+    isPressingRef.current = true;
+    startTimeRef.current = Date.now();
+    hasTriggeredRef.current = false;
+
+    timeoutRef.current = setTimeout(() => {
+      if (!isPressingRef.current) return;
+
+      if (shouldStop?.()) {
+        stopPress();
+        return;
+      }
+
+      hasTriggeredRef.current = true;
+      callbackRef.current();
+
+      intervalRef.current = setInterval(() => {
+        if (!isPressingRef.current) return;
+
+        if (shouldStop?.()) {
+          stopPress();
+          return;
         }
 
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-    }, []);
+        callbackRef.current();
+      }, interval);
+    }, delay);
+  }, [delay, interval, shouldStop, stopPress]);
 
-    const startPress = useCallback(() => {
-        if (isPressingRef.current) return;
-        isPressingRef.current = true;
-        startTimeRef.current = Date.now();
-        hasTriggeredRef.current = false;
+  const handleClick = useCallback(() => {
+    const pressDuration = Date.now() - startTimeRef.current;
 
-        timeoutRef.current = setTimeout(() => {
-            if (!isPressingRef.current) return;
+    if (!hasTriggeredRef.current && pressDuration < delay) {
+      if (clickCallback) {
+        clickCallback();
+      } else {
+        callbackRef.current();
+      }
+    }
+  }, [delay, clickCallback]);
 
-            if (shouldStop?.()) {
-                stopPress();
-                return;
-            }
+  const handleMouseDown = useCallback(() => {
+    startPress();
+  }, [startPress]);
 
-            hasTriggeredRef.current = true;
-            callbackRef.current();
+  const handleMouseUp = useCallback(() => {
+    stopPress();
+  }, [stopPress]);
 
-            intervalRef.current = setInterval(() => {
-                if (!isPressingRef.current) return;
+  const handleMouseLeave = useCallback(() => {
+    stopPress();
+  }, [stopPress]);
 
-                if (shouldStop?.()) {
-                    stopPress();
-                    return;
-                }
+  const handleTouchStart = useCallback(
+    (_e: React.TouchEvent) => {
+      startPress();
+    },
+    [startPress],
+  );
 
-                callbackRef.current();
-            }, interval);
-        }, delay);
-    }, [delay, interval, shouldStop, stopPress]);
+  const handleTouchEnd = useCallback(
+    (_e: React.TouchEvent) => {
+      stopPress();
+    },
+    [stopPress],
+  );
 
-    const handleClick = useCallback(() => {
-        const pressDuration = Date.now() - startTimeRef.current;
+  const handleTouchCancel = useCallback(
+    (_e: React.TouchEvent) => {
+      stopPress();
+    },
+    [stopPress],
+  );
 
-        if (!hasTriggeredRef.current && pressDuration < delay) {
-            if (clickCallback) {
-                clickCallback();
-            } else {
-                callbackRef.current();
-            }
-        }
-    }, [delay, clickCallback]);
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
 
-    const handleMouseDown = useCallback(() => {
-        startPress();
-    }, [startPress]);
-
-    const handleMouseUp = useCallback(() => {
-        stopPress();
-    }, [stopPress]);
-
-    const handleMouseLeave = useCallback(() => {
-        stopPress();
-    }, [stopPress]);
-
-    const handleTouchStart = useCallback((_e: React.TouchEvent) => {
-        startPress();
-    }, [startPress]);
-
-    const handleTouchEnd = useCallback((_e: React.TouchEvent) => {
-        stopPress();
-    }, [stopPress]);
-
-    const handleTouchCancel = useCallback((_e: React.TouchEvent) => {
-        stopPress();
-    }, [stopPress]);
-
-    const handleContextMenu = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-    }, []);
-
-    useEffect(() => {
-        return () => {
-            stopPress();
-        };
-    }, [stopPress]);
-
-    return {
-        onClick: handleClick,
-        onMouseDown: handleMouseDown,
-        onMouseUp: handleMouseUp,
-        onMouseLeave: handleMouseLeave,
-        onTouchStart: handleTouchStart,
-        onTouchEnd: handleTouchEnd,
-        onTouchCancel: handleTouchCancel,
-        onContextMenu: handleContextMenu,
+  useEffect(() => {
+    return () => {
+      stopPress();
     };
+  }, [stopPress]);
+
+  return {
+    onClick: handleClick,
+    onMouseDown: handleMouseDown,
+    onMouseUp: handleMouseUp,
+    onMouseLeave: handleMouseLeave,
+    onTouchStart: handleTouchStart,
+    onTouchEnd: handleTouchEnd,
+    onTouchCancel: handleTouchCancel,
+    onContextMenu: handleContextMenu,
+  };
 }

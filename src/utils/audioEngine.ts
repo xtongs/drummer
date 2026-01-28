@@ -42,7 +42,7 @@ let masterVolumeMultiplier = 100;
 export type SampleLoadProgressCallback = (
   loaded: number,
   total: number,
-  currentName: string
+  currentName: string,
 ) => void;
 let progressCallback: SampleLoadProgressCallback | null = null;
 
@@ -66,8 +66,14 @@ function getRawContext(): AudioContext {
   );
 }
 
-function scheduleDispose(nodes: Array<{ dispose: () => void }>, disposeAtTime: number): void {
-  const delaySeconds = Math.max(0, disposeAtTime - getAudioContext().currentTime);
+function scheduleDispose(
+  nodes: Array<{ dispose: () => void }>,
+  disposeAtTime: number,
+): void {
+  const delaySeconds = Math.max(
+    0,
+    disposeAtTime - getAudioContext().currentTime,
+  );
   const delayMs = delaySeconds * 1000;
   setTimeout(() => {
     nodes.forEach((node) => node.dispose());
@@ -101,7 +107,11 @@ export async function resumeAudioContext(): Promise<void> {
  * 优先从 IndexedDB 缓存读取，避免重复解码
  * 每次启动时静默更新缓存以确保最新
  */
-async function loadSample(url: string, name: string, forceUpdate = false): Promise<void> {
+async function loadSample(
+  url: string,
+  name: string,
+  forceUpdate = false,
+): Promise<void> {
   const ctx = getAudioContext();
   try {
     let audioBuffer: AudioBuffer;
@@ -170,7 +180,7 @@ function loadAllSamples(forceUpdate = false): Promise<void> {
 export function preInitAudioContext(): void {
   const ctx = getAudioContext();
   if (ctx.state === "suspended") {
-    Tone.start().catch(() => { });
+    Tone.start().catch(() => {});
   }
   // 开始加载采样
   loadAllSamples();
@@ -205,7 +215,7 @@ export async function updateSampleCache(): Promise<void> {
  * 设置采样加载进度回调
  */
 export function setSampleLoadProgressCallback(
-  callback: SampleLoadProgressCallback | null
+  callback: SampleLoadProgressCallback | null,
 ): void {
   progressCallback = callback;
 }
@@ -216,7 +226,7 @@ export function setSampleLoadProgressCallback(
 function playMetronomeSample(
   time: number,
   volume: number = 1,
-  playbackRate: number = 1
+  playbackRate: number = 1,
 ): boolean {
   return playSample("metronome", time, volume, false, playbackRate, false);
 }
@@ -227,7 +237,7 @@ function playMetronomeSample(
 function playClickSynth(
   time: number,
   frequency: number = 800,
-  duration: number = 0.01
+  duration: number = 0.01,
 ): void {
   const gain = new Tone.Gain(0.3).toDestination();
   const osc = new Tone.Oscillator({ frequency, type: "sine" });
@@ -309,7 +319,7 @@ function playSample(
   volume: number = 1,
   applyVolumeMultiplier: boolean = true,
   playbackRate: number = 1,
-  applyMasterVolume: boolean = true
+  applyMasterVolume: boolean = true,
 ): boolean {
   const buffer = sampleBuffers.get(name);
   if (!buffer) return false;
@@ -394,7 +404,7 @@ function playSnareSynth(time: number): void {
 
   scheduleDispose(
     [osc, oscGain, osc2, osc2Gain, noise, filter, noiseGain, masterGain],
-    time + 0.28
+    time + 0.28,
   );
 }
 
@@ -486,7 +496,10 @@ function playCrashSynth(time: number, brightness: number = 1): void {
   const masterGain = new Tone.Gain(0.5).toDestination();
 
   const noise = new Tone.Noise("white");
-  const highpass = new Tone.Filter({ type: "highpass", frequency: 3000 * brightness });
+  const highpass = new Tone.Filter({
+    type: "highpass",
+    frequency: 3000 * brightness,
+  });
   const noiseGain = new Tone.Gain();
 
   noise.connect(highpass);
@@ -584,7 +597,7 @@ function playTomSynth(time: number, frequency: number = 200): void {
  */
 export async function playDrumSound(
   drumType: DrumType,
-  volume: number = 1
+  volume: number = 1,
 ): Promise<void> {
   await resumeAudioContext();
   // 确保采样已加载

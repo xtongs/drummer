@@ -17,4 +17,3 @@ export function BeatDots({ currentBeat, beatsPerBar }: BeatDotsProps) {
     </div>
   );
 }
-

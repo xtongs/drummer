@@ -112,7 +112,7 @@ export function LegacyDrumNotation({
     { length: pattern.bars * beatsPerBar + 1 },
     (_, i) => ({
       x: i * SUBDIVISIONS_PER_BEAT * cellWidth,
-    })
+    }),
   );
 
   return (
@@ -210,7 +210,7 @@ export function LegacyDrumNotation({
             notation.line,
             STAFF_HEIGHT,
             STAFF_TOP,
-            LINE_SPACING
+            LINE_SPACING,
           );
 
           return row.map((cellState, subdivisionIndex) => {
@@ -230,9 +230,9 @@ export function LegacyDrumNotation({
             const symbolXs =
               isDouble32 || isFirst32 || isSecond32
                 ? [
-                  ...(isDouble32 || isFirst32 ? [baseX - xOffset] : []),
-                  ...(isDouble32 || isSecond32 ? [baseX + xOffset] : []),
-                ]
+                    ...(isDouble32 || isFirst32 ? [baseX - xOffset] : []),
+                    ...(isDouble32 || isSecond32 ? [baseX + xOffset] : []),
+                  ]
                 : [baseX];
 
             // 渲染括号的辅助函数
@@ -262,7 +262,7 @@ export function LegacyDrumNotation({
                     stroke={colorText}
                     strokeWidth={1.5}
                     strokeLinecap="round"
-                  />
+                  />,
                 );
                 // 右括号：一段圆弧，从顶部到底部，向右弯曲
                 bracketElements.push(
@@ -274,7 +274,7 @@ export function LegacyDrumNotation({
                     stroke={colorText}
                     strokeWidth={1.5}
                     strokeLinecap="round"
-                  />
+                  />,
                 );
               } else if (isGrace) {
                 // 倚音：只加左侧一半括号，一段圆弧
@@ -287,7 +287,7 @@ export function LegacyDrumNotation({
                     stroke={colorText}
                     strokeWidth={1.5}
                     strokeLinecap="round"
-                  />
+                  />,
                 );
               }
               return bracketElements;

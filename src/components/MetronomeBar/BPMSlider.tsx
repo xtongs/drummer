@@ -25,7 +25,7 @@ export function BPMSlider({
     (value: number) => {
       return ((value - min) / (max - min)) * 100;
     },
-    [min, max]
+    [min, max],
   );
 
   // 将百分比转换为BPM值（5BPM步进）
@@ -35,7 +35,7 @@ export function BPMSlider({
       // 四舍五入到最近的5的倍数
       return Math.round(rawValue / 5) * 5;
     },
-    [min, max]
+    [min, max],
   );
 
   // 处理鼠标/触摸事件
@@ -46,13 +46,13 @@ export function BPMSlider({
       const rect = sliderRef.current.getBoundingClientRect();
       const percentage = Math.max(
         0,
-        Math.min(100, ((clientX - rect.left) / rect.width) * 100)
+        Math.min(100, ((clientX - rect.left) / rect.width) * 100),
       );
       const newBPM = getBPMFromPercentage(percentage);
       const clampedBPM = Math.max(min, Math.min(max, newBPM));
       onChange(clampedBPM);
     },
-    [getBPMFromPercentage, min, max, onChange]
+    [getBPMFromPercentage, min, max, onChange],
   );
 
   const handlePointerDown = useCallback(
@@ -63,7 +63,7 @@ export function BPMSlider({
       // 捕获指针以确保拖动时事件不会丢失
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [disabled, handlePointerMove]
+    [disabled, handlePointerMove],
   );
 
   const handlePointerMoveEvent = useCallback(
@@ -72,7 +72,7 @@ export function BPMSlider({
         handlePointerMove(e.clientX);
       }
     },
-    [isDragging, handlePointerMove]
+    [isDragging, handlePointerMove],
   );
 
   const handlePointerUp = useCallback(() => {

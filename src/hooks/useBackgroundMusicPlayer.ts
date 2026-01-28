@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Tone from "tone";
 import { getAudioContext } from "../utils/audioEngine";
 import type { BgmConfig } from "../utils/bgmStorage";
@@ -47,7 +47,7 @@ export function useBackgroundMusicPlayer({
   const lastSubdivisionRef = useRef<number | null>(null);
   const lastStartTimeRef = useRef<number>(0);
 
-  const startFromCurrentPosition = () => {
+  const startFromCurrentPosition = useCallback(() => {
     const player = playerRef.current;
     if (!player) return;
 
@@ -86,7 +86,8 @@ export function useBackgroundMusicPlayer({
     let timeAtRangeStartOriginal = 0;
     for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
       const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
-      const originalBeatDuration = (60 / barBpm) * (4 / pattern.timeSignature[1]);
+      const originalBeatDuration =
+        (60 / barBpm) * (4 / pattern.timeSignature[1]);
       const originalBarDuration = originalBeatDuration * beatsPerBar;
       timeAtRangeStartOriginal += originalBarDuration;
     }
@@ -103,7 +104,8 @@ export function useBackgroundMusicPlayer({
     // 因为 Tone.js 的 startOffset 是相对于音频文件的，不受 playbackRate 影响
     const desiredBgmPosition = adjustedPatternTime / effectiveRate;
 
-    const startDelay = adjustedPatternTime < 0 ? Math.abs(adjustedPatternTime) : 0;
+    const startDelay =
+      adjustedPatternTime < 0 ? Math.abs(adjustedPatternTime) : 0;
     const startTime = baseTime + startDelay;
     const startOffset = Math.max(0, desiredBgmPosition);
     let safeStartOffset = startOffset;
@@ -117,11 +119,20 @@ export function useBackgroundMusicPlayer({
     }
 
     // 确保 startTime 严格递增（Tone.js 要求）
-    const adjustedStartTime = Math.max(startTime, lastStartTimeRef.current + 0.001);
+    const adjustedStartTime = Math.max(
+      startTime,
+      lastStartTimeRef.current + 0.001,
+    );
     lastStartTimeRef.current = adjustedStartTime;
 
     player.start(adjustedStartTime, safeStartOffset);
-  };
+  }, [
+    bgmConfig.offsetMs,
+    pattern.barBpmOverrides,
+    pattern.bpm,
+    pattern.timeSignature,
+    rangeStartBar,
+  ]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -185,7 +196,10 @@ export function useBackgroundMusicPlayer({
           setState({
             isLoading: false,
             isLoaded: false,
-            error: error instanceof Error ? error.message : "Failed to load background music",
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to load background music",
           });
         }
       }
@@ -196,7 +210,7 @@ export function useBackgroundMusicPlayer({
     return () => {
       isCancelled = true;
     };
-  }, [bgmConfig.fileId]);
+  }, [bgmConfig.fileId, bgmConfig.volumePct]);
 
   useEffect(() => {
     // 计算实际播放时间（考虑 playbackRate 和每小节 BPM 覆盖）
@@ -218,7 +232,8 @@ export function useBackgroundMusicPlayer({
     }
 
     // 加上当前小节内的时间
-    const currentBarBpm = pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
+    const currentBarBpm =
+      pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
     const effectiveBpm = currentBarBpm * playbackRate;
     const beatDuration = (60 / effectiveBpm) * (4 / pattern.timeSignature[1]);
     const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
@@ -265,7 +280,13 @@ export function useBackgroundMusicPlayer({
   const lastOffsetRef = useRef(bgmConfig.offsetMs ?? 0);
   useEffect(() => {
     const player = playerRef.current;
-    if (!player || !isPlaying || !isFullPracticeMode || !bgmConfig.fileId || !isLoaded) {
+    if (
+      !player ||
+      !isPlaying ||
+      !isFullPracticeMode ||
+      !bgmConfig.fileId ||
+      !isLoaded
+    ) {
       lastOffsetRef.current = bgmConfig.offsetMs ?? 0;
       return;
     }
@@ -277,7 +298,14 @@ export function useBackgroundMusicPlayer({
     if (lastOffset !== (bgmConfig.offsetMs ?? 0)) {
       startFromCurrentPosition();
     }
-  }, [bgmConfig.offsetMs, isPlaying, isFullPracticeMode, isLoaded, bgmConfig.fileId]);
+  }, [
+    bgmConfig.offsetMs,
+    isPlaying,
+    isFullPracticeMode,
+    isLoaded,
+    bgmConfig.fileId,
+    startFromCurrentPosition,
+  ]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -304,7 +332,6 @@ export function useBackgroundMusicPlayer({
     }
 
     startFromCurrentPosition();
-    lastSubdivisionRef.current = currentSubdivision;
   }, [
     isPlaying,
     isFullPracticeMode,
@@ -312,6 +339,7 @@ export function useBackgroundMusicPlayer({
     bgmConfig.offsetMs,
     isLoaded,
     patternStartToken,
+    startFromCurrentPosition,
   ]);
 
   useEffect(() => {
@@ -337,7 +365,12 @@ export function useBackgroundMusicPlayer({
     isFullPracticeMode,
     bgmConfig.fileId,
     isLoaded,
+    startFromCurrentPosition,
   ]);
+
+  useEffect(() => {
+    lastSubdivisionRef.current = currentSubdivision;
+  }, [currentSubdivision]);
 
   useEffect(() => {
     return () => {

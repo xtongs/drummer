@@ -73,7 +73,7 @@ export function usePattern(initialPattern: Pattern) {
   const updateBarBpm = useCallback((barIndex: number, bpm: number | null) => {
     setPattern((prev) => {
       const newOverrides = { ...prev.barBpmOverrides };
-      
+
       if (bpm === null) {
         // 移除覆盖，使用全局 BPM
         delete newOverrides[barIndex];
@@ -81,10 +81,10 @@ export function usePattern(initialPattern: Pattern) {
         // 设置覆盖值
         newOverrides[barIndex] = bpm;
       }
-      
+
       // 如果没有覆盖值了，移除整个字段
       const hasOverrides = Object.keys(newOverrides).length > 0;
-      
+
       return {
         ...prev,
         barBpmOverrides: hasOverrides ? newOverrides : undefined,
@@ -220,7 +220,7 @@ export function usePattern(initialPattern: Pattern) {
         };
       });
     },
-    []
+    [],
   );
 
   // 添加小节
@@ -440,10 +440,10 @@ export function usePattern(initialPattern: Pattern) {
         // 如果目标节奏型的 BPM 和复制来源的 BPM 不同，则为所有复制的小节创建 BPM 覆盖
         const bpmDiffers = copy.bpm !== prev.bpm;
         let newOverrides: Record<number, number> | undefined;
-        
+
         if (prev.barBpmOverrides || copy.barBpmOverrides || bpmDiffers) {
           newOverrides = {};
-          
+
           // 处理现有的覆盖
           if (prev.barBpmOverrides) {
             for (const [key, value] of Object.entries(prev.barBpmOverrides)) {
@@ -456,7 +456,7 @@ export function usePattern(initialPattern: Pattern) {
               }
             }
           }
-          
+
           // 合并复制的覆盖（索引加上 insertIndex）
           // 如果 BPM 不同且没有特殊覆盖，则使用复制来源的全局 BPM
           for (let i = 0; i < copy.bars; i++) {
@@ -469,7 +469,7 @@ export function usePattern(initialPattern: Pattern) {
               newOverrides[insertIndex + i] = copy.bpm;
             }
           }
-          
+
           if (Object.keys(newOverrides).length === 0) {
             newOverrides = undefined;
           }
@@ -484,7 +484,7 @@ export function usePattern(initialPattern: Pattern) {
         };
       });
     },
-    []
+    [],
   );
 
   // 加载节奏型

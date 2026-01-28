@@ -68,7 +68,7 @@ export const BPM_RATE_LABELS = ["", "x0.9", "x0.8", "x0.7", "x0.6", "x0.5"];
  */
 export function calculateCumulativeRate(
   rateIndex: number,
-  rates: number[] = BPM_RATES
+  rates: number[] = BPM_RATES,
 ): number {
   let cumulativeRate = 1;
   for (let i = 0; i < rateIndex; i++) {

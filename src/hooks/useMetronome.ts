@@ -114,28 +114,31 @@ export function useMetronome({
       // 使用 setTimeout + requestAnimationFrame 同步更新动画状态
       const subIdx = subdivisionIndex;
       const beatNum = beatNumber;
-      const timeoutId = window.setTimeout(() => {
-        // 从 set 中移除已执行的 timeout
-        activeTimeoutsRef.current.delete(timeoutId as unknown as number);
+      const timeoutId = window.setTimeout(
+        () => {
+          // 从 set 中移除已执行的 timeout
+          activeTimeoutsRef.current.delete(timeoutId as unknown as number);
 
-        const now = Date.now();
-        if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
-          requestAnimationFrame(() => {
-            lastAnimationUpdateTime = Date.now();
+          const now = Date.now();
+          if (now - lastAnimationUpdateTime >= ANIMATION_THROTTLE) {
+            requestAnimationFrame(() => {
+              lastAnimationUpdateTime = Date.now();
+              // 检查是否仍在运行，避免停止后的更新
+              if (isRunningRef.current) {
+                setCurrentSubdivision(subIdx);
+                setCurrentBeat(beatNum);
+              }
+            });
+          } else {
             // 检查是否仍在运行，避免停止后的更新
             if (isRunningRef.current) {
               setCurrentSubdivision(subIdx);
               setCurrentBeat(beatNum);
             }
-          });
-        } else {
-          // 检查是否仍在运行，避免停止后的更新
-          if (isRunningRef.current) {
-            setCurrentSubdivision(subIdx);
-            setCurrentBeat(beatNum);
           }
-        }
-      }, Math.max(0, delayMs));
+        },
+        Math.max(0, delayMs),
+      );
       activeTimeoutsRef.current.add(timeoutId as unknown as number);
 
       // 移动到下一个 subdivision

@@ -31,8 +31,16 @@ export interface DrumFeatureConfig {
 export const DRUM_FEATURE_CONFIG: Record<DrumType, DrumFeatureConfig> = {
   "Crash 1": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
   "Crash 2": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
-  "Hi-Hat Open": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
-  "Hi-Hat Closed": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
+  "Hi-Hat Open": {
+    allowGhost: true,
+    allowGrace: false,
+    allowThirtySecond: true,
+  },
+  "Hi-Hat Closed": {
+    allowGhost: true,
+    allowGrace: false,
+    allowThirtySecond: true,
+  },
   Ride: { allowGhost: true, allowGrace: false, allowThirtySecond: true },
   "Tom 1": { allowGhost: true, allowGrace: false, allowThirtySecond: true },
   "Tom 2": { allowGhost: true, allowGrace: false, allowThirtySecond: true },

@@ -9,16 +9,16 @@
  *   bun run version:bump patch    # 强制 PATCH
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { execSync } from 'child_process';
-import { join } from 'path';
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { execSync } from "child_process";
+import { join } from "path";
 
 const COLORS = {
-  reset: '\x1b[0m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
-  cyan: '\x1b[36m',
+  reset: "\x1b[0m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
+  cyan: "\x1b[36m",
 };
 
 function log(color, message) {
@@ -26,13 +26,13 @@ function log(color, message) {
 }
 
 function readPackage() {
-  const pkgPath = join(process.cwd(), 'package.json');
-  return JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  const pkgPath = join(process.cwd(), "package.json");
+  return JSON.parse(readFileSync(pkgPath, "utf-8"));
 }
 
 function writePackage(pkg) {
-  const pkgPath = join(process.cwd(), 'package.json');
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  const pkgPath = join(process.cwd(), "package.json");
+  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 }
 
 /**
@@ -41,12 +41,12 @@ function writePackage(pkg) {
  * 注意: bun.lock 不包含项目版本号，无需处理
  */
 function updateLockFiles(oldVersion, newVersion) {
-  const packageLockPath = join(process.cwd(), 'package-lock.json');
+  const packageLockPath = join(process.cwd(), "package-lock.json");
 
   // 更新 package-lock.json
   if (existsSync(packageLockPath)) {
     try {
-      const lockContent = readFileSync(packageLockPath, 'utf-8');
+      const lockContent = readFileSync(packageLockPath, "utf-8");
       const lockData = JSON.parse(lockContent);
 
       let updated = false;
@@ -58,18 +58,24 @@ function updateLockFiles(oldVersion, newVersion) {
       }
 
       // 更新 packages 节点中的版本号（lockfileVersion 2/3 格式）
-      if (lockData.packages && lockData.packages['']) {
-        if (lockData.packages[''].version !== newVersion) {
-          lockData.packages[''].version = newVersion;
+      if (lockData.packages && lockData.packages[""]) {
+        if (lockData.packages[""].version !== newVersion) {
+          lockData.packages[""].version = newVersion;
           updated = true;
         }
       }
 
       if (updated) {
-        writeFileSync(packageLockPath, JSON.stringify(lockData, null, 2) + '\n');
+        writeFileSync(
+          packageLockPath,
+          JSON.stringify(lockData, null, 2) + "\n",
+        );
         log(COLORS.green, `✅ package-lock.json 版本已更新 → ${newVersion}`);
       } else {
-        log(COLORS.yellow, `ℹ️  package-lock.json 版本已是 ${newVersion}，无需更新`);
+        log(
+          COLORS.yellow,
+          `ℹ️  package-lock.json 版本已是 ${newVersion}，无需更新`,
+        );
       }
     } catch (error) {
       log(COLORS.red, `⚠️  更新 package-lock.json 失败: ${error.message}`);
@@ -83,7 +89,7 @@ function updateLockFiles(oldVersion, newVersion) {
 }
 
 function parseVersion(version) {
-  const [major, minor, patch] = version.split('.').map(Number);
+  const [major, minor, patch] = version.split(".").map(Number);
   return { major, minor, patch };
 }
 
@@ -91,11 +97,11 @@ function bumpVersion(version, level) {
   const v = parseVersion(version);
 
   switch (level) {
-    case 'MAJOR':
+    case "MAJOR":
       return `${v.major + 1}.0.0`;
-    case 'MINOR':
+    case "MINOR":
       return `${v.major}.${v.minor + 1}.0`;
-    case 'PATCH':
+    case "PATCH":
       return `${v.major}.${v.minor}.${v.patch + 1}`;
     default:
       return version;
@@ -106,25 +112,26 @@ function bumpVersion(version, level) {
 function detectVersionLevel() {
   try {
     // 获取最近的非合并提交
-    const lastCommit = execSync(
-      'git log -1 --pretty=%B --no-merges',
-      { encoding: 'utf-8' }
+    const lastCommit = execSync("git log -1 --pretty=%B --no-merges", {
+      encoding: "utf-8",
+    });
+
+    const firstLine = lastCommit.split("\n")[0];
+    const match = firstLine.match(
+      /^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?!?:/,
     );
 
-    const firstLine = lastCommit.split('\n')[0];
-    const match = firstLine.match(/^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?!?:/);
-
-    if (!match) return 'PATCH';
+    if (!match) return "PATCH";
 
     const type = match[1];
-    const hasBreakingIndicator = match[0].includes('!');
-    const hasBreakingFooter = lastCommit.includes('BREAKING CHANGE:');
+    const hasBreakingIndicator = match[0].includes("!");
+    const hasBreakingFooter = lastCommit.includes("BREAKING CHANGE:");
 
-    if (hasBreakingIndicator || hasBreakingFooter) return 'MAJOR';
-    if (type === 'feat') return 'MINOR';
-    return 'PATCH';
+    if (hasBreakingIndicator || hasBreakingFooter) return "MAJOR";
+    if (type === "feat") return "MINOR";
+    return "PATCH";
   } catch {
-    return 'PATCH';
+    return "PATCH";
   }
 }
 
@@ -155,10 +162,13 @@ function main() {
   // 更新 lock 文件
   updateLockFiles(currentVersion, newVersion);
 
-  log(COLORS.reset, '接下来:');
-  log(COLORS.reset, '  1. 提交变更:');
-  log(COLORS.green, `     git add package.json package-lock.json && git commit -m "chore: bump version to ${newVersion}"`);
-  log(COLORS.reset, '  2. 创建 tag (可选):');
+  log(COLORS.reset, "接下来:");
+  log(COLORS.reset, "  1. 提交变更:");
+  log(
+    COLORS.green,
+    `     git add package.json package-lock.json && git commit -m "chore: bump version to ${newVersion}"`,
+  );
+  log(COLORS.reset, "  2. 创建 tag (可选):");
   log(COLORS.green, `     git tag v${newVersion}\n`);
 }
 

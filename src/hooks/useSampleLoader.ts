@@ -46,7 +46,7 @@ export function useSampleLoader(): UseSampleLoaderReturn {
         const progressCallback: SampleLoadProgressCallback = (
           loaded,
           total,
-          currentName
+          currentName,
         ) => {
           setLoadingProgress({ loaded, total, currentName });
         };

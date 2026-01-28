@@ -246,6 +246,8 @@ export function usePlaybackAutoScroll({
   }, [
     currentBeat,
     cellSize,
+    isPlaying,
+    rightLead,
     doScroll,
     pattern.timeSignature,
     pattern.bars,
@@ -373,6 +375,7 @@ export function usePlaybackAutoScroll({
     isPlaying,
     currentBeat,
     cellSize,
+    rightLead,
     pattern.timeSignature,
     pattern.bars,
     pattern.name,

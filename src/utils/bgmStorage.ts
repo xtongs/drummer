@@ -45,7 +45,9 @@ async function openBgmDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveBgmFile(file: File): Promise<{ id: string; meta: BgmFileMeta }> {
+export async function saveBgmFile(
+  file: File,
+): Promise<{ id: string; meta: BgmFileMeta }> {
   const db = await openBgmDB();
   const transaction = db.transaction(BGM_STORE_NAME, "readwrite");
   const store = transaction.objectStore(BGM_STORE_NAME);
@@ -73,7 +75,10 @@ export async function saveBgmFile(file: File): Promise<{ id: string; meta: BgmFi
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     db.close();
-    return { id, meta: { name: record.name, size: record.size, type: record.type } };
+    return {
+      id,
+      meta: { name: record.name, size: record.size, type: record.type },
+    };
   } catch (error) {
     db.close();
     throw error;

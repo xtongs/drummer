@@ -107,7 +107,9 @@ describe("useExportMode", () => {
 
     it("当剪贴板抛出错误时应该进入导出模式", async () => {
       vi.mocked(isClipboardWriteSupported).mockReturnValue(true);
-      vi.mocked(copyToClipboard).mockRejectedValue(new Error("Clipboard error"));
+      vi.mocked(copyToClipboard).mockRejectedValue(
+        new Error("Clipboard error"),
+      );
 
       const { result } = renderHook(() => useExportMode("test-content"));
 

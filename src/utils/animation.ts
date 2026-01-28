@@ -22,7 +22,7 @@ export function smoothScrollTo(
   element: HTMLElement,
   targetLeft: number,
   duration: number = 150,
-  onComplete?: () => void
+  onComplete?: () => void,
 ): void {
   // 取消之前的动画
   cancelSmoothScroll();

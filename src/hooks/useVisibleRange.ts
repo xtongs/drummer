@@ -22,8 +22,14 @@ function calculateVisibleRange(
   const visibleLeft = scrollLeft;
   const visibleRight = visibleLeft + viewportWidth;
 
-  const startItem = Math.max(0, Math.floor(visibleLeft / itemSize) - bufferItems);
-  const endItem = Math.min(totalItems, Math.ceil(visibleRight / itemSize) + bufferItems);
+  const startItem = Math.max(
+    0,
+    Math.floor(visibleLeft / itemSize) - bufferItems,
+  );
+  const endItem = Math.min(
+    totalItems,
+    Math.ceil(visibleRight / itemSize) + bufferItems,
+  );
 
   return { start: startItem, end: endItem };
 }
@@ -44,7 +50,7 @@ export function useVisibleRange(
   const [visibleRange, setVisibleRange] = useState(() => {
     const initialVisibleItems = Math.min(
       totalItems,
-      Math.ceil(window.innerWidth / itemSize) + bufferItems! * 2
+      Math.ceil(window.innerWidth / itemSize) + bufferItems! * 2,
     );
     return { start: 0, end: initialVisibleItems };
   });
@@ -115,7 +121,10 @@ export function useVisibleRange(
   const visibleSet = useMemo(
     () =>
       new Set(
-        Array.from({ length: visibleRange.end - visibleRange.start }, (_, i) => visibleRange.start + i),
+        Array.from(
+          { length: visibleRange.end - visibleRange.start },
+          (_, i) => visibleRange.start + i,
+        ),
       ),
     [visibleRange],
   );

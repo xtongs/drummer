@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { LegacyDrumNotation, type DrumNotationProps } from "./LegacyDrumNotation";
+import {
+  LegacyDrumNotation,
+  type DrumNotationProps,
+} from "./LegacyDrumNotation";
 import { VexFlowDrumNotation } from "./VexFlowDrumNotation";
 import {
   getNotationRenderer,
@@ -19,7 +22,7 @@ export const RENDERER_CHANGE_EVENT = "drummer-renderer-change";
  */
 export function DrumNotation(props: DrumNotationProps) {
   const [renderer, setRenderer] = useState<NotationRenderer>(() =>
-    getNotationRenderer()
+    getNotationRenderer(),
   );
   const [fallbackToLegacy, setFallbackToLegacy] = useState(false);
 

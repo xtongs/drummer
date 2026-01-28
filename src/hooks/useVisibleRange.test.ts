@@ -8,7 +8,9 @@ describe("useVisibleRange", () => {
   const scrollContainerRef = {
     current: {
       scrollLeft: 0,
-      get clientWidth() { return 500; },
+      get clientWidth() {
+        return 500;
+      },
       addEventListener: mockAddEventListener,
       removeEventListener: mockRemoveEventListener,
     } as unknown as HTMLElement,
@@ -26,7 +28,10 @@ describe("useVisibleRange", () => {
 
   it("应该返回完整的可见范围当内容比视口小时", () => {
     // 模拟：scrollContainer 宽 500px，content 宽 300px（比视口小）
-    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
+    Object.defineProperty(scrollContainerRef.current, "clientWidth", {
+      value: 500,
+      configurable: true,
+    });
 
     const { result } = renderHook(() =>
       useVisibleRange(scrollContainerRef, contentRef, {
@@ -41,7 +46,10 @@ describe("useVisibleRange", () => {
   });
 
   it("应该计算正确的可见范围（视口在起始位置）", () => {
-    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
+    Object.defineProperty(scrollContainerRef.current, "clientWidth", {
+      value: 500,
+      configurable: true,
+    });
     scrollContainerRef.current.scrollLeft = 0;
 
     const { result } = renderHook(() =>
@@ -60,7 +68,10 @@ describe("useVisibleRange", () => {
   });
 
   it("应该返回正确的 visibleSet", () => {
-    Object.defineProperty(scrollContainerRef.current, 'clientWidth', { value: 500, configurable: true });
+    Object.defineProperty(scrollContainerRef.current, "clientWidth", {
+      value: 500,
+      configurable: true,
+    });
     scrollContainerRef.current.scrollLeft = 500;
 
     const { result } = renderHook(() =>
@@ -89,6 +100,12 @@ describe("useVisibleRange", () => {
       }),
     );
 
-    expect(mockAddEventListener).toHaveBeenCalledWith("scroll", expect.any(Function), { passive: true });
+    expect(mockAddEventListener).toHaveBeenCalledWith(
+      "scroll",
+      expect.any(Function),
+      {
+        passive: true,
+      },
+    );
   });
 });

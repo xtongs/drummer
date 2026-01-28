@@ -27,7 +27,7 @@ describe("MetronomeBar - BPM 点击变速", () => {
         onRateIndexChange={onRateIndexChange}
         rates={BPM_RATES}
         rateLabels={BPM_RATE_LABELS}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByLabelText("BPM rate next"));
@@ -51,7 +51,7 @@ describe("MetronomeBar - BPM 点击变速", () => {
         onRateIndexChange={onRateIndexChange}
         rates={BPM_RATES}
         rateLabels={BPM_RATE_LABELS}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByLabelText("BPM rate prev"));
@@ -76,7 +76,7 @@ describe("MetronomeBar - BPM 点击变速", () => {
         onRateIndexChange={onRateIndexChange}
         rates={BPM_RATES}
         rateLabels={BPM_RATE_LABELS}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByLabelText("BPM rate prev"));

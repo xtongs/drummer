@@ -448,9 +448,7 @@ export function PatternEditor({
         <div className="pattern-editor-actions-right">
           <button
             type="button"
-            className={`action-button count-in-toggle-button${
-              isCountInEnabled ? " active" : ""
-            }`}
+            className={`action-button count-in-toggle-button${isCountInEnabled ? " active" : ""}`}
             onClick={onCountInToggle}
             aria-label="Toggle count-in"
             title="Toggle count-in"
@@ -473,9 +471,7 @@ export function PatternEditor({
           </button>
           <button
             type="button"
-            className={`action-button practice-toggle-button${
-              isFullPracticeMode ? " active" : ""
-            }`}
+            className={`action-button practice-toggle-button${isFullPracticeMode ? " active" : ""}`}
             onClick={handlePracticeModeToggle}
             aria-label="Toggle practice mode"
             title="Toggle practice mode"

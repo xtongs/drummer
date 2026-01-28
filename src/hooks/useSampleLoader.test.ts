@@ -67,7 +67,7 @@ describe("useSampleLoader", () => {
     });
 
     expect(setSampleLoadProgressCallback).toHaveBeenCalledWith(
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -97,7 +97,7 @@ describe("useSampleLoader", () => {
 
   it("加载失败时 isLoading 仍应该变为 false", async () => {
     vi.mocked(ensureSamplesLoaded).mockRejectedValueOnce(
-      new Error("Load failed")
+      new Error("Load failed"),
     );
 
     const { result } = renderHook(() => useSampleLoader());

@@ -113,11 +113,13 @@ export function useMultiPatternPlayer({
   const playStepsRef = useRef<PlayStep[]>([]);
   const onSubdivisionChangeRef = useRef(onSubdivisionChange);
   const onPatternChangeRef = useRef(onPatternChange);
+  const onPlayStartRef = useRef(onPlayStart);
   const currentPatternRef = useRef(currentPattern);
   const isDraftModeRef = useRef(isDraftMode);
 
   onSubdivisionChangeRef.current = onSubdivisionChange;
   onPatternChangeRef.current = onPatternChange;
+  onPlayStartRef.current = onPlayStart;
   currentPatternRef.current = currentPattern;
   isDraftModeRef.current = isDraftMode;
 
@@ -126,23 +128,26 @@ export function useMultiPatternPlayer({
   playbackRateRef.current = playbackRate;
 
   // 计算指定 pattern 的 subdivision 时长（考虑 playbackRate 和每小节 BPM 覆盖）
-  const getSubdivisionDuration = useCallback((pattern: Pattern, subdivisionIndex?: number): number => {
-    // 获取该小节的 BPM（覆盖值或全局值）
-    let baseBPM = pattern.bpm;
-    if (subdivisionIndex !== undefined && pattern.barBpmOverrides) {
-      const [beatsPerBar] = pattern.timeSignature;
-      const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-      const barIndex = Math.floor(subdivisionIndex / subdivisionsPerBar);
-      baseBPM = pattern.barBpmOverrides[barIndex] ?? pattern.bpm;
-    }
-    
-    // 应用 playbackRate：rate 越小，BPM 越慢，duration 越长
-    // 因为 rate 已经是累积倍率（如 0.9 表示减速到 90%），直接除以 rate
-    const effectiveBPM = baseBPM * playbackRateRef.current;
-    const beatDuration =
-      (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
-    return beatDuration / SUBDIVISIONS_PER_BEAT;
-  }, []);
+  const getSubdivisionDuration = useCallback(
+    (pattern: Pattern, subdivisionIndex?: number): number => {
+      // 获取该小节的 BPM（覆盖值或全局值）
+      let baseBPM = pattern.bpm;
+      if (subdivisionIndex !== undefined && pattern.barBpmOverrides) {
+        const [beatsPerBar] = pattern.timeSignature;
+        const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+        const barIndex = Math.floor(subdivisionIndex / subdivisionsPerBar);
+        baseBPM = pattern.barBpmOverrides[barIndex] ?? pattern.bpm;
+      }
+
+      // 应用 playbackRate：rate 越小，BPM 越慢，duration 越长
+      // 因为 rate 已经是累积倍率（如 0.9 表示减速到 90%），直接除以 rate
+      const effectiveBPM = baseBPM * playbackRateRef.current;
+      const beatDuration =
+        (60.0 / effectiveBPM) * (4.0 / pattern.timeSignature[1]);
+      return beatDuration / SUBDIVISIONS_PER_BEAT;
+    },
+    [],
+  );
 
   // 计算指定 pattern 的每小节 subdivisions 数量
   const getSubdivisionsPerBar = useCallback((pattern: Pattern): number => {
@@ -443,10 +448,13 @@ export function useMultiPatternPlayer({
       // 播放当前 subdivision
       playSubdivision(step.pattern, subInStep, playTime);
 
-      // 更新动画状态
-      const callback = onSubdivisionChangeRef.current;
-      if (callback) {
-        scheduleAnimationUpdate(subInStep, callback, delayMs);
+      // 更新动画状态（仅在仍在运行时）
+      // 防止在 stop() 过程中调度已预安排的动画更新
+      if (isRunningRef.current) {
+        const callback = onSubdivisionChangeRef.current;
+        if (callback) {
+          scheduleAnimationUpdate(subInStep, callback, delayMs);
+        }
       }
 
       currentSubdivisionInStepRef.current = subInStep + 1;
@@ -476,8 +484,9 @@ export function useMultiPatternPlayer({
 
     if (steps.length === 0) return;
 
-    if (onPlayStart) {
-      onPlayStart(currentTime);
+    const playStartCallback = onPlayStartRef.current;
+    if (playStartCallback) {
+      playStartCallback(currentTime);
     }
 
     // 检查当前位置是否在有效范围内，且指向的是当前选中的 pattern

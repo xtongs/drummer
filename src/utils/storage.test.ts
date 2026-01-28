@@ -85,7 +85,12 @@ describe("Storage 工具函数", () => {
       const loaded = loadStorageData();
 
       // 应该被迁移为 CellState
-      expect(loaded.patterns[0].grid[0]).toEqual([CELL_NORMAL, CELL_OFF, CELL_NORMAL, CELL_OFF]);
+      expect(loaded.patterns[0].grid[0]).toEqual([
+        CELL_NORMAL,
+        CELL_OFF,
+        CELL_NORMAL,
+        CELL_OFF,
+      ]);
     });
   });
 
@@ -237,7 +242,10 @@ describe("Storage 工具函数", () => {
 
     it("应该验证加载的数据格式", () => {
       // 无效数据
-      localStorage.setItem("drummer-cross-pattern-loop", JSON.stringify({ invalid: true }));
+      localStorage.setItem(
+        "drummer-cross-pattern-loop",
+        JSON.stringify({ invalid: true }),
+      );
 
       expect(loadCrossPatternLoop()).toBeUndefined();
     });

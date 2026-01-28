@@ -9,6 +9,20 @@ npm run test || { echo "❌ Tests failed! Commit aborted."; exit 1; }
 echo "🔍 Running type check..."
 npm run typecheck || { echo "❌ Type check failed! Commit aborted."; exit 1; }
 
+echo "✨ Checking formatting..."
+npm run format:check || { echo "❌ Prettier check failed! Commit aborted."; exit 1; }
+
+CHANGED_TS="$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\\.(ts|tsx)$' || true)"
+if [ -n "$CHANGED_TS" ]; then
+  echo "🔎 Running lint on staged TS/TSX files..."
+  npx eslint --max-warnings 0 --report-unused-disable-directives $CHANGED_TS || {
+    echo "❌ Lint failed! Commit aborted."
+    exit 1
+  }
+else
+  echo "🟢 No staged TS/TSX files to lint."
+fi
+
 CHANGED_FILES="$(git diff --cached --name-only --diff-filter=ACMR)"
 
 # 仅当 staged 改动命中"构建输入文件"时才执行 build + 更新 dist

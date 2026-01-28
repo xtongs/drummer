@@ -52,19 +52,19 @@ export function MetronomeBar({
       [5, 4], // 5/4拍
       [7, 8], // 7/8拍
     ],
-    []
+    [],
   );
 
   const getCurrentTimeSignatureIndex = useCallback(() => {
     const index = commonTimeSignatures.findIndex(
-      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1]
+      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1],
     );
     return index >= 0 ? index : 0;
   }, [timeSignature, commonTimeSignatures]);
 
   const [timeSignatureIndex, setTimeSignatureIndex] = useState(() => {
     const index = commonTimeSignatures.findIndex(
-      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1]
+      (ts) => ts[0] === timeSignature[0] && ts[1] === timeSignature[1],
     );
     return index >= 0 ? index : 0;
   });
@@ -122,22 +122,22 @@ export function MetronomeBar({
   const max = 200;
 
   const handleDecrease = () => {
-    const newBPM = Math.round((Math.max(min, bpm - 1)) * 10) / 10;
+    const newBPM = Math.round(Math.max(min, bpm - 1) * 10) / 10;
     onBPMChange(newBPM);
   };
 
   const handleIncrease = () => {
-    const newBPM = Math.round((Math.min(max, bpm + 1)) * 10) / 10;
+    const newBPM = Math.round(Math.min(max, bpm + 1) * 10) / 10;
     onBPMChange(newBPM);
   };
 
   const handleClickDecrease = () => {
-    const newBPM = Math.round((Math.max(min, bpm - 0.5)) * 10) / 10;
+    const newBPM = Math.round(Math.max(min, bpm - 0.5) * 10) / 10;
     onBPMChange(newBPM);
   };
 
   const handleClickIncrease = () => {
-    const newBPM = Math.round((Math.min(max, bpm + 0.5)) * 10) / 10;
+    const newBPM = Math.round(Math.min(max, bpm + 0.5) * 10) / 10;
     onBPMChange(newBPM);
   };
 
@@ -216,7 +216,9 @@ export function MetronomeBar({
                 const rounded = Math.round(bpm * 10) / 10;
                 const hasDecimal = rounded !== Math.round(bpm);
                 const integerPart = Math.floor(rounded);
-                const decimalPart = hasDecimal ? String(rounded).split('.')[1] : null;
+                const decimalPart = hasDecimal
+                  ? String(rounded).split(".")[1]
+                  : null;
                 return (
                   <>
                     <span className="bpm-value-integer">{integerPart}</span>
@@ -256,18 +258,16 @@ export function MetronomeBar({
         </div>
 
         <div className="loop-count-group">
-          {patternPlayButton ? (
-            patternPlayButton
-          ) : (
-            onPatternPlayToggle && (
-              <PlayButton
-                isPlaying={isPatternPlaying}
-                onClick={onPatternPlayToggle}
-                loopCount={loopCount}
-                onResetCount={handleResetCount}
-              />
-            )
-          )}
+          {patternPlayButton
+            ? patternPlayButton
+            : onPatternPlayToggle && (
+                <PlayButton
+                  isPlaying={isPatternPlaying}
+                  onClick={onPatternPlayToggle}
+                  loopCount={loopCount}
+                  onResetCount={handleResetCount}
+                />
+              )}
         </div>
       </div>
       {/* 第二行：BPM滑块（撑满） */}

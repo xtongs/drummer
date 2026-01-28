@@ -129,13 +129,13 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
 
       // 合并 normal 和 ghost 到同一个事件中，避免时值被拆分
       const allDrums = [
-        ...slot.normal.map(d => ({ ...d, kind: "normal" as const })),
-        ...slot.ghost.map(d => ({ ...d, kind: "ghost" as const })),
+        ...slot.normal.map((d) => ({ ...d, kind: "normal" as const })),
+        ...slot.ghost.map((d) => ({ ...d, kind: "ghost" as const })),
       ];
 
       if (allDrums.length > 0) {
         // 检查是否所有鼓都是 ghost，如果是则事件类型为 ghost
-        const allGhost = allDrums.every(d => d.kind === "ghost");
+        const allGhost = allDrums.every((d) => d.kind === "ghost");
         const eventKind = allGhost ? "ghost" : "normal";
 
         collection.push({

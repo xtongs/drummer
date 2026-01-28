@@ -12,7 +12,7 @@ export function getSymbolY(
   line: number,
   _staffHeight: number,
   staffTop: number,
-  lineSpacing: number
+  lineSpacing: number,
 ): number {
   // 五线谱有5条线，中间线是第3条（索引2）
   // 第1条线（最下）在 staffTop + 0 * lineSpacing
@@ -27,4 +27,3 @@ export function getSymbolY(
 export function getDrumNotation(drum: DrumType) {
   return DRUM_NOTATION[drum];
 }
-

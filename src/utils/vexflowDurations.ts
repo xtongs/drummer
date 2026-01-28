@@ -48,7 +48,7 @@ const REST_TOKENS: readonly VexflowDurationToken[] = [
  * gapUnits32 必须 > 0。
  */
 export function pickLargestDurationToken(
-  gapUnits32: number
+  gapUnits32: number,
 ): VexflowDurationToken {
   if (!Number.isFinite(gapUnits32) || gapUnits32 <= 0) {
     throw new Error(`gapUnits32 must be > 0, got: ${gapUnits32}`);
@@ -68,7 +68,7 @@ export function pickLargestDurationToken(
  * gapUnits32 可以为 0。
  */
 export function splitGapIntoDurationTokens(
-  gapUnits32: number
+  gapUnits32: number,
 ): VexflowDurationToken[] {
   if (!Number.isFinite(gapUnits32) || gapUnits32 < 0) {
     throw new Error(`gapUnits32 must be >= 0, got: ${gapUnits32}`);
@@ -87,4 +87,3 @@ export function splitGapIntoDurationTokens(
   }
   return result;
 }
-

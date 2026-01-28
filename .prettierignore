@@ -1,0 +1,12 @@
+node_modules
+dist
+public
+open_spec
+openspec
+coverage
+*.log
+.*/*
+*.svg
+*.md
+bun.lock
+package-lock.json

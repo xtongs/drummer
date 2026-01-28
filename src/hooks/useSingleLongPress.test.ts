@@ -17,7 +17,7 @@ describe("useSingleLongPress", () => {
       const onClick = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 500, onLongPress, onClick })
+        useSingleLongPress({ delay: 500, onLongPress, onClick }),
       );
 
       // 开始按下
@@ -47,7 +47,7 @@ describe("useSingleLongPress", () => {
       const onLongPress = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 500, onLongPress })
+        useSingleLongPress({ delay: 500, onLongPress }),
       );
 
       act(() => {
@@ -72,7 +72,7 @@ describe("useSingleLongPress", () => {
       const onClick = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 500, onLongPress, onClick })
+        useSingleLongPress({ delay: 500, onLongPress, onClick }),
       );
 
       // 开始按下
@@ -96,7 +96,7 @@ describe("useSingleLongPress", () => {
       const onLongPress = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 500, onLongPress })
+        useSingleLongPress({ delay: 500, onLongPress }),
       );
 
       act(() => {
@@ -120,7 +120,7 @@ describe("useSingleLongPress", () => {
       const onClick = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 500, onLongPress, onClick })
+        useSingleLongPress({ delay: 500, onLongPress, onClick }),
       );
 
       act(() => {
@@ -150,9 +150,7 @@ describe("useSingleLongPress", () => {
     it("应该返回 ref 回调和事件处理器", () => {
       const onLongPress = vi.fn();
 
-      const { result } = renderHook(() =>
-        useSingleLongPress({ onLongPress })
-      );
+      const { result } = renderHook(() => useSingleLongPress({ onLongPress }));
 
       expect(result.current).toHaveProperty("ref");
       expect(result.current).toHaveProperty("onMouseDown");
@@ -165,7 +163,7 @@ describe("useSingleLongPress", () => {
       const onLongPress = vi.fn();
 
       const { result, rerender } = renderHook(() =>
-        useSingleLongPress({ onLongPress })
+        useSingleLongPress({ onLongPress }),
       );
 
       const firstRef = result.current.ref;
@@ -181,7 +179,7 @@ describe("useSingleLongPress", () => {
       const onLongPress = vi.fn();
 
       const { result } = renderHook(() =>
-        useSingleLongPress({ delay: 1000, onLongPress })
+        useSingleLongPress({ delay: 1000, onLongPress }),
       );
 
       act(() => {

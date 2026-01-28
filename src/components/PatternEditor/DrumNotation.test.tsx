@@ -90,7 +90,7 @@ describe("DrumNotation 组件", () => {
           pattern={pattern}
           cellSize={20}
           onDoubleClick={onDoubleClick}
-        />
+        />,
       );
 
       const svg = container.querySelector("svg");
@@ -128,7 +128,7 @@ describe("DrumNotation 组件", () => {
             pattern={pattern}
             cellSize={20}
             onDoubleClick={onDoubleClick}
-          />
+          />,
         );
 
         const svg = container.querySelector("svg");

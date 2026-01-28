@@ -36,9 +36,9 @@ describe("useTheme", () => {
     expect(document.documentElement.style.getPropertyValue("--bg-color")).toBe(
       theme.colors.bgColor,
     );
-    expect(document.documentElement.style.getPropertyValue("--color-text")).toBe(
-      theme.colors.text,
-    );
+    expect(
+      document.documentElement.style.getPropertyValue("--color-text"),
+    ).toBe(theme.colors.text);
   });
 
   it("applies theme to CSS variables when theme changes", () => {
@@ -137,7 +137,9 @@ describe("useTheme", () => {
   it("handles localStorage errors gracefully", () => {
     // Mock localStorage.getItem to throw error
     const originalGetItem = localStorage.getItem;
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
 
     localStorage.getItem = vi.fn(() => {
       throw new Error("localStorage access denied");
@@ -166,9 +168,8 @@ describe("useTheme", () => {
   it("sets theme-color meta tag", () => {
     const { result } = renderHook(() => useTheme());
 
-    const themeColor = document.documentElement.style.getPropertyValue(
-      "--theme-color",
-    );
+    const themeColor =
+      document.documentElement.style.getPropertyValue("--theme-color");
 
     expect(themeColor).toBe(result.current.currentTheme.colors.bgColor);
   });
@@ -185,30 +186,30 @@ describe("useTheme", () => {
     expect(document.documentElement.style.getPropertyValue("--card-bg")).toBe(
       colors.cardBg,
     );
-    expect(document.documentElement.style.getPropertyValue("--color-text")).toBe(
-      colors.text,
-    );
+    expect(
+      document.documentElement.style.getPropertyValue("--color-text"),
+    ).toBe(colors.text);
 
     // Check functional colors
-    expect(document.documentElement.style.getPropertyValue("--color-primary")).toBe(
-      colors.primary,
-    );
-    expect(document.documentElement.style.getPropertyValue("--color-secondary")).toBe(
-      colors.secondary,
-    );
-    expect(document.documentElement.style.getPropertyValue("--color-danger")).toBe(
-      colors.danger,
-    );
+    expect(
+      document.documentElement.style.getPropertyValue("--color-primary"),
+    ).toBe(colors.primary);
+    expect(
+      document.documentElement.style.getPropertyValue("--color-secondary"),
+    ).toBe(colors.secondary);
+    expect(
+      document.documentElement.style.getPropertyValue("--color-danger"),
+    ).toBe(colors.danger);
 
     // Check special effects
     expect(document.documentElement.style.getPropertyValue("--glass-bg")).toBe(
       colors.glassBg,
     );
-    expect(document.documentElement.style.getPropertyValue("--grid-border")).toBe(
-      colors.gridBorder,
-    );
-    expect(document.documentElement.style.getPropertyValue("--color-beat-line")).toBe(
-      colors.beatLine,
-    );
+    expect(
+      document.documentElement.style.getPropertyValue("--grid-border"),
+    ).toBe(colors.gridBorder);
+    expect(
+      document.documentElement.style.getPropertyValue("--color-beat-line"),
+    ).toBe(colors.beatLine);
   });
 });

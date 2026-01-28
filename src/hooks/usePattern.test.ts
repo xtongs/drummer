@@ -88,7 +88,9 @@ describe("usePattern", () => {
         result.current.updateBPM(140);
       });
 
-      expect(result.current.pattern.updatedAt).toBeGreaterThanOrEqual(originalUpdatedAt);
+      expect(result.current.pattern.updatedAt).toBeGreaterThanOrEqual(
+        originalUpdatedAt,
+      );
     });
   });
 

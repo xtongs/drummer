@@ -30,7 +30,7 @@ describe("useMetronome", () => {
           bpm: 120,
           timeSignature: [4, 4],
           isPlaying: false,
-        })
+        }),
       );
 
       expect(result.current.currentBeat).toBe(0);
@@ -47,7 +47,7 @@ describe("useMetronome", () => {
             timeSignature: [4, 4],
             isPlaying,
           }),
-        { initialProps: { isPlaying: false } }
+        { initialProps: { isPlaying: false } },
       );
 
       // 开始播放
@@ -70,7 +70,7 @@ describe("useMetronome", () => {
             timeSignature: [4, 4],
             isPlaying,
           }),
-        { initialProps: { isPlaying: true } }
+        { initialProps: { isPlaying: true } },
       );
 
       await act(async () => {
@@ -91,7 +91,7 @@ describe("useMetronome", () => {
           bpm: 60,
           timeSignature: [4, 4],
           isPlaying: false,
-        })
+        }),
       );
 
       expect(result.current).toBeDefined();
@@ -103,7 +103,7 @@ describe("useMetronome", () => {
           bpm: 120,
           timeSignature: [3, 4], // 3/4 拍
           isPlaying: false,
-        })
+        }),
       );
 
       expect(result.current).toBeDefined();
@@ -115,7 +115,7 @@ describe("useMetronome", () => {
           bpm: 120,
           timeSignature: [6, 8],
           isPlaying: false,
-        })
+        }),
       );
 
       expect(result.current).toBeDefined();
@@ -132,7 +132,7 @@ describe("useMetronome", () => {
           timeSignature: [4, 4],
           isPlaying: false,
           onBeatChange,
-        })
+        }),
       );
 
       expect(result.current).toBeDefined();
@@ -146,7 +146,7 @@ describe("useMetronome", () => {
           bpm: 120,
           timeSignature: [4, 4],
           isPlaying: false,
-        })
+        }),
       );
 
       expect(result.current).toHaveProperty("currentBeat");
@@ -163,7 +163,7 @@ describe("useMetronome", () => {
           bpm: 120,
           timeSignature: [4, 4],
           isPlaying: true,
-        })
+        }),
       );
 
       await act(async () => {

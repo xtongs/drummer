@@ -1,5 +1,13 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import { Renderer, Stave, Voice, Formatter, Beam, Barline, Fraction } from "vexflow";
+import {
+  Renderer,
+  Stave,
+  Voice,
+  Formatter,
+  Beam,
+  Barline,
+  Fraction,
+} from "vexflow";
 import { SUBDIVISIONS_PER_BEAT } from "../../utils/constants";
 import type { DrumNotationProps } from "./LegacyDrumNotation";
 import type { DrumType } from "../../types";
@@ -306,8 +314,10 @@ export function VexFlowDrumNotation({
             hasSixteenthByHalfBar(beamableNotes, barSubdivisions);
 
           // 按半小节分组音符
-          const [firstHalfNotes, secondHalfNotes] =
-            splitNotesByHalfBar(beamableNotes, barSubdivisions);
+          const [firstHalfNotes, secondHalfNotes] = splitNotesByHalfBar(
+            beamableNotes,
+            barSubdivisions,
+          );
 
           // 为每半小节分别生成符杠
           const halfBarGroups = [
@@ -327,7 +337,11 @@ export function VexFlowDrumNotation({
             if (hasSixteenth) {
               // 有十六分音符：将半小节内的音符按拍子进一步分组，防止跨拍符杠连接
               // 例如：4/4 拍时，半小节有 2 拍，需要分成 2 组
-              const beatGroups = splitNotesByBeat(halfNotes, barSubdivisions, beatsPerBar);
+              const beatGroups = splitNotesByBeat(
+                halfNotes,
+                barSubdivisions,
+                beatsPerBar,
+              );
 
               // 为每拍生成符杠
               for (const beatNotes of beatGroups) {
@@ -373,11 +387,15 @@ export function VexFlowDrumNotation({
               getSVGElement?: () => SVGElement;
             }>;
           };
-          if (note._ghostDrums && note._ghostDrums.length > 0 && note.noteHeads) {
+          if (
+            note._ghostDrums &&
+            note._ghostDrums.length > 0 &&
+            note.noteHeads
+          ) {
             // noteHeads 的索引顺序对应 allKeys 的顺序
             // allKeys 是按 event.drums 的顺序生成的
             const ghostDrumsSet = new Set(note._ghostDrums);
-            const drumTypes = noteObj.event.drums.map(d => d.drum);
+            const drumTypes = noteObj.event.drums.map((d) => d.drum);
 
             for (let i = 0; i < note.noteHeads.length; i++) {
               const head = note.noteHeads[i];

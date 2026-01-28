@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
  */
 export function useBeforeUnloadWarning(
   isMetronomePlaying: boolean,
-  isPatternPlaying: boolean
+  isPatternPlaying: boolean,
 ): void {
   // 使用 ref 存储当前播放状态，避免闭包问题
   const isMetronomePlayingRef = useRef(isMetronomePlaying);

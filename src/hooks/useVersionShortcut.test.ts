@@ -23,7 +23,9 @@ describe("useVersionShortcut", () => {
     expect(addEventListenerSpy).toHaveBeenCalledWith(
       "pointerdown",
       expect.any(Function),
-      { passive: true }
+      {
+        passive: true,
+      },
     );
 
     addEventListenerSpy.mockRestore();
@@ -32,7 +34,7 @@ describe("useVersionShortcut", () => {
   it("卸载时应该移除事件监听器", () => {
     const removeEventListenerSpy = vi.spyOn(
       document.body,
-      "removeEventListener"
+      "removeEventListener",
     );
 
     const { unmount } = renderHook(() => useVersionShortcut());
@@ -40,7 +42,7 @@ describe("useVersionShortcut", () => {
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       "pointerdown",
-      expect.any(Function)
+      expect.any(Function),
     );
 
     removeEventListenerSpy.mockRestore();
@@ -62,7 +64,7 @@ describe("useVersionShortcut", () => {
     expect(dispatchEventSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "show-version",
-      })
+      }),
     );
   });
 
@@ -92,7 +94,7 @@ describe("useVersionShortcut", () => {
 
     // 不应该触发 show-version（只有 show-version 事件类型）
     const showVersionCalls = dispatchEventSpy.mock.calls.filter(
-      (call: [Event]) => call[0].type === "show-version"
+      (call: [Event]) => call[0].type === "show-version",
     );
     expect(showVersionCalls.length).toBe(0);
   });
@@ -116,7 +118,7 @@ describe("useVersionShortcut", () => {
 
     // 不应该触发 show-version
     const showVersionCalls = dispatchEventSpy.mock.calls.filter(
-      (call: [Event]) => call[0].type === "show-version"
+      (call: [Event]) => call[0].type === "show-version",
     );
     expect(showVersionCalls.length).toBe(0);
 
@@ -140,7 +142,7 @@ describe("useVersionShortcut", () => {
     }
 
     const showVersionCalls = dispatchEventSpy.mock.calls.filter(
-      (call: [Event]) => call[0].type === "show-version"
+      (call: [Event]) => call[0].type === "show-version",
     );
     expect(showVersionCalls.length).toBe(0);
 

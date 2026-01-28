@@ -1,5 +1,9 @@
 import JSZip from "jszip";
-import { getAllBgmFiles, saveBgmFileFromBase64, clearAllBgmFiles } from "./bgmStorage";
+import {
+  getAllBgmFiles,
+  saveBgmFileFromBase64,
+  clearAllBgmFiles,
+} from "./bgmStorage";
 
 /**
  * 配置导出数据结构
