@@ -124,25 +124,6 @@ const DRUM_TO_SAMPLE_NAME: Record<DrumType, string> = {
   "Tom 3": "tom3",
 };
 
-/**
- * 获取采样 URL（根据用户选择）
- */
-function getSampleUrl(sampleName: string): string {
-  // 获取鼓件类型
-  const drumType = Object.keys(DRUM_TO_SAMPLE_NAME).find(
-    (key) => DRUM_TO_SAMPLE_NAME[key as DrumType] === sampleName,
-  ) as DrumType | undefined;
-
-  if (!drumType) {
-    // 节拍器等特殊采样直接使用变体 A
-    return SAMPLE_URLS[sampleName]?.A || SAMPLE_URLS[sampleName].A;
-  }
-
-  // 获取用户选择的变体
-  const variant = getSampleVariant(drumType);
-  return SAMPLE_URLS[sampleName]?.[variant] || SAMPLE_URLS[sampleName].A;
-}
-
 let toneContext: Tone.BaseContext | null = null;
 let isResuming = false;
 
@@ -256,36 +237,47 @@ async function loadSample(
 }
 
 /**
- * 加载所有采样
+ * 加载所有采样（包括所有变体 A/B/C）
  * @param forceUpdate 是否强制更新缓存（即使缓存存在也重新加载）
  */
 function loadAllSamples(forceUpdate = false): Promise<void> {
   if (samplesLoaded && !forceUpdate) return Promise.resolve();
   if (samplesLoadPromise) return samplesLoadPromise;
 
-  const samples = [
-    { name: "kick" },
-    { name: "snare" },
-    { name: "hiHatClosed" },
-    { name: "hiHatOpen" },
-    { name: "crash1" },
-    { name: "crash2" },
-    { name: "ride" },
-    { name: "tom1" },
-    { name: "tom2" },
-    { name: "tom3" },
-    { name: "metronome" },
+  const variants: SampleVariantType[] = ["A", "B", "C"];
+  const sampleNames = [
+    "kick",
+    "snare",
+    "hiHatClosed",
+    "hiHatOpen",
+    "crash1",
+    "crash2",
+    "ride",
+    "tom1",
+    "tom2",
+    "tom3",
   ];
+
+  // 构建所有采样变体列表
+  const samples: Array<{ name: string; url: string; cacheKey: string }> = [];
+  for (const sampleName of sampleNames) {
+    for (const variant of variants) {
+      const url = SAMPLE_URLS[sampleName][variant];
+      const cacheKey = `${sampleName}-${variant}`;
+      samples.push({ name: sampleName, url, cacheKey });
+    }
+  }
+  // 添加节拍器（只有一个变体）
+  samples.push({ name: "metronome", url: metronomeUrl, cacheKey: "metronome" });
 
   let loadedCount = 0;
 
   samplesLoadPromise = (async () => {
     for (const sample of samples) {
-      const url = getSampleUrl(sample.name);
-      await loadSample(url, sample.name, forceUpdate);
+      await loadSample(sample.url, sample.cacheKey, forceUpdate);
       loadedCount++;
       if (progressCallback) {
-        progressCallback(loadedCount, samples.length, sample.name);
+        progressCallback(loadedCount, samples.length, sample.cacheKey);
       }
     }
     samplesLoaded = true;
@@ -342,15 +334,12 @@ export function setSampleLoadProgressCallback(
 
 /**
  * 重新加载所有采样（当用户改变采样选择时调用）
+ * 由于所有变体已经在首次加载时预加载，此函数现在不需要做任何事
  */
 export async function reloadSamples(): Promise<void> {
-  // 清除已加载标记
-  samplesLoaded = false;
-  samplesLoadPromise = null;
-  sampleBuffers.clear();
-
-  // 重新加载所有采样
-  await loadAllSamples(true);
+  // 所有采样变体已在首次加载时预加载，切换采样不需要重新加载
+  // 此函数保留以保持 API 兼容性
+  return Promise.resolve();
 }
 
 /**
@@ -410,7 +399,11 @@ export function playBeat(time: number): void {
  * 底鼓 - 优先使用真实采样
  */
 export function playKick(time: number): void {
-  if (playSample("kick", time, 0.9)) {
+  const sampleName = DRUM_TO_SAMPLE_NAME["Kick"];
+  const variant = getSampleVariant("Kick");
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 0.9)) {
     return;
   }
   // 后备：合成音色
@@ -481,8 +474,12 @@ function playSample(
  * 军鼓 - 优先使用真实采样，如果未加载则使用合成音色
  */
 export function playSnare(time: number): void {
+  const sampleName = DRUM_TO_SAMPLE_NAME["Snare"];
+  const variant = getSampleVariant("Snare");
+  const cacheKey = `${sampleName}-${variant}`;
+
   // 尝试使用采样
-  if (playSample("snare", time, 0.9)) {
+  if (playSample(cacheKey, time, 0.9)) {
     return;
   }
 
@@ -545,7 +542,11 @@ function playSnareSynth(time: number): void {
  * 闭合踩镲 - 优先使用真实采样
  */
 export function playHiHatClosed(time: number): void {
-  if (playSample("hiHatClosed", time, 0.7)) {
+  const sampleName = DRUM_TO_SAMPLE_NAME["Hi-Hat Closed"];
+  const variant = getSampleVariant("Hi-Hat Closed");
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 0.7)) {
     return;
   }
   // 后备：合成音色
@@ -579,7 +580,11 @@ function playHiHatClosedSynth(time: number): void {
  * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
-  if (playSample("hiHatOpen", time, 0.7)) {
+  const sampleName = DRUM_TO_SAMPLE_NAME["Hi-Hat Open"];
+  const variant = getSampleVariant("Hi-Hat Open");
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 0.5)) {
     return;
   }
   // 后备：合成音色
@@ -614,8 +619,12 @@ function playHiHatOpenSynth(time: number): void {
  */
 export function playCrash(time: number, brightness: number = 1): void {
   // brightness > 1 使用 crash1，否则使用 crash2
-  const sampleName = brightness > 1 ? "crash1" : "crash2";
-  if (playSample(sampleName, time, 0.6)) {
+  const drumType = brightness > 1 ? "Crash 1" : "Crash 2";
+  const sampleName = DRUM_TO_SAMPLE_NAME[drumType];
+  const variant = getSampleVariant(drumType);
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 0.6)) {
     return;
   }
   // 后备：合成音色
@@ -652,7 +661,11 @@ function playCrashSynth(time: number, brightness: number = 1): void {
  * Ride 镲 - 优先使用真实采样
  */
 export function playRide(time: number): void {
-  if (playSample("ride", time, 0.7)) {
+  const sampleName = DRUM_TO_SAMPLE_NAME["Ride"];
+  const variant = getSampleVariant("Ride");
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 0.7)) {
     return;
   }
   // 后备：合成音色
@@ -685,16 +698,20 @@ function playRideSynth(time: number): void {
  */
 export function playTom(time: number, frequency: number = 200): void {
   // 根据频率选择采样
-  let sampleName: string;
+  let drumType: DrumType;
   if (frequency >= 230) {
-    sampleName = "tom1";
+    drumType = "Tom 1";
   } else if (frequency >= 180) {
-    sampleName = "tom2";
+    drumType = "Tom 2";
   } else {
-    sampleName = "tom3";
+    drumType = "Tom 3";
   }
 
-  if (playSample(sampleName, time, 1)) {
+  const sampleName = DRUM_TO_SAMPLE_NAME[drumType];
+  const variant = getSampleVariant(drumType);
+  const cacheKey = `${sampleName}-${variant}`;
+
+  if (playSample(cacheKey, time, 1)) {
     return;
   }
   // 后备：合成音色
