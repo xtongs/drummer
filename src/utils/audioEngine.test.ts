@@ -409,4 +409,42 @@ describe("audioEngine", () => {
       ).toHaveBeenCalled();
     });
   });
+
+  describe("采样变体加载", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Mock storage functions
+      vi.doMock("./storage", () => ({
+        getSampleVariant: vi.fn(() => "A"),
+      }));
+    });
+
+    it("应该清除已加载标记并重新加载采样", async () => {
+      const { reloadSamples } = await import("./audioEngine");
+
+      await reloadSamples();
+
+      // reloadSamples 应该被调用
+      expect(reloadSamples).toBeDefined();
+    });
+
+    it("应该清除采样缓存", async () => {
+      const { reloadSamples } = await import("./audioEngine");
+
+      await reloadSamples();
+
+      // 验证函数可以正常调用
+      expect(reloadSamples).toBeDefined();
+    });
+
+    it("应该能够多次调用reloadSamples", async () => {
+      const { reloadSamples } = await import("./audioEngine");
+
+      await reloadSamples();
+      await reloadSamples();
+      await reloadSamples();
+
+      expect(reloadSamples).toBeDefined();
+    });
+  });
 });

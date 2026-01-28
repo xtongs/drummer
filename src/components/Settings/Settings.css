@@ -289,3 +289,50 @@
     opacity: 0.5;
   }
 }
+
+/* 采样选择样式 */
+.sample-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.sample-selection-item {
+  display: flex;
+  align-items: center;
+}
+
+.sample-selection-drum {
+}
+
+.sample-selection-drum:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-hover);
+}
+
+.sample-selection-drum:active {
+  transform: scale(0.98);
+}
+
+.sample-selection-variants {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.sample-variant-button {
+  width: var(--button-size);
+  height: var(--button-size);
+  min-width: var(--button-size);
+  min-height: var(--button-size);
+  background-color: var(--bg-color);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.sample-variant-button.active {
+  background-color: var(--color-primary);
+}

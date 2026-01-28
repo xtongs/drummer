@@ -2,6 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { VERSION, BUILD_TIME } from "../../version";
 import { useTheme } from "../../hooks/useTheme";
 import { exportConfig, importConfig } from "../../utils/configBackup";
+import { playDrumSound, reloadSamples } from "../../utils/audioEngine";
+import { loadSampleSelection, setSampleVariant } from "../../utils/storage";
+import type { DrumType, SampleVariant } from "../../types";
 import "./Settings.css";
 
 type UpdateStatus =
@@ -18,10 +21,48 @@ export function Settings() {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [isExporting, setIsExporting] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [sampleSelection, setSampleSelection] = useState<
+    Partial<Record<DrumType, SampleVariant>>
+  >({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { currentTheme, cycleTheme } = useTheme();
+
+  // 鼓件列表（从上到下）
+  const drumTypes: DrumType[] = [
+    "Crash 1",
+    "Crash 2",
+    "Hi-Hat Open",
+    "Hi-Hat Closed",
+    "Ride",
+    "Tom 1",
+    "Tom 2",
+    "Snare",
+    "Tom 3",
+    "Kick",
+  ];
+
+  // 加载采样选择
+  useEffect(() => {
+    setSampleSelection(loadSampleSelection());
+  }, []);
+
+  // 处理采样选择变更（预览并切换）
+  const handleSampleChange = async (
+    drumType: DrumType,
+    variant: SampleVariant,
+  ) => {
+    // 先切换采样
+    setSampleVariant(drumType, variant);
+    setSampleSelection((prev) => ({ ...prev, [drumType]: variant }));
+
+    // 重新加载采样
+    await reloadSamples();
+
+    // 加载完成后再预听（使用新采样）
+    await playDrumSound(drumType);
+  };
 
   // 重置超时定时器
   const resetTimeout = useCallback(() => {
@@ -1038,7 +1079,7 @@ export function Settings() {
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
                     </span>
-                    : import or export all settings as a zip file.
+                    : import or export all data as a zip file.
                   </li>
                   <li>
                     <strong>Settings</strong>{" "}
@@ -1062,10 +1103,40 @@ export function Settings() {
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Other Settings</h3>
-                <p className="settings-modal-placeholder">
-                  More feature toggles will appear here.
+                <h3>Drum Samples Selection</h3>
+                <p className="settings-modal-description">
+                  Choose between different sample variants (A/B/C) for each
+                  drum. Click to preview.
                 </p>
+                <div className="sample-selection-list">
+                  {drumTypes.map((drumType) => {
+                    const currentVariant = sampleSelection[drumType] || "A";
+                    return (
+                      <div key={drumType} className="sample-selection-item">
+                        <div className="sample-selection-drum">{drumType}</div>
+                        <div className="sample-selection-variants">
+                          {(["A", "B", "C"] as SampleVariant[]).map(
+                            (variant) => (
+                              <button
+                                key={variant}
+                                type="button"
+                                className={`sample-variant-button ${
+                                  currentVariant === variant ? "active" : ""
+                                }`}
+                                onClick={() =>
+                                  handleSampleChange(drumType, variant)
+                                }
+                                title={`Select ${variant} variant for ${drumType}`}
+                              >
+                                {variant}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div

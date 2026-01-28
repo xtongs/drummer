@@ -18,6 +18,10 @@ import {
   getNextPatternName,
   getNotationRenderer,
   setNotationRenderer,
+  saveSampleSelection,
+  loadSampleSelection,
+  getSampleVariant,
+  setSampleVariant,
 } from "./storage";
 import type { Pattern, CrossPatternLoop } from "../types";
 import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
@@ -418,6 +422,174 @@ describe("Storage 工具函数", () => {
 
       setNotationRenderer("legacy");
       expect(getNotationRenderer()).toBe("vexflow");
+    });
+  });
+
+  describe("采样选择存储 (Sample Selection)", () => {
+    beforeEach(() => {
+      localStorage.clear();
+      vi.clearAllMocks();
+    });
+
+    describe("saveSampleSelection / loadSampleSelection", () => {
+      it("应该保存并加载采样选择映射", () => {
+        const selection = {
+          Kick: "B",
+          Snare: "C",
+          "Hi-Hat Closed": "A",
+        };
+        saveSampleSelection(selection);
+
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual(selection);
+      });
+
+      it("空的 localStorage 应该返回空对象", () => {
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual({});
+      });
+
+      it("应该忽略非法的 variant 值", () => {
+        const selection = {
+          Kick: "B",
+          Snare: "invalid",
+          "Hi-Hat Closed": "A",
+        } as unknown;
+        localStorage.setItem(
+          "drummer-sample-selection",
+          JSON.stringify(selection),
+        );
+
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual({
+          Kick: "B",
+          "Hi-Hat Closed": "A",
+        });
+      });
+
+      it("应该覆盖已存在的采样选择", () => {
+        saveSampleSelection({ Kick: "A" });
+        saveSampleSelection({ Kick: "B" });
+
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual({ Kick: "B" });
+      });
+
+      it("应该支持部分鼓件的采样选择", () => {
+        const selection = {
+          Kick: "C",
+          Snare: "B",
+        };
+        saveSampleSelection(selection);
+
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual(selection);
+      });
+    });
+
+    describe("getSampleVariant", () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it("应该返回已设置的采样变体", () => {
+        setSampleVariant("Kick", "C");
+        expect(getSampleVariant("Kick")).toBe("C");
+
+        setSampleVariant("Snare", "A");
+        expect(getSampleVariant("Snare")).toBe("A");
+      });
+
+      it("未设置的鼓件应该返回默认值 'A'", () => {
+        expect(getSampleVariant("Kick")).toBe("A");
+        expect(getSampleVariant("Snare")).toBe("A");
+        expect(getSampleVariant("Crash 1")).toBe("A");
+      });
+
+      it("应该正确更新采样变体", () => {
+        setSampleVariant("Kick", "B");
+        expect(getSampleVariant("Kick")).toBe("B");
+
+        setSampleVariant("Kick", "C");
+        expect(getSampleVariant("Kick")).toBe("C");
+      });
+    });
+
+    describe("setSampleVariant", () => {
+      beforeEach(() => {
+        localStorage.clear();
+      });
+
+      it("应该能够设置所有鼓件的所有变体", () => {
+        const variants: Array<"A" | "B" | "C"> = ["A", "B", "C"];
+
+        variants.forEach((variant) => {
+          setSampleVariant("Kick", variant);
+          expect(getSampleVariant("Kick")).toBe(variant);
+        });
+      });
+
+      it("应该支持多个鼓件的不同采样变体", () => {
+        setSampleVariant("Kick", "A");
+        setSampleVariant("Snare", "B");
+        setSampleVariant("Crash 1", "C");
+
+        expect(getSampleVariant("Kick")).toBe("A");
+        expect(getSampleVariant("Snare")).toBe("B");
+        expect(getSampleVariant("Crash 1")).toBe("C");
+      });
+
+      it("应该能够覆盖已有的采样选择", () => {
+        setSampleVariant("Kick", "B");
+        setSampleVariant("Kick", "C");
+
+        expect(getSampleVariant("Kick")).toBe("C");
+      });
+    });
+
+    describe("集成测试", () => {
+      it("完整的采样选择工作流", () => {
+        // 1. 初始状态应该返回默认值
+        expect(getSampleVariant("Kick")).toBe("A");
+
+        // 2. 设置不同的变体
+        setSampleVariant("Kick", "B");
+        expect(getSampleVariant("Kick")).toBe("B");
+
+        // 3. 通过 loadSampleSelection 验证
+        const loaded = loadSampleSelection();
+        expect(loaded).toEqual({ Kick: "B" });
+
+        // 4. 清除 localStorage 后应该恢复默认值
+        localStorage.removeItem("drummer-sample-selection");
+        expect(getSampleVariant("Kick")).toBe("A");
+      });
+
+      it("应该支持所有鼓件类型的采样选择", () => {
+        const drumTypes = [
+          "Kick",
+          "Snare",
+          "Hi-Hat Closed",
+          "Hi-Hat Open",
+          "Crash 1",
+          "Crash 2",
+          "Ride",
+          "Tom 1",
+          "Tom 2",
+          "Tom 3",
+        ] as const;
+
+        drumTypes.forEach((drumType) => {
+          setSampleVariant(drumType, "B");
+          expect(getSampleVariant(drumType)).toBe("B");
+
+          setSampleVariant(drumType, "C");
+          expect(getSampleVariant(drumType)).toBe("C");
+
+          setSampleVariant(drumType, "A");
+          expect(getSampleVariant(drumType)).toBe("A");
+        });
+      });
     });
   });
 });

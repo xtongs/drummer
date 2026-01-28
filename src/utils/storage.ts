@@ -3,6 +3,9 @@ import type {
   StorageData,
   CellState,
   CrossPatternLoop,
+  SampleSelectionMap,
+  SampleVariant,
+  DrumType,
 } from "../types";
 import {
   CELL_OFF,
@@ -18,6 +21,7 @@ const STORAGE_KEY = "drummer-app-data";
 const METRONOME_BPM_KEY = "drummer-metronome-bpm";
 const CROSS_PATTERN_LOOP_KEY = "drummer-cross-pattern-loop";
 const NOTATION_RENDERER_KEY = "drummer-notation-renderer";
+const SAMPLE_SELECTION_KEY = "drummer-sample-selection";
 
 /**
  * 渲染器类型
@@ -452,4 +456,65 @@ export function setNotationRenderer(renderer: NotationRenderer): void {
   } catch (error) {
     console.error("Failed to set notation renderer:", error);
   }
+}
+
+/**
+ * 保存采样选择
+ * @param selection - 采样选择映射
+ */
+export function saveSampleSelection(selection: SampleSelectionMap): void {
+  try {
+    localStorage.setItem(SAMPLE_SELECTION_KEY, JSON.stringify(selection));
+  } catch (error) {
+    console.error("Failed to save sample selection:", error);
+  }
+}
+
+/**
+ * 加载采样选择
+ * @returns 采样选择映射
+ */
+export function loadSampleSelection(): SampleSelectionMap {
+  try {
+    const data = localStorage.getItem(SAMPLE_SELECTION_KEY);
+    if (data) {
+      const parsed = JSON.parse(data) as Record<string, string>;
+      // 验证数据格式
+      const validVariants = new Set<SampleVariant>(["A", "B", "C"]);
+      const selection: SampleSelectionMap = {};
+      for (const [drumType, variant] of Object.entries(parsed)) {
+        if (validVariants.has(variant as SampleVariant)) {
+          selection[drumType as DrumType] = variant as SampleVariant;
+        }
+      }
+      return selection;
+    }
+  } catch (error) {
+    console.error("Failed to load sample selection:", error);
+  }
+  return {};
+}
+
+/**
+ * 获取指定鼓件的采样变体
+ * @param drumType - 鼓件类型
+ * @returns 采样变体，默认为 "A"
+ */
+export function getSampleVariant(drumType: DrumType): SampleVariant {
+  const selection = loadSampleSelection();
+  return selection[drumType] || "A";
+}
+
+/**
+ * 设置指定鼓件的采样变体
+ * @param drumType - 鼓件类型
+ * @param variant - 采样变体
+ */
+export function setSampleVariant(
+  drumType: DrumType,
+  variant: SampleVariant,
+): void {
+  const selection = loadSampleSelection();
+  selection[drumType] = variant;
+  saveSampleSelection(selection);
 }

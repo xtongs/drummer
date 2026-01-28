@@ -90,6 +90,18 @@ export interface Pattern {
   updatedAt: number; // 更新时间戳
 }
 
+// 采样变体类型
+export type SampleVariant = "A" | "B" | "C";
+
+/**
+ * 采样选择映射
+ * key: DrumType, value: SampleVariant (A/B/C)
+ * - A: 原始采样 (如 crash.mp3)
+ * - B: alt 变体 (如 crash-alt.mp3)
+ * - C: another 变体 (如 crash-another.mp3)
+ */
+export type SampleSelectionMap = Partial<Record<DrumType, SampleVariant>>;
+
 // 存储数据结构
 export interface StorageData {
   patterns: Pattern[];
@@ -98,4 +110,5 @@ export interface StorageData {
     defaultBPM: number;
     defaultTimeSignature: TimeSignature;
   };
+  sampleSelection?: SampleSelectionMap;
 }

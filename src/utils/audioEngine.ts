@@ -10,8 +10,9 @@ import {
   cacheAudioBuffer,
   checkAndUpdateCacheVersion,
 } from "./audioCache";
+import { getSampleVariant } from "./storage";
 
-// 导入采样文件
+// 导入基础采样文件
 import kickUrl from "../sounds/kick.mp3";
 import snareUrl from "../sounds/snare.mp3";
 import hiHatClosedUrl from "../sounds/hi-hat-closed.mp3";
@@ -23,6 +24,124 @@ import tom1Url from "../sounds/tom1.mp3";
 import tom2Url from "../sounds/tom2.mp3";
 import tom3Url from "../sounds/tom3.mp3";
 import metronomeUrl from "../sounds/metronome.mp3";
+
+// 导入 alt 变体采样
+import kickAltUrl from "../sounds/kick-alt.mp3";
+import snareAltUrl from "../sounds/snare-alt.mp3";
+import hiHatClosedAltUrl from "../sounds/hi-hat-closed-alt.mp3";
+import hiHatOpenAltUrl from "../sounds/hi-hat-open-alt.mp3";
+import crash1AltUrl from "../sounds/crash-alt.mp3";
+import crash2AltUrl from "../sounds/crash2-alt.mp3";
+import rideAltUrl from "../sounds/ride-alt.mp3";
+import tom1AltUrl from "../sounds/tom1-alt.mp3";
+import tom2AltUrl from "../sounds/tom2-alt.mp3";
+import tom3AltUrl from "../sounds/tom3-alt.mp3";
+
+// 导入 another 变体采样
+import kickAnotherUrl from "../sounds/kick-another.mp3";
+import snareAnotherUrl from "../sounds/snare-another.mp3";
+import hiHatClosedAnotherUrl from "../sounds/hi-hat-closed-another.mp3";
+import hiHatOpenAnotherUrl from "../sounds/hi-hat-open-another.mp3";
+import crash1AnotherUrl from "../sounds/crash-another.mp3";
+import crash2AnotherUrl from "../sounds/crash2-another.mp3";
+import rideAnotherUrl from "../sounds/ride-another.mp3";
+import tom1AnotherUrl from "../sounds/tom1-another.mp3";
+import tom2AnotherUrl from "../sounds/tom2-another.mp3";
+import tom3AnotherUrl from "../sounds/tom3-another.mp3";
+
+// 采样 URL 映射表
+type SampleVariantType = "A" | "B" | "C";
+
+const SAMPLE_URLS: Record<string, Record<SampleVariantType, string>> = {
+  kick: {
+    A: kickUrl,
+    B: kickAltUrl,
+    C: kickAnotherUrl,
+  },
+  snare: {
+    A: snareUrl,
+    B: snareAltUrl,
+    C: snareAnotherUrl,
+  },
+  hiHatClosed: {
+    A: hiHatClosedUrl,
+    B: hiHatClosedAltUrl,
+    C: hiHatClosedAnotherUrl,
+  },
+  hiHatOpen: {
+    A: hiHatOpenUrl,
+    B: hiHatOpenAltUrl,
+    C: hiHatOpenAnotherUrl,
+  },
+  crash1: {
+    A: crash1Url,
+    B: crash1AltUrl,
+    C: crash1AnotherUrl,
+  },
+  crash2: {
+    A: crash2Url,
+    B: crash2AltUrl,
+    C: crash2AnotherUrl,
+  },
+  ride: {
+    A: rideUrl,
+    B: rideAltUrl,
+    C: rideAnotherUrl,
+  },
+  tom1: {
+    A: tom1Url,
+    B: tom1AltUrl,
+    C: tom1AnotherUrl,
+  },
+  tom2: {
+    A: tom2Url,
+    B: tom2AltUrl,
+    C: tom2AnotherUrl,
+  },
+  tom3: {
+    A: tom3Url,
+    B: tom3AltUrl,
+    C: tom3AnotherUrl,
+  },
+  metronome: {
+    A: metronomeUrl,
+    B: metronomeUrl,
+    C: metronomeUrl,
+  },
+};
+
+// 鼓件类型到采样名称的映射
+const DRUM_TO_SAMPLE_NAME: Record<DrumType, string> = {
+  Kick: "kick",
+  Snare: "snare",
+  "Hi-Hat Closed": "hiHatClosed",
+  "Hi-Hat Open": "hiHatOpen",
+  "Crash 1": "crash1",
+  "Crash 2": "crash2",
+  Ride: "ride",
+  "Tom 1": "tom1",
+  "Tom 2": "tom2",
+  "Tom 3": "tom3",
+};
+
+/**
+ * 获取采样 URL（根据用户选择）
+ */
+function getSampleUrl(sampleName: string): string {
+  // 获取鼓件类型
+  const drumType = Object.keys(DRUM_TO_SAMPLE_NAME).find(
+    (key) => DRUM_TO_SAMPLE_NAME[key as DrumType] === sampleName,
+  ) as DrumType | undefined;
+
+  if (!drumType) {
+    // 节拍器等特殊采样直接使用变体 A
+    return SAMPLE_URLS[sampleName]?.A || SAMPLE_URLS[sampleName].A;
+  }
+
+  // 获取用户选择的变体
+  const variant = getSampleVariant(drumType);
+  return SAMPLE_URLS[sampleName]?.[variant] || SAMPLE_URLS[sampleName].A;
+}
 
 let toneContext: Tone.BaseContext | null = null;
 let isResuming = false;
@@ -145,24 +264,25 @@ function loadAllSamples(forceUpdate = false): Promise<void> {
   if (samplesLoadPromise) return samplesLoadPromise;
 
   const samples = [
-    { url: kickUrl, name: "kick" },
-    { url: snareUrl, name: "snare" },
-    { url: hiHatClosedUrl, name: "hiHatClosed" },
-    { url: hiHatOpenUrl, name: "hiHatOpen" },
-    { url: crash1Url, name: "crash1" },
-    { url: crash2Url, name: "crash2" },
-    { url: rideUrl, name: "ride" },
-    { url: tom1Url, name: "tom1" },
-    { url: tom2Url, name: "tom2" },
-    { url: tom3Url, name: "tom3" },
-    { url: metronomeUrl, name: "metronome" },
+    { name: "kick" },
+    { name: "snare" },
+    { name: "hiHatClosed" },
+    { name: "hiHatOpen" },
+    { name: "crash1" },
+    { name: "crash2" },
+    { name: "ride" },
+    { name: "tom1" },
+    { name: "tom2" },
+    { name: "tom3" },
+    { name: "metronome" },
   ];
 
   let loadedCount = 0;
 
   samplesLoadPromise = (async () => {
     for (const sample of samples) {
-      await loadSample(sample.url, sample.name, forceUpdate);
+      const url = getSampleUrl(sample.name);
+      await loadSample(url, sample.name, forceUpdate);
       loadedCount++;
       if (progressCallback) {
         progressCallback(loadedCount, samples.length, sample.name);
@@ -218,6 +338,19 @@ export function setSampleLoadProgressCallback(
   callback: SampleLoadProgressCallback | null,
 ): void {
   progressCallback = callback;
+}
+
+/**
+ * 重新加载所有采样（当用户改变采样选择时调用）
+ */
+export async function reloadSamples(): Promise<void> {
+  // 清除已加载标记
+  samplesLoaded = false;
+  samplesLoadPromise = null;
+  sampleBuffers.clear();
+
+  // 重新加载所有采样
+  await loadAllSamples(true);
 }
 
 /**
@@ -349,7 +482,7 @@ function playSample(
  */
 export function playSnare(time: number): void {
   // 尝试使用采样
-  if (playSample("snare", time, 0.5)) {
+  if (playSample("snare", time, 0.9)) {
     return;
   }
 
@@ -412,7 +545,7 @@ function playSnareSynth(time: number): void {
  * 闭合踩镲 - 优先使用真实采样
  */
 export function playHiHatClosed(time: number): void {
-  if (playSample("hiHatClosed", time, 0.3)) {
+  if (playSample("hiHatClosed", time, 0.7)) {
     return;
   }
   // 后备：合成音色
@@ -446,7 +579,7 @@ function playHiHatClosedSynth(time: number): void {
  * 开放踩镲 - 优先使用真实采样
  */
 export function playHiHatOpen(time: number): void {
-  if (playSample("hiHatOpen", time, 0.3)) {
+  if (playSample("hiHatOpen", time, 0.7)) {
     return;
   }
   // 后备：合成音色
