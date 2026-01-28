@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createEmptyPattern, usePattern } from "./hooks/usePattern";
 import { useBeforeUnloadWarning } from "./hooks/useBeforeUnloadWarning";
 import { useVisibilityHandler } from "./hooks/useVisibilityHandler";
@@ -52,6 +52,55 @@ import type { PatternGridCopy } from "./hooks/usePattern";
 import type { BgmConfig } from "./utils/bgmStorage";
 import "./index.css";
 import { useLandscapeMode } from "./hooks/useLandscapeMode";
+
+/**
+ * 检查 pattern 是否在跨 pattern 循环范围内
+ */
+function isPatternInCrossPatternRange(
+  patternName: string,
+  crossPatternLoop: CrossPatternLoop | undefined,
+  savedPatterns: Pattern[],
+): boolean {
+  if (!crossPatternLoop) return false;
+  const { startPatternName, endPatternName } = crossPatternLoop;
+
+  // 如果起始和结束是同一个 pattern，不算跨 pattern
+  if (startPatternName === endPatternName) return false;
+
+  // 获取所有 pattern 的排序列表（按字母顺序）
+  const sortedPatternNames = savedPatterns
+    .map((p) => p.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  // 添加草稿模式（空字符串）到最前面
+  const allPatternNames = ["", ...sortedPatternNames];
+
+  const startIndex = allPatternNames.indexOf(startPatternName);
+  const endIndex = allPatternNames.indexOf(endPatternName);
+  const patternIndex = allPatternNames.indexOf(patternName);
+
+  // 检查 pattern 是否在范围内
+  return patternIndex >= startIndex && patternIndex <= endIndex;
+}
+
+/**
+ * 停止所有播放（节奏型和节拍器）
+ */
+function stopAllPlayback(
+  isPatternPlaying: boolean,
+  setIsPatternPlaying: (value: boolean) => void,
+  isMetronomePlaying: boolean,
+  setIsMetronomePlaying: (value: boolean) => void,
+  clearCountIn: () => void,
+) {
+  if (isPatternPlaying) {
+    setIsPatternPlaying(false);
+  }
+  if (isMetronomePlaying) {
+    setIsMetronomePlaying(false);
+  }
+  clearCountIn();
+}
 
 function App() {
   // 采样加载
@@ -219,16 +268,13 @@ function App() {
 
   // 选择草稿模式
   const handleSelectDraft = () => {
-    clearCountIn();
-    // 如果正在播放，停止播放
-    if (isPatternPlaying) {
-      setIsPatternPlaying(false);
-    }
-
-    // 停止节拍器播放
-    if (isMetronomePlaying) {
-      setIsMetronomePlaying(false);
-    }
+    stopAllPlayback(
+      isPatternPlaying,
+      setIsPatternPlaying,
+      isMetronomePlaying,
+      setIsMetronomePlaying,
+      clearCountIn,
+    );
 
     // 重置 BPM rate 和小节 BPM 模式
     setRateIndex(0);
@@ -444,17 +490,14 @@ function App() {
 
   // 处理长按底部播放按钮，完全停止并回到 range start
   const handleBottomPlayButtonLongPress = () => {
-    // resetToRangeStart 内部会停止播放器并重置位置
     resetToRangeStart();
-    clearCountIn();
-    // 更新播放状态
-    if (isPatternPlaying) {
-      setIsPatternPlaying(false);
-    }
-    // 停止节拍器播放（如果正在播放）
-    if (isMetronomePlaying) {
-      setIsMetronomePlaying(false);
-    }
+    stopAllPlayback(
+      isPatternPlaying,
+      setIsPatternPlaying,
+      isMetronomePlaying,
+      setIsMetronomePlaying,
+      clearCountIn,
+    );
   };
   // 计算 BGM 的 rangeStartBar（用于正确计算时间偏移）
   // 如果有跨 pattern 循环，使用起始 pattern 的 startBar；否则为 0
@@ -548,13 +591,13 @@ function App() {
   const handlePastePatternGrid = (position: "before" | "after") => {
     if (isDraftMode || !copiedPatternGrid || !canPastePatternGrid) return;
 
-    if (isPatternPlaying) {
-      setIsPatternPlaying(false);
-    }
-    if (isMetronomePlaying) {
-      setIsMetronomePlaying(false);
-    }
-    clearCountIn();
+    stopAllPlayback(
+      isPatternPlaying,
+      setIsPatternPlaying,
+      isMetronomePlaying,
+      setIsMetronomePlaying,
+      clearCountIn,
+    );
 
     const insertIndex = position === "before" ? 0 : pattern.bars;
     insertPatternGrid(insertIndex, copiedPatternGrid);
@@ -680,43 +723,23 @@ function App() {
   };
 
   const handleLoadFromSlot = (loadedPattern: Pattern) => {
-    // 如果正在播放，停止播放
-    if (isPatternPlaying) {
-      setIsPatternPlaying(false);
-    }
-
-    clearCountIn();
-
-    // 停止节拍器播放
-    if (isMetronomePlaying) {
-      setIsMetronomePlaying(false);
-    }
+    stopAllPlayback(
+      isPatternPlaying,
+      setIsPatternPlaying,
+      isMetronomePlaying,
+      setIsMetronomePlaying,
+      clearCountIn,
+    );
 
     // 检查当前是否有跨 pattern 的 range 设置，且新 pattern 在范围内
-    const isInCrossPatternRange = (() => {
-      if (!crossPatternLoop) return false;
-      const { startPatternName, endPatternName } = crossPatternLoop;
-      // 如果起始和结束是同一个 pattern，不算跨 pattern
-      if (startPatternName === endPatternName) return false;
-
-      // 获取所有 pattern 的排序列表（按字母顺序）
-      const sortedPatternNames = [...savedPatterns]
-        .map((p) => p.name)
-        .sort((a, b) => a.localeCompare(b));
-
-      // 添加草稿模式（空字符串）到最前面
-      const allPatternNames = ["", ...sortedPatternNames];
-
-      const startIndex = allPatternNames.indexOf(startPatternName);
-      const endIndex = allPatternNames.indexOf(endPatternName);
-      const loadedIndex = allPatternNames.indexOf(loadedPattern.name);
-
-      // 检查新 pattern 是否在范围内
-      return loadedIndex >= startIndex && loadedIndex <= endIndex;
-    })();
+    const inRange = isPatternInCrossPatternRange(
+      loadedPattern.name,
+      crossPatternLoop,
+      savedPatterns,
+    );
 
     // 如果新 pattern 在跨 pattern range 内，保持 rate 不变；否则重置
-    if (!isInCrossPatternRange) {
+    if (!inRange) {
       setRateIndex(0);
     }
 
@@ -728,7 +751,7 @@ function App() {
     setCurrentPatternId(loadedPattern.id);
 
     // 如果在跨 pattern range 内且有 rate 设置，应用 rate 到显示的 BPM
-    if (isInCrossPatternRange && rateIndex > 0) {
+    if (inRange && rateIndex > 0) {
       const cumulativeRate = calculateCumulativeRate(rateIndex);
       const newBPM = loadedPattern.bpm * cumulativeRate;
       setMetronomeBPM(newBPM);
@@ -743,7 +766,7 @@ function App() {
     // loadPattern 已经设置了正确的 pattern.bpm，不需要再调用 updateBPM
 
     // 如果在跨 pattern range 内，保持 range 不变；否则设置为该节奏型的完整范围
-    if (!isInCrossPatternRange) {
+    if (!inRange) {
       setCrossPatternLoop({
         startPatternName: loadedPattern.name,
         startBar: 0,
@@ -812,23 +835,23 @@ function App() {
     }
   };
 
-  const handleBgmOffsetChange = (offsetMs: number) => {
-    const nextConfig: BgmConfig = {
-      ...bgmConfig,
-      offsetMs,
-    };
-    saveBgmConfig(pattern.id, nextConfig);
-    setBgmConfig(nextConfig);
-  };
+  const handleBgmOffsetChange = useCallback(
+    (offsetMs: number) => {
+      const nextConfig: BgmConfig = { ...bgmConfig, offsetMs };
+      saveBgmConfig(pattern.id, nextConfig);
+      setBgmConfig(nextConfig);
+    },
+    [bgmConfig, pattern.id],
+  );
 
-  const handleBgmVolumeChange = (volumePct: number) => {
-    const nextConfig: BgmConfig = {
-      ...bgmConfig,
-      volumePct,
-    };
-    saveBgmConfig(pattern.id, nextConfig);
-    setBgmConfig(nextConfig);
-  };
+  const handleBgmVolumeChange = useCallback(
+    (volumePct: number) => {
+      const nextConfig: BgmConfig = { ...bgmConfig, volumePct };
+      saveBgmConfig(pattern.id, nextConfig);
+      setBgmConfig(nextConfig);
+    },
+    [bgmConfig, pattern.id],
+  );
 
   const handleMasterVolumeChange = (volumePct: number) => {
     setMasterVolume(volumePct);

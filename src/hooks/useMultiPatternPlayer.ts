@@ -21,30 +21,7 @@ import {
   setVolumeMultiplier,
   resetVolumeMultiplier,
 } from "../utils/audioEngine";
-
-// WakeLock 管理
-let wakeLock: WakeLockSentinel | null = null;
-
-async function requestWakeLock() {
-  if ("wakeLock" in navigator) {
-    try {
-      wakeLock = await navigator.wakeLock.request("screen");
-    } catch {
-      // WakeLock request failed
-    }
-  }
-}
-
-async function releaseWakeLock() {
-  if (wakeLock !== null) {
-    try {
-      await wakeLock.release();
-      wakeLock = null;
-    } catch {
-      // WakeLock release failed
-    }
-  }
-}
+import { requestWakeLock, releaseWakeLock } from "../utils/wakeLock";
 
 let lastAnimationUpdateTime = 0;
 const ANIMATION_THROTTLE = 16;

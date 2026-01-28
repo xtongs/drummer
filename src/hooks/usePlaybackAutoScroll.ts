@@ -9,6 +9,53 @@ import type { Pattern, CrossPatternLoop } from "../types";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import { smoothScrollTo } from "../utils/animation";
 
+interface PatternRangeInfo {
+  rangeStartBar: number;
+  rangeEndBar: number;
+  rangeStartSub: number;
+  rangeEndSub: number;
+}
+
+/**
+ * 获取 pattern 在跨 pattern 循环中的范围信息
+ */
+function getPatternRangeInfo(
+  pattern: Pattern,
+  crossPatternLoop: CrossPatternLoop | undefined,
+  isDraftMode: boolean,
+  subdivisionsPerBar: number,
+  totalSubdivisions: number,
+): PatternRangeInfo {
+  const defaultInfo = {
+    rangeStartBar: 0,
+    rangeEndBar: pattern.bars - 1,
+    rangeStartSub: 0,
+    rangeEndSub: totalSubdivisions,
+  };
+
+  if (!crossPatternLoop) {
+    return defaultInfo;
+  }
+
+  const isStartPattern = isDraftMode
+    ? crossPatternLoop.startPatternName === ""
+    : crossPatternLoop.startPatternName === pattern.name;
+  const isEndPattern = isDraftMode
+    ? crossPatternLoop.endPatternName === ""
+    : crossPatternLoop.endPatternName === pattern.name;
+
+  return {
+    rangeStartBar: isStartPattern ? crossPatternLoop.startBar : 0,
+    rangeEndBar: isEndPattern ? crossPatternLoop.endBar : pattern.bars - 1,
+    rangeStartSub: isStartPattern
+      ? crossPatternLoop.startBar * subdivisionsPerBar
+      : 0,
+    rangeEndSub: isEndPattern
+      ? (crossPatternLoop.endBar + 1) * subdivisionsPerBar
+      : totalSubdivisions,
+  };
+}
+
 interface UsePlaybackAutoScrollOptions {
   /** 滚动容器的 ref */
   scrollContainerRef: React.RefObject<HTMLDivElement>;
@@ -61,7 +108,6 @@ export function usePlaybackAutoScroll({
     () => pattern.bars * subdivisionsPerBar,
     [pattern.bars, subdivisionsPerBar],
   );
-  const patternBars = pattern.bars;
   const rightLead = useMemo(
     () => (cellSize * SUBDIVISIONS_PER_BEAT) / 8,
     [cellSize],
@@ -98,28 +144,21 @@ export function usePlaybackAutoScroll({
 
     // 检测 pattern 是否切换
     if (previousPatternId !== null && previousPatternId !== currentPatternId) {
-      // Pattern 切换了，计算该 pattern 在 crossPatternLoop 中的起始小节
-      // 注意：此时 currentBeat 可能还是旧 pattern 的值，不可靠
-      let startBar = 0;
+      const rangeInfo = getPatternRangeInfo(
+        pattern,
+        crossPatternLoop,
+        isDraftMode,
+        subdivisionsPerBar,
+        totalSubdivisions,
+      );
 
-      if (crossPatternLoop) {
-        // 检查当前 pattern 是否是 range 的开始 pattern
-        const isStartPattern = isDraftMode
-          ? crossPatternLoop.startPatternName === ""
-          : crossPatternLoop.startPatternName === pattern.name;
-
-        if (isStartPattern) {
-          startBar = crossPatternLoop.startBar;
-        }
-      }
-
-      const targetLeft = startBar * subdivisionsPerBar * cellSize;
+      const targetLeft =
+        rangeInfo.rangeStartBar * subdivisionsPerBar * cellSize;
 
       // 记录预期的起始位置（第一个小节末尾），用于验证 currentBeat 是否已同步
-      // 只有当 currentBeat 进入这个范围内时，才恢复正常的滚动逻辑
-      expectedStartSubRef.current = (startBar + 1) * subdivisionsPerBar;
+      expectedStartSubRef.current =
+        (rangeInfo.rangeStartBar + 1) * subdivisionsPerBar;
 
-      // 使用平滑滚动切换到新 pattern 的起始位置
       doScroll(container, Math.max(0, targetLeft));
     }
 
@@ -130,9 +169,11 @@ export function usePlaybackAutoScroll({
     lastPatternIdRef.current = currentPatternId;
   }, [
     pattern.id,
-    pattern.name,
+    pattern,
+    pattern.bars,
     cellSize,
     subdivisionsPerBar,
+    totalSubdivisions,
     scrollContainerRef,
     crossPatternLoop,
     isDraftMode,
@@ -163,29 +204,19 @@ export function usePlaybackAutoScroll({
     }
 
     // 检查 currentBeat 是否在当前 pattern 的循环范围内
-    // 这用于检测跨 pattern 切换时的状态不同步
-    if (crossPatternLoop) {
-      let rangeStartSub = 0;
-      let rangeEndSub = totalSubdivisions;
+    const rangeInfo = getPatternRangeInfo(
+      pattern,
+      crossPatternLoop,
+      isDraftMode,
+      subdivisionsPerBar,
+      totalSubdivisions,
+    );
 
-      const isStartPattern = isDraftMode
-        ? crossPatternLoop.startPatternName === ""
-        : crossPatternLoop.startPatternName === pattern.name;
-      const isEndPattern = isDraftMode
-        ? crossPatternLoop.endPatternName === ""
-        : crossPatternLoop.endPatternName === pattern.name;
-
-      if (isStartPattern) {
-        rangeStartSub = crossPatternLoop.startBar * subdivisionsPerBar;
-      }
-      if (isEndPattern) {
-        rangeEndSub = (crossPatternLoop.endBar + 1) * subdivisionsPerBar;
-      }
-
-      // 如果 currentBeat 不在循环范围内，说明状态还未同步
-      if (currentBeat < rangeStartSub || currentBeat >= rangeEndSub) {
-        return;
-      }
+    if (
+      currentBeat < rangeInfo.rangeStartSub ||
+      currentBeat >= rangeInfo.rangeEndSub
+    ) {
+      return;
     }
 
     const container = scrollContainerRef.current;
@@ -221,33 +252,19 @@ export function usePlaybackAutoScroll({
         return;
       }
       // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
-      // 确定当前 pattern 在 range 中的范围
-      let rangeStartBar = 0;
-      let rangeEndBar = patternBars - 1;
-
-      if (crossPatternLoop) {
-        // 检查当前 pattern 是否是 range 的开始 pattern
-        const isStartPattern = isDraftMode
-          ? crossPatternLoop.startPatternName === ""
-          : crossPatternLoop.startPatternName === pattern.name;
-        // 检查当前 pattern 是否是 range 的结束 pattern
-        const isEndPattern = isDraftMode
-          ? crossPatternLoop.endPatternName === ""
-          : crossPatternLoop.endPatternName === pattern.name;
-
-        if (isStartPattern) {
-          rangeStartBar = crossPatternLoop.startBar;
-        }
-        if (isEndPattern) {
-          rangeEndBar = crossPatternLoop.endBar;
-        }
-      }
+      const rangeInfo = getPatternRangeInfo(
+        pattern,
+        crossPatternLoop,
+        isDraftMode,
+        subdivisionsPerBar,
+        totalSubdivisions,
+      );
 
       // 计算下一个小节的位置
       let nextBarIndex: number;
-      if (currentBarIndex >= rangeEndBar) {
+      if (currentBarIndex >= rangeInfo.rangeEndBar) {
         // 当前是 range 最后一个小节，回到 range 开头
-        nextBarIndex = rangeStartBar;
+        nextBarIndex = rangeInfo.rangeStartBar;
       } else {
         // 滚到下一个小节
         nextBarIndex = currentBarIndex + 1;
@@ -264,11 +281,11 @@ export function usePlaybackAutoScroll({
     doScroll,
     subdivisionsPerBar,
     totalSubdivisions,
-    pattern.name,
+    pattern,
+    pattern.bars,
     crossPatternLoop,
     isDraftMode,
     scrollContainerRef,
-    patternBars,
   ]);
 
   // 当停止播放或切换 pattern 时，重置滚动状态
@@ -301,28 +318,19 @@ export function usePlaybackAutoScroll({
     }
 
     // 检查 currentBeat 是否在当前 pattern 的循环范围内
-    if (crossPatternLoop) {
-      let rangeStartSub = 0;
-      let rangeEndSub = totalSubdivisions;
+    const rangeInfo = getPatternRangeInfo(
+      pattern,
+      crossPatternLoop,
+      isDraftMode,
+      subdivisionsPerBar,
+      totalSubdivisions,
+    );
 
-      const isStartPattern = isDraftMode
-        ? crossPatternLoop.startPatternName === ""
-        : crossPatternLoop.startPatternName === pattern.name;
-      const isEndPattern = isDraftMode
-        ? crossPatternLoop.endPatternName === ""
-        : crossPatternLoop.endPatternName === pattern.name;
-
-      if (isStartPattern) {
-        rangeStartSub = crossPatternLoop.startBar * subdivisionsPerBar;
-      }
-      if (isEndPattern) {
-        rangeEndSub = (crossPatternLoop.endBar + 1) * subdivisionsPerBar;
-      }
-
-      // 如果 currentBeat 不在循环范围内，说明状态还未同步
-      if (currentBeat < rangeStartSub || currentBeat >= rangeEndSub) {
-        return;
-      }
+    if (
+      currentBeat < rangeInfo.rangeStartSub ||
+      currentBeat >= rangeInfo.rangeEndSub
+    ) {
+      return;
     }
 
     // 计算游标所在的小节索引
@@ -345,31 +353,19 @@ export function usePlaybackAutoScroll({
 
     if (cursorPosition + cellSize > scrollRight - rightLead) {
       // 如果游标已经在接近右边界，滚动到下一个小节
-      // 确定当前 pattern 在 range 中的范围
-      let rangeStartBar = 0;
-      let rangeEndBar = patternBars - 1;
-
-      if (crossPatternLoop) {
-        const isStartPattern = isDraftMode
-          ? crossPatternLoop.startPatternName === ""
-          : crossPatternLoop.startPatternName === pattern.name;
-        const isEndPattern = isDraftMode
-          ? crossPatternLoop.endPatternName === ""
-          : crossPatternLoop.endPatternName === pattern.name;
-
-        if (isStartPattern) {
-          rangeStartBar = crossPatternLoop.startBar;
-        }
-        if (isEndPattern) {
-          rangeEndBar = crossPatternLoop.endBar;
-        }
-      }
+      const rangeInfo = getPatternRangeInfo(
+        pattern,
+        crossPatternLoop,
+        isDraftMode,
+        subdivisionsPerBar,
+        totalSubdivisions,
+      );
 
       // 计算下一个小节的位置
       let nextBarIndex: number;
-      if (currentBarIndex >= rangeEndBar) {
+      if (currentBarIndex >= rangeInfo.rangeEndBar) {
         // 当前是 range 最后一个小节，回到 range 开头
-        nextBarIndex = rangeStartBar;
+        nextBarIndex = rangeInfo.rangeStartBar;
       } else {
         // 滚到下一个小节
         nextBarIndex = currentBarIndex + 1;
@@ -388,8 +384,8 @@ export function usePlaybackAutoScroll({
     rightLead,
     subdivisionsPerBar,
     totalSubdivisions,
-    patternBars,
-    pattern.name,
+    pattern,
+    pattern.bars,
     crossPatternLoop,
     isDraftMode,
     scrollContainerRef,

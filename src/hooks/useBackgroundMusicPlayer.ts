@@ -6,6 +6,24 @@ import { getBgmFile } from "../utils/bgmStorage";
 import { SUBDIVISIONS_PER_BEAT } from "../utils/constants";
 import type { Pattern } from "../types";
 
+/**
+ * 计算从 bar 0 到指定小节的原始节奏时间（不考虑 playbackRate）
+ */
+function calculateTimeToBar(targetBarIndex: number, pattern: Pattern): number {
+  const beatsPerBar = pattern.timeSignature[0];
+  const beatUnit = pattern.timeSignature[1];
+  let totalTime = 0;
+
+  for (let barIndex = 0; barIndex < targetBarIndex; barIndex++) {
+    const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
+    const originalBeatDuration = (60 / barBpm) * (4 / beatUnit);
+    const originalBarDuration = originalBeatDuration * beatsPerBar;
+    totalTime += originalBarDuration;
+  }
+
+  return totalTime;
+}
+
 interface UseBackgroundMusicPlayerOptions {
   isPlaying: boolean;
   isFullPracticeMode: boolean;
@@ -83,13 +101,7 @@ export function useBackgroundMusicPlayer({
 
     // 计算 range start 的原始节奏时间（从 bar 0 到 rangeStartBar）
     // ⚠️ 必须使用原始 BPM，不乘以 playbackRate
-    let timeAtRangeStartOriginal = 0;
-    for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
-      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
-      const originalBeatDuration = (60 / barBpm) * (4 / beatUnit);
-      const originalBarDuration = originalBeatDuration * beatsPerBar;
-      timeAtRangeStartOriginal += originalBarDuration;
-    }
+    const timeAtRangeStartOriginal = calculateTimeToBar(rangeStartBar, pattern);
 
     // 将 patternTime（已考虑 playbackRate）转换回原始节奏时间
     // patternTime / playbackRate = 原始节奏时间
@@ -125,14 +137,7 @@ export function useBackgroundMusicPlayer({
     lastStartTimeRef.current = adjustedStartTime;
 
     player.start(adjustedStartTime, safeStartOffset);
-  }, [
-    bgmConfig.offsetMs,
-    pattern.barBpmOverrides,
-    pattern.bpm,
-    beatUnit,
-    beatsPerBar,
-    rangeStartBar,
-  ]);
+  }, [bgmConfig.offsetMs, pattern, rangeStartBar]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -211,45 +216,30 @@ export function useBackgroundMusicPlayer({
   useEffect(() => {
     // 计算实际播放时间（考虑 playbackRate 和每小节 BPM 覆盖）
     const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
-
-    // 累计计算从 bar 0 到 currentSubdivision 的总时间
-    // 每个小节使用自己的 BPM（基础 BPM 或特殊 BPM）
     const currentBarIndex = Math.floor(currentSubdivision / subdivisionsPerBar);
-    let totalSeconds = 0;
+    const subdivisionsInCurrentBar = currentSubdivision % subdivisionsPerBar;
 
-    for (let barIndex = 0; barIndex < currentBarIndex; barIndex++) {
-      // 获取该小节的 BPM
-      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
-      const effectiveBpm = barBpm * playbackRate;
-      const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
-      const barDuration = beatDuration * beatsPerBar;
-      totalSeconds += barDuration;
-    }
+    // 计算从 bar 0 到当前小节的原始节奏时间
+    const timeToCurrentBar = calculateTimeToBar(currentBarIndex, pattern);
 
-    // 加上当前小节内的时间
+    // 加上当前小节内的时间（考虑 playbackRate）
     const currentBarBpm =
       pattern.barBpmOverrides?.[currentBarIndex] ?? pattern.bpm;
     const effectiveBpm = currentBarBpm * playbackRate;
     const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
     const subdivisionDuration = beatDuration / SUBDIVISIONS_PER_BEAT;
-    const subdivisionsInCurrentBar = currentSubdivision % subdivisionsPerBar;
-    totalSeconds += subdivisionsInCurrentBar * subdivisionDuration;
 
-    // 减去从 bar 0 到 rangeStartBar 的时间（range start 之前的时间不应计入）
-    let rangeStartOffset = 0;
-    for (let barIndex = 0; barIndex < rangeStartBar; barIndex++) {
-      const barBpm = pattern.barBpmOverrides?.[barIndex] ?? pattern.bpm;
-      const effectiveBpm = barBpm * playbackRate;
-      const beatDuration = (60 / effectiveBpm) * (4 / beatUnit);
-      const barDuration = beatDuration * beatsPerBar;
-      rangeStartOffset += barDuration;
-    }
+    // 计算从 bar 0 到 rangeStartBar 的原始节奏时间
+    const timeToRangeStart = calculateTimeToBar(rangeStartBar, pattern);
 
-    positionSecondsRef.current = totalSeconds - rangeStartOffset;
+    // 当前播放时间 = (到当前小节的原始时间 + 当前小节内的时间) / playbackRate - 到 rangeStart 的原始时间
+    positionSecondsRef.current =
+      timeToCurrentBar +
+      subdivisionsInCurrentBar * subdivisionDuration -
+      timeToRangeStart;
   }, [
     currentSubdivision,
-    pattern.bpm,
-    pattern.barBpmOverrides,
+    pattern,
     beatUnit,
     playbackRate,
     rangeStartBar,
