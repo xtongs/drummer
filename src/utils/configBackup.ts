@@ -171,7 +171,7 @@ export async function exportConfig(): Promise<void> {
     // 生成文件名
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-    a.download = `backup-${dateStr}.zip`;
+    a.download = `${dateStr}.zip`;
 
     document.body.appendChild(a);
     a.click();
