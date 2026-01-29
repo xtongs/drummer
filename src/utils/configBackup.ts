@@ -171,8 +171,7 @@ export async function exportConfig(): Promise<void> {
     // 生成文件名
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
-    a.download = `drummer-config-${dateStr}-${timeStr}.zip`;
+    a.download = `backup-${dateStr}.zip`;
 
     document.body.appendChild(a);
     a.click();

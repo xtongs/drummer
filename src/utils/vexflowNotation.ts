@@ -104,14 +104,9 @@ export function patternToVexflowNoteEvents(pattern: Pattern): {
         if (DRUM_TO_VEXFLOW[drum].isLowerVoice) has32ndLower = true;
         else has32ndUpper = true;
       } else if (cellState === CELL_GRACE) {
-        // 只允许 Snare 添加倚音
-        if (drum === "Snare") {
-          push("normal", 0);
-          push("grace", 0);
-        } else {
-          // 其他鼓件将倚音状态当作正常音符处理
-          push("normal", 0);
-        }
+        // 所有鼓件都支持倚音
+        push("normal", 0);
+        push("grace", 0);
       } else if (cellState === CELL_GHOST) {
         push("ghost", 0);
       } else {

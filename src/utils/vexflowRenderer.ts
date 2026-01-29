@@ -96,6 +96,34 @@ export function addHiHatOpenAnnotation(
 }
 
 /**
+ * 根据鼓件类型计算倚音标注的垂直偏移
+ * 不同鼓件在五线谱上的位置不同，需要对应调整倚音位置
+ */
+function getGraceNoteYShift(drum: DrumType): number {
+  // 基准位置（军鼓 c/5）
+  const baseShift = -55;
+  // 半音符行高
+  const lineHeight = 5;
+
+  // 根据鼓件在五线谱上的音高位置调整偏移
+  // 音高越高，偏移越大（向下移动）
+  const yOffsets: Record<DrumType, number> = {
+    "Crash 1": baseShift - lineHeight * 6, // b/5 - 最高
+    "Crash 2": baseShift - lineHeight * 5, // a/5
+    "Hi-Hat Open": baseShift - lineHeight * 4, // g/5
+    "Hi-Hat Closed": baseShift - lineHeight * 4, // g/5
+    Ride: baseShift - lineHeight * 3, // f/5
+    "Tom 1": baseShift - lineHeight * 2, // e/5
+    "Tom 2": baseShift - lineHeight * 1, // d/5
+    Snare: baseShift, // c/5 - 基准
+    "Tom 3": baseShift + lineHeight * 2, // a/4
+    Kick: baseShift, // f/4 - 最低
+  };
+
+  return yOffsets[drum] ?? baseShift;
+}
+
+/**
  * 添加倚音标注
  */
 export function addGraceNoteAnnotation(
@@ -106,12 +134,16 @@ export function addGraceNoteAnnotation(
     return;
   }
 
+  // 使用第一个倚音鼓件的位置（通常只有一个倚音）
+  const drum = graceDrums[0]!.drum;
+  const yShift = getGraceNoteYShift(drum);
+
   const annotation = new Annotation("♪");
   annotation.setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
   annotation.setJustification(Annotation.HorizontalJustify.CENTER_STEM);
   annotation.setFont("", 15, "normal");
-  annotation.setXShift(10);
-  annotation.setYShift(-55);
+  annotation.setXShift(drum === "Kick" ? 0 : 10);
+  annotation.setYShift(yShift);
   note.addModifier(annotation, 0);
 }
 

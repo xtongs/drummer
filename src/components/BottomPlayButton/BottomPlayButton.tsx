@@ -80,12 +80,12 @@ export function BottomPlayButton({
       hasLongPressedRef.current = false;
       return;
     }
-    // 如果有 BGM 播放或者有countin开启，则点击变成停止行为，先触发长按行为
-    if ((fullPracticeMode || isCountInEnabled) && isPlaying && onLongPress) {
-      onClick();
+    // 如果有 BGM 播放或者有countin开启，则点击播放先触发长按行为
+    if ((fullPracticeMode || isCountInEnabled) && !isPlaying && onLongPress) {
+      onLongPress();
       setTimeout(() => {
         hasLongPressedRef.current = false;
-        onLongPress();
+        onClick();
       }, 300);
       return;
     } else {
