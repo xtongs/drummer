@@ -32,16 +32,28 @@
   justify-content: center;
   font-size: var(--font-size-xs);
   color: var(--color-text);
-  background: transparent;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-sm);
   cursor: pointer;
+  /* iOS Safari 渲染优化：防止边框颜色渲染错误 */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* 清除 iOS 点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+  /* 提示浏览器优化渲染 */
+  will-change: border-color, background-color;
+  /* 隔离渲染层，防止样式污染 */
+  isolation: isolate;
 }
 
 .pattern-tab.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-text);
+  /* 强制重绘，确保 iOS Safari 正确渲染 */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* 草稿 Tab */
@@ -50,7 +62,17 @@
 }
 
 .pattern-tab.draft-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: var(--color-text);
+  /* 强制重绘，确保 iOS Safari 正确渲染 */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* 确保非选中状态的边框颜色明确（防止 iOS 渲染错误） */
+.pattern-tab:not(.active) {
+  border-color: var(--color-border);
 }
 
 /* 导入输入框容器 */

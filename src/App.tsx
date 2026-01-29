@@ -104,7 +104,8 @@ function stopAllPlayback(
 
 function App() {
   // 采样加载
-  const { isLoading, loadingProgress, showProgress } = useSampleLoader();
+  const { isLoading, loadingProgress, showProgress, isFadingOut } =
+    useSampleLoader();
 
   // 播放状态管理
   const {
@@ -774,6 +775,11 @@ function App() {
         endBar: loadedPattern.bars - 1,
       });
     }
+
+    // 延迟恢复游标位置
+    setTimeout(() => {
+      resetToRangeStart();
+    }, 300);
   };
 
   const handleDeletePattern = (patternId: string) => {
@@ -971,7 +977,7 @@ function App() {
       (loadingProgress.loaded / loadingProgress.total) * 100,
     );
     return (
-      <div className="app loading">
+      <div className={`app loading ${isFadingOut ? "fade-out" : ""}`}>
         <div className="loading-container">
           {showProgress && (
             <div className="loading-progress">

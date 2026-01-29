@@ -76,6 +76,12 @@ body {
   justify-content: center;
   align-items: center;
   padding-bottom: var(--spacing-md);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.app.loading.fade-out {
+  opacity: 0;
 }
 
 .loading-container {

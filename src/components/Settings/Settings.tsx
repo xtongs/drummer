@@ -442,11 +442,11 @@ export function Settings() {
 
   return (
     <>
-      {showFirstTimeHint && (
-        <div className="settings-first-hint visible">
-          Tap 5 times quickly to show settings
-        </div>
-      )}
+      <div
+        className={`settings-first-hint ${showFirstTimeHint ? "visible" : "hidden"}`}
+      >
+        Tap 5 times quickly to show settings
+      </div>
       <div className={`settings ${isVisible ? "visible" : "hidden"}`}>
         <div className="settings-theme" onClick={cycleTheme}>
           <button

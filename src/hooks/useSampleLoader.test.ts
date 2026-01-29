@@ -54,6 +54,8 @@ describe("useSampleLoader", () => {
       // 让 promises resolve
       await Promise.resolve();
       await Promise.resolve();
+      // 运行所有剩余的定时器
+      await vi.runAllTimersAsync();
     });
 
     expect(result.current.isLoading).toBe(false);
@@ -107,6 +109,8 @@ describe("useSampleLoader", () => {
       vi.advanceTimersByTime(200);
       await Promise.resolve();
       await Promise.resolve();
+      // 运行所有剩余的定时器
+      await vi.runAllTimersAsync();
     });
 
     expect(result.current.isLoading).toBe(false);
