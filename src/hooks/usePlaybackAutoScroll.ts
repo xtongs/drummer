@@ -241,16 +241,16 @@ export function usePlaybackAutoScroll({
       lastBarIndexRef.current = currentBarIndex;
     }
 
+    // 只在播放时才自动滚动到游标位置
+    if (!isPlaying) {
+      return;
+    }
+
     // 游标超出可视区域左侧时，滚动到游标所在小节的起始位置
     if (cursorPosition < scrollLeft) {
       const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
       doScroll(container, Math.max(0, targetLeft));
     } else if (cursorPosition + cellSize > scrollRight - rightLead) {
-      if (!isPlaying) {
-        const targetLeft = currentBarIndex * subdivisionsPerBar * cellSize;
-        doScroll(container, Math.max(0, targetLeft));
-        return;
-      }
       // 游标接近右侧提前量时，滚动到 range 范围内的下一个小节
       const rangeInfo = getPatternRangeInfo(
         pattern,

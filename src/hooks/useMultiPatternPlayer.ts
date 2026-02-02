@@ -156,12 +156,15 @@ export function useMultiPatternPlayer({
         }
       }
 
-      // 如果找不到对应的 step，跳到第一个 step 的开始
+      // 如果找不到对应的 step，只更新动画状态，不改变播放位置
+      // 这允许用户双击循环范围外的小节，但不会改变播放序列
       if (targetStepIndex === -1) {
-        targetStepIndex = 0;
-        const firstStep = steps[0];
-        const firstStepSubsPerBar = getSubdivisionsPerBar(firstStep.pattern);
-        targetSubInStep = firstStep.startBar * firstStepSubsPerBar;
+        // 更新动画状态（用于显示游标位置）
+        const callback = onSubdivisionChangeRef.current;
+        if (callback) {
+          scheduleAnimationUpdate(subdivision, callback, 0);
+        }
+        return;
       }
 
       // 更新播放位置

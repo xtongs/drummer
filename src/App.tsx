@@ -566,6 +566,32 @@ function App() {
     seekTo(subdivision);
   };
 
+  // 处理删除小节
+  const handleRemoveBar = (cursorPosition?: number) => {
+    const previousBars = pattern.bars;
+    const [beatsPerBar] = pattern.timeSignature;
+    const subdivisionsPerBar = beatsPerBar * SUBDIVISIONS_PER_BEAT;
+
+    // 判断删除的是哪一个小节
+    let barToRemove: number;
+    if (cursorPosition !== undefined) {
+      const cursorBarIndex = Math.floor(cursorPosition / subdivisionsPerBar);
+      barToRemove = cursorBarIndex;
+    } else {
+      barToRemove = previousBars - 1; // 删除最后一小节
+    }
+
+    // 调用原始的 removeBar
+    removeBar(cursorPosition);
+
+    // 如果删除的是最后一个小节，移动游标到新的末尾
+    if (barToRemove === previousBars - 1 && previousBars > 1) {
+      const newBars = previousBars - 1;
+      const newEndSubdivision = newBars * subdivisionsPerBar - 1; // 最后一个 subdivision
+      seekTo(newEndSubdivision);
+    }
+  };
+
   const handleCopyPatternGrid = () => {
     if (isDraftMode) return;
     setCopiedPatternGrid({
@@ -1031,7 +1057,7 @@ function App() {
           onToggleGhost={toggleGhost}
           onCycleThirtySecond={cycleThirtySecond}
           onAddBar={addBar}
-          onRemoveBar={removeBar}
+          onRemoveBar={handleRemoveBar}
           onClearGrid={clearGrid}
           onClearBar={clearBar}
           crossPatternLoop={crossPatternLoop}
