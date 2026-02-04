@@ -817,7 +817,8 @@ export function Settings() {
                   </li>
                   <li>
                     <strong>Notation view</strong>: double-click/tap to jump the
-                    playhead (disabled when a rate label is active).
+                    playhead (disabled only when playing with a rate label
+                    active).
                   </li>
                 </ul>
               </div>

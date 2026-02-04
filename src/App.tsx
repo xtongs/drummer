@@ -562,7 +562,7 @@ function App() {
 
   // 处理鼓谱区域双击事件
   const handleNotationDoubleClick = (subdivision: number) => {
-    if (rateIndex !== 0) return; // 变速模式下禁用双击跳转
+    if (rateIndex !== 0 && isPatternPlaying) return; // 变速模式下播放时禁用双击跳转
     seekTo(subdivision);
   };
 
