@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Settings } from "./Settings";
 import * as storage from "../../utils/storage";
@@ -8,6 +8,8 @@ import * as audioEngine from "../../utils/audioEngine";
 vi.mock("../../utils/storage", () => ({
   loadSampleSelection: vi.fn(),
   setSampleVariant: vi.fn(),
+  loadSettingsLanguagePreference: vi.fn(() => "auto"),
+  saveSettingsLanguagePreference: vi.fn(),
 }));
 
 // Mock audioEngine functions
@@ -31,13 +33,29 @@ vi.mock("../../utils/configBackup", () => ({
 }));
 
 describe("Settings 采样选择功能", () => {
+  const originalNavigatorLanguage = Object.getOwnPropertyDescriptor(
+    window.navigator,
+    "language",
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     // 默认mock返回值
     vi.mocked(storage.loadSampleSelection).mockReturnValue({});
+    vi.mocked(storage.loadSettingsLanguagePreference).mockReturnValue("auto");
     vi.mocked(audioEngine.playDrumSound).mockResolvedValue(undefined);
     vi.mocked(audioEngine.reloadSamples).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    if (originalNavigatorLanguage) {
+      Object.defineProperty(
+        window.navigator,
+        "language",
+        originalNavigatorLanguage,
+      );
+    }
   });
 
   describe("采样选择UI渲染", () => {
@@ -387,6 +405,73 @@ describe("Settings 采样选择功能", () => {
       )[0];
 
       expect(kickAButton).toHaveAttribute("title", "Select A variant for Kick");
+    });
+  });
+
+  describe("多语言与法律文案", () => {
+    it("默认 auto 时应跟随系统语言显示介绍文本", () => {
+      Object.defineProperty(window.navigator, "language", {
+        value: "zh-CN",
+        configurable: true,
+      });
+      vi.mocked(storage.loadSettingsLanguagePreference).mockReturnValue("auto");
+
+      render(<Settings />);
+
+      const aboutButton = screen.getByTitle("About");
+      fireEvent.click(aboutButton);
+
+      expect(screen.getByText("功能与使用说明")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "为首次使用者提供的分步指南。请从上到下阅读，以学习完整工作流并发现隐藏手势。",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("手动切换语言后应保存偏好并即时切换文案", () => {
+      vi.mocked(storage.loadSettingsLanguagePreference).mockReturnValue("auto");
+
+      render(<Settings />);
+
+      const aboutButton = screen.getByTitle("About");
+      fireEvent.click(aboutButton);
+
+      const languageSelect = screen.getByTestId("settings-language-select");
+      fireEvent.change(languageSelect, { target: { value: "ja" } });
+
+      expect(storage.saveSettingsLanguagePreference).toHaveBeenCalledWith("ja");
+      expect(screen.getByText("機能と使い方")).toBeInTheDocument();
+    });
+
+    it("应渲染当前语言的隐私政策和用户协议", () => {
+      vi.mocked(storage.loadSettingsLanguagePreference).mockReturnValue(
+        "zh-CN",
+      );
+
+      render(<Settings />);
+
+      const aboutButton = screen.getByTitle("About");
+      fireEvent.click(aboutButton);
+
+      expect(screen.getByText("隐私政策")).toBeInTheDocument();
+      expect(screen.getByText("用户协议")).toBeInTheDocument();
+      expect(
+        screen.getByText("应用默认不会将你的个人数据上传到外部服务器。"),
+      ).toBeInTheDocument();
+    });
+
+    it("采样鼓件名称应随语言切换本地化", () => {
+      vi.mocked(storage.loadSettingsLanguagePreference).mockReturnValue(
+        "zh-CN",
+      );
+
+      render(<Settings />);
+
+      const aboutButton = screen.getByTitle("About");
+      fireEvent.click(aboutButton);
+
+      expect(screen.getByText("底鼓")).toBeInTheDocument();
     });
   });
 });

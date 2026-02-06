@@ -8,6 +8,10 @@ import type {
   DrumType,
 } from "../types";
 import {
+  isValidSettingsLanguage,
+  type SettingsLanguagePreference,
+} from "./settingsI18n";
+import {
   CELL_OFF,
   CELL_NORMAL,
   CELL_GHOST,
@@ -22,6 +26,7 @@ const METRONOME_BPM_KEY = "drummer-metronome-bpm";
 const CROSS_PATTERN_LOOP_KEY = "drummer-cross-pattern-loop";
 const NOTATION_RENDERER_KEY = "drummer-notation-renderer";
 const SAMPLE_SELECTION_KEY = "drummer-sample-selection";
+const SETTINGS_LANGUAGE_KEY = "drummer-settings-language";
 
 /**
  * 渲染器类型
@@ -517,4 +522,41 @@ export function setSampleVariant(
   const selection = loadSampleSelection();
   selection[drumType] = variant;
   saveSampleSelection(selection);
+}
+
+/**
+ * 保存 Settings 语言偏好
+ * @param preference - "auto" 或语言代码
+ */
+export function saveSettingsLanguagePreference(
+  preference: SettingsLanguagePreference,
+): void {
+  try {
+    localStorage.setItem(SETTINGS_LANGUAGE_KEY, preference);
+  } catch (error) {
+    console.error("Failed to save settings language preference:", error);
+  }
+}
+
+/**
+ * 加载 Settings 语言偏好
+ * @returns 语言偏好，缺省或非法值返回 "auto"
+ */
+export function loadSettingsLanguagePreference(): SettingsLanguagePreference {
+  try {
+    const value = localStorage.getItem(SETTINGS_LANGUAGE_KEY);
+    if (!value) {
+      return "auto";
+    }
+    if (value === "auto") {
+      return "auto";
+    }
+    if (isValidSettingsLanguage(value)) {
+      return value;
+    }
+  } catch (error) {
+    console.error("Failed to load settings language preference:", error);
+  }
+
+  return "auto";
 }

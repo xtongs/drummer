@@ -22,6 +22,8 @@ import {
   loadSampleSelection,
   getSampleVariant,
   setSampleVariant,
+  saveSettingsLanguagePreference,
+  loadSettingsLanguagePreference,
 } from "./storage";
 import type { Pattern, CrossPatternLoop } from "../types";
 import { CELL_OFF, CELL_NORMAL, CELL_GHOST } from "../types";
@@ -590,6 +592,27 @@ describe("Storage 工具函数", () => {
           expect(getSampleVariant(drumType)).toBe("A");
         });
       });
+    });
+  });
+
+  describe("Settings 语言偏好存储", () => {
+    it("默认应返回 auto", () => {
+      expect(loadSettingsLanguagePreference()).toBe("auto");
+    });
+
+    it("应保存并读取具体语言代码", () => {
+      saveSettingsLanguagePreference("ja");
+      expect(loadSettingsLanguagePreference()).toBe("ja");
+    });
+
+    it("应保存并读取 auto", () => {
+      saveSettingsLanguagePreference("auto");
+      expect(loadSettingsLanguagePreference()).toBe("auto");
+    });
+
+    it("非法值应回退为 auto", () => {
+      localStorage.setItem("drummer-settings-language", "invalid");
+      expect(loadSettingsLanguagePreference()).toBe("auto");
     });
   });
 });

@@ -1,10 +1,25 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { VERSION, BUILD_TIME } from "../../version";
 import { useTheme } from "../../hooks/useTheme";
 import { exportConfig, importConfig } from "../../utils/configBackup";
 import { playDrumSound, reloadSamples } from "../../utils/audioEngine";
-import { loadSampleSelection, setSampleVariant } from "../../utils/storage";
+import {
+  loadSampleSelection,
+  loadSettingsLanguagePreference,
+  saveSettingsLanguagePreference,
+  setSampleVariant,
+} from "../../utils/storage";
 import type { DrumType, SampleVariant } from "../../types";
+import {
+  getLocalizedDrumLabel,
+  getResolvedLanguage,
+  getSettingsGuideMap,
+  getSettingsCopy,
+  SETTINGS_LANGUAGE_OPTIONS,
+  type SettingsGuideKey,
+  type SettingsLanguageCode,
+  type SettingsLanguagePreference,
+} from "../../utils/settingsI18n";
 import "./Settings.css";
 
 type UpdateStatus =
@@ -15,6 +30,8 @@ type UpdateStatus =
   | "activating"
   | "no-update";
 
+const RTL_SETTINGS_LANGUAGES = new Set<SettingsLanguageCode>(["ar"]);
+
 export function Settings() {
   const [isVisible, setIsVisible] = useState(false);
   const [showFirstTimeHint, setShowFirstTimeHint] = useState(false);
@@ -24,6 +41,8 @@ export function Settings() {
   const [sampleSelection, setSampleSelection] = useState<
     Partial<Record<DrumType, SampleVariant>>
   >({});
+  const [languagePreference, setLanguagePreference] =
+    useState<SettingsLanguagePreference>("auto");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -46,6 +65,11 @@ export function Settings() {
   // 加载采样选择
   useEffect(() => {
     setSampleSelection(loadSampleSelection());
+  }, []);
+
+  // 加载语言偏好（默认跟随系统）
+  useEffect(() => {
+    setLanguagePreference(loadSettingsLanguagePreference());
   }, []);
 
   // 处理采样选择变更（预览并切换）
@@ -378,15 +402,15 @@ export function Settings() {
   const getStatusText = () => {
     switch (updateStatus) {
       case "checking":
-        return "Checking...";
+        return currentCopy.statusChecking;
       case "downloading":
-        return "Downloading...";
+        return currentCopy.statusDownloading;
       case "installing":
-        return "Installing...";
+        return currentCopy.statusInstalling;
       case "activating":
-        return "Activating...";
+        return currentCopy.statusActivating;
       case "no-update":
-        return "Latest version";
+        return currentCopy.statusLatestVersion;
       default:
         return `v${VERSION} - ${BUILD_TIME}`;
     }
@@ -439,13 +463,29 @@ export function Settings() {
   };
 
   const isUpdating = updateStatus !== "idle";
+  const resolvedLanguage = getResolvedLanguage(languagePreference);
+  const isRtlLanguage = RTL_SETTINGS_LANGUAGES.has(resolvedLanguage);
+  const currentCopy = getSettingsCopy(languagePreference);
+  const guideMap = useMemo(
+    () => getSettingsGuideMap(languagePreference),
+    [languagePreference],
+  );
+  const tGuide = (key: SettingsGuideKey) => guideMap[key];
+
+  const handleLanguageChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextPreference = event.target.value as SettingsLanguagePreference;
+    setLanguagePreference(nextPreference);
+    saveSettingsLanguagePreference(nextPreference);
+  };
 
   return (
     <>
       <div
         className={`settings-first-hint ${showFirstTimeHint ? "visible" : "hidden"}`}
       >
-        Tap 5 times quickly to show settings
+        {currentCopy.tapHintShowSettings}
       </div>
       <div className={`settings ${isVisible ? "visible" : "hidden"}`}>
         <div className="settings-theme" onClick={cycleTheme}>
@@ -552,9 +592,14 @@ export function Settings() {
           className="settings-modal-mask"
           onClick={() => setIsAboutModalOpen(false)}
         >
-          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="settings-modal"
+            dir={isRtlLanguage ? "rtl" : "ltr"}
+            lang={resolvedLanguage}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="settings-modal-header">
-              <h2>Drummer - Beat Maker</h2>
+              <h2>{currentCopy.modalTitle}</h2>
               <button
                 type="button"
                 className="settings-modal-close"
@@ -576,20 +621,40 @@ export function Settings() {
               </button>
             </div>
             <div className="settings-modal-content">
-              <h3 className="settings-modal-subtitle">Features & Usage</h3>
+              <div className="settings-language-row">
+                <label htmlFor="settings-language-select">
+                  {currentCopy.languageLabel}
+                </label>
+                <select
+                  id="settings-language-select"
+                  className="settings-language-select"
+                  value={languagePreference}
+                  onChange={handleLanguageChange}
+                  data-testid="settings-language-select"
+                >
+                  <option value="auto">{`${currentCopy.autoLabel}`}</option>
+                  {SETTINGS_LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <h3 className="settings-modal-subtitle">
+                {currentCopy.introTitle}
+              </h3>
               <p className="settings-modal-description">
-                A step-by-step guide for first-time users. Read top to bottom to
-                learn the full workflow and discover hidden gestures.
+                {currentCopy.introDescription}
               </p>
               <div className="settings-modal-section">
-                <h3>Top Bar: Metronome and Tempo</h3>
+                <h3>{tGuide("sectionTopBarTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Beat dots</strong>: click to cycle time signatures
-                    (4/4, 3/4, 2/4, 6/8, 5/4, 7/8).
+                    <strong>{tGuide("labelBeatDots")}</strong>:{" "}
+                    {tGuide("tailBeatDots")}
                   </li>
                   <li>
-                    <strong>Tempo</strong>{" "}
+                    <strong>{tGuide("labelTempo")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -620,14 +685,14 @@ export function Settings() {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                     </span>
-                    : click for 0.5 BPM steps, press and hold to keep changing.
+                    : {tGuide("tailTempo")}
                   </li>
                   <li>
-                    <strong>BPM number</strong>: tap the left/right side of the
-                    digits to cycle speed rates (a rate label appears).
+                    <strong>{tGuide("labelBpmNumber")}</strong>:{" "}
+                    {tGuide("tailBpmNumber")}
                   </li>
                   <li>
-                    <strong>Play</strong>{" "}
+                    <strong>{tGuide("labelPlay")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -638,20 +703,18 @@ export function Settings() {
                         <polygon points="6 3 18 12 6 21" />
                       </svg>
                     </span>
-                    : start or stop playback. Long-press to reset the loop
-                    counter to 0.
+                    : {tGuide("tailPlay")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Patterns, Bars, and Loop Range</h3>
+                <h3>{tGuide("sectionPatternsTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Tabs</strong>: the circle is Draft; letter tabs are
-                    saved patterns. Click a tab to load it.
+                    <strong>{tGuide("labelTabs")}</strong>: {tGuide("tailTabs")}
                   </li>
                   <li>
-                    <strong>New pattern</strong>{" "}
+                    <strong>{tGuide("labelNewPattern")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -667,10 +730,10 @@ export function Settings() {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                     </span>
-                    : save the current draft as a new pattern tab.
+                    : {tGuide("tailNewPattern")}
                   </li>
                   <li>
-                    <strong>Import pattern</strong>{" "}
+                    <strong>{tGuide("labelImportPattern")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -687,10 +750,10 @@ export function Settings() {
                         <path d="M4 21h16v0" />
                       </svg>
                     </span>
-                    : load a pattern zip file.
+                    : {tGuide("tailImportPattern")}
                   </li>
                   <li>
-                    <strong>Bars</strong>{" "}
+                    <strong>{tGuide("labelBars")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -721,15 +784,14 @@ export function Settings() {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                     </span>
-                    : remove or add a bar (uses your cursor position when
-                    possible).
+                    : {tGuide("tailBars")}
                   </li>
                   <li>
-                    <strong>Loop range</strong>: choose start/end pattern and
-                    bar; press and hold the +/- buttons to move faster.
+                    <strong>{tGuide("labelLoopRange")}</strong>:{" "}
+                    {tGuide("tailLoopRange")}
                   </li>
                   <li>
-                    <strong>Per-bar BPM</strong>{" "}
+                    <strong>{tGuide("labelPerBarBpm")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -746,10 +808,10 @@ export function Settings() {
                         <circle cx="12" cy="12" r="1.5" />
                       </svg>
                     </span>
-                    : click to set or clear BPM for the current bar.
+                    : {tGuide("tailPerBarBpm")}
                   </li>
                   <li>
-                    <strong>Copy/Paste</strong>{" "}
+                    <strong>{tGuide("labelCopyPaste")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -765,7 +827,6 @@ export function Settings() {
                         <rect x="5" y="5" width="10" height="10" rx="2" />
                       </svg>
                     </span>{" "}
-                    then{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -797,36 +858,36 @@ export function Settings() {
                         <line x1="19" y1="12" x2="5" y2="12" />
                       </svg>
                     </span>
-                    : duplicate a whole pattern grid before or after.
+                    : {tGuide("tailCopyPaste")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Grid Editor and Notation</h3>
+                <h3>{tGuide("sectionGridTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Single click/tap</strong>: toggle a cell on or off.
+                    <strong>{tGuide("labelSingleClickTap")}</strong>:{" "}
+                    {tGuide("tailSingleClickTap")}
                   </li>
                   <li>
-                    <strong>Double-click/tap</strong>: cycle 32nd-note states
-                    (double, first, second, back to normal).
+                    <strong>{tGuide("labelDoubleClickTap")}</strong>:{" "}
+                    {tGuide("tailDoubleClickTap")}
                   </li>
                   <li>
-                    <strong>Long-press on an active cell</strong>: cycle note
-                    type (normal to ghost to grace) when supported.
+                    <strong>{tGuide("labelLongPressActiveCell")}</strong>:{" "}
+                    {tGuide("tailLongPressActiveCell")}
                   </li>
                   <li>
-                    <strong>Notation view</strong>: double-click/tap to jump the
-                    playhead (disabled only when playing with a rate label
-                    active).
+                    <strong>{tGuide("labelNotationView")}</strong>:{" "}
+                    {tGuide("tailNotationView")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Action Buttons (Right Side)</h3>
+                <h3>{tGuide("sectionActionButtonsTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Count-in</strong>{" "}
+                    <strong>{tGuide("labelCountIn")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -842,10 +903,10 @@ export function Settings() {
                         <line x1="12" y1="16" x2="16" y2="6" />
                       </svg>
                     </span>
-                    : toggle a one-bar count-in before playback.
+                    : {tGuide("tailCountIn")}
                   </li>
                   <li>
-                    <strong>Practice mode</strong>{" "}
+                    <strong>{tGuide("labelPracticeMode")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -862,10 +923,10 @@ export function Settings() {
                         <circle cx="18" cy="16" r="3" />
                       </svg>
                     </span>
-                    : show background music and volume controls.
+                    : {tGuide("tailPracticeMode")}
                   </li>
                   <li>
-                    <strong>Play (bottom)</strong>{" "}
+                    <strong>{tGuide("labelPlayBottom")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -876,11 +937,10 @@ export function Settings() {
                         <polygon points="6 3 18 12 6 21" />
                       </svg>
                     </span>
-                    : tap to play/pause. Long-press to stop and jump to the loop
-                    start.
+                    : {tGuide("tailPlayBottom")}
                   </li>
                   <li>
-                    <strong>Save current</strong>{" "}
+                    <strong>{tGuide("labelSaveCurrent")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -897,11 +957,10 @@ export function Settings() {
                         <polyline points="7 3 7 8 15 8" />
                       </svg>
                     </span>
-                    : save edits to the current pattern. Long-press to export a
-                    pattern zip (includes BGM).
+                    : {tGuide("tailSaveCurrent")}
                   </li>
                   <li>
-                    <strong>Delete</strong>{" "}
+                    <strong>{tGuide("labelDelete")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -915,10 +974,10 @@ export function Settings() {
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       </svg>
                     </span>
-                    : remove the current pattern.
+                    : {tGuide("tailDelete")}
                   </li>
                   <li>
-                    <strong>Clear</strong>{" "}
+                    <strong>{tGuide("labelClear")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -933,16 +992,15 @@ export function Settings() {
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </span>
-                    : short press clears the current bar, long-press clears all
-                    bars.
+                    : {tGuide("tailClear")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Background Music (Practice Mode)</h3>
+                <h3>{tGuide("sectionBgmTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Upload</strong>{" "}
+                    <strong>{tGuide("labelUpload")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -959,7 +1017,7 @@ export function Settings() {
                         <path d="M4 21h16v0" />
                       </svg>
                     </span>
-                    : add an MP3 file, or{" "}
+                    : {tGuide("tailUploadBeforeDelete")}{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -973,10 +1031,10 @@ export function Settings() {
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       </svg>
                     </span>{" "}
-                    to delete it.
+                    {tGuide("tailUploadAfterDelete")}
                   </li>
                   <li>
-                    <strong>Volume</strong>{" "}
+                    <strong>{tGuide("labelVolume")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -1007,24 +1065,23 @@ export function Settings() {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                     </span>
-                    : click or press-and-hold to adjust. Click the % number to
-                    mute/unmute.
+                    : {tGuide("tailVolume")}
                   </li>
                   <li>
-                    <strong>Offset</strong>: click the ms/s value to type an
-                    exact offset (disabled while playing).
+                    <strong>{tGuide("labelOffset")}</strong>:{" "}
+                    {tGuide("tailOffset")}
                   </li>
                   <li>
-                    <strong>Pattern volume</strong>: the right-side controls
-                    adjust drum volume (same +/- and mute behavior).
+                    <strong>{tGuide("labelPatternVolume")}</strong>:{" "}
+                    {tGuide("tailPatternVolume")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Settings and About</h3>
+                <h3>{tGuide("sectionSettingsTitle")}</h3>
                 <ul>
                   <li>
-                    <strong>Theme</strong>{" "}
+                    <strong>{tGuide("labelTheme")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -1043,10 +1100,10 @@ export function Settings() {
                         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
                       </svg>
                     </span>
-                    : click to cycle themes.
+                    : {tGuide("tailTheme")}
                   </li>
                   <li>
-                    <strong>Backup and Restore</strong>{" "}
+                    <strong>{tGuide("labelBackupRestore")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -1080,10 +1137,10 @@ export function Settings() {
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
                     </span>
-                    : import or export all data as a zip file.
+                    : {tGuide("tailBackupRestore")}
                   </li>
                   <li>
-                    <strong>Settings</strong>{" "}
+                    <strong>{tGuide("labelSettings")}</strong>{" "}
                     <span className="settings-icon">
                       <svg
                         width="12"
@@ -1099,22 +1156,43 @@ export function Settings() {
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                     </span>
-                    : open this.
+                    : {tGuide("tailSettings")}
                   </li>
                 </ul>
               </div>
               <div className="settings-modal-section">
-                <h3>Drum Samples Selection</h3>
+                <h3>{currentCopy.privacyTitle}</h3>
+                <ul>
+                  {currentCopy.privacyItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>{currentCopy.termsTitle}</h3>
+                <ul>
+                  {currentCopy.termsItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="settings-modal-section">
+                <h3>{currentCopy.sampleSelectionTitle}</h3>
                 <p className="settings-modal-description">
-                  Choose between different sample variants (A/B/C) for each
-                  drum. Click to preview.
+                  {currentCopy.sampleSelectionDescription}
                 </p>
                 <div className="sample-selection-list">
                   {drumTypes.map((drumType) => {
                     const currentVariant = sampleSelection[drumType] || "A";
+                    const localizedDrumLabel = getLocalizedDrumLabel(
+                      drumType,
+                      languagePreference,
+                    );
                     return (
                       <div key={drumType} className="sample-selection-item">
-                        <div className="sample-selection-drum">{drumType}</div>
+                        <div className="sample-selection-drum">
+                          {localizedDrumLabel}
+                        </div>
                         <div className="sample-selection-variants">
                           {(["A", "B", "C"] as SampleVariant[]).map(
                             (variant) => (
@@ -1127,7 +1205,7 @@ export function Settings() {
                                 onClick={() =>
                                   handleSampleChange(drumType, variant)
                                 }
-                                title={`Select ${variant} variant for ${drumType}`}
+                                title={`Select ${variant} variant for ${localizedDrumLabel}`}
                               >
                                 {variant}
                               </button>

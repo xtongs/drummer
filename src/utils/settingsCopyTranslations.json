@@ -1,0 +1,629 @@
+{
+  "default": {
+    "languageLabel": "Language",
+    "autoLabel": "Follow system",
+    "introTitle": "Features & Usage",
+    "introDescription": "A step-by-step guide for first-time users. Read top to bottom to learn the full workflow and discover hidden gestures.",
+    "privacyTitle": "Privacy Policy",
+    "privacyItems": [
+      "All pattern and setting data is stored on your device by default.",
+      "The app does not upload your personal data to external servers by default."
+    ],
+    "termsTitle": "Terms of Use",
+    "termsItems": [
+      "You are responsible for uploaded files and exported content.",
+      "Please use the app lawfully and respect third-party copyrights."
+    ],
+    "sampleSelectionTitle": "Drum Samples Selection",
+    "sampleSelectionDescription": "Choose between different sample variants (A/B/C) for each drum. Click to preview.",
+    "statusChecking": "Checking...",
+    "statusDownloading": "Downloading...",
+    "statusInstalling": "Installing...",
+    "statusActivating": "Activating...",
+    "statusLatestVersion": "Latest version",
+    "modalTitle": "About & Settings",
+    "tapHintShowSettings": "Tap 5 times quickly to show settings"
+  },
+  "translations": {
+    "en": {
+      "languageLabel": "Language",
+      "autoLabel": "Follow system",
+      "introTitle": "Features & Usage",
+      "introDescription": "A step-by-step guide for first-time users. Read top to bottom to learn the full workflow and discover hidden gestures.",
+      "privacyTitle": "Privacy Policy",
+      "privacyItems": [
+        "All pattern and setting data is stored on your device by default.",
+        "The app does not upload your personal data to external servers by default."
+      ],
+      "termsTitle": "Terms of Use",
+      "termsItems": [
+        "You are responsible for uploaded files and exported content.",
+        "Please use the app lawfully and respect third-party copyrights."
+      ],
+      "sampleSelectionTitle": "Drum Samples Selection",
+      "sampleSelectionDescription": "Choose between different sample variants (A/B/C) for each drum. Click to preview.",
+      "statusChecking": "Checking...",
+      "statusDownloading": "Downloading...",
+      "statusInstalling": "Installing...",
+      "statusActivating": "Activating...",
+      "statusLatestVersion": "Latest version",
+      "modalTitle": "About & Settings",
+      "tapHintShowSettings": "Tap 5 times quickly to show settings"
+    },
+    "zh-CN": {
+      "languageLabel": "语言",
+      "autoLabel": "跟随系统",
+      "introTitle": "功能与使用说明",
+      "introDescription": "为首次使用者提供的分步指南。请从上到下阅读，以学习完整工作流并发现隐藏手势。",
+      "privacyTitle": "隐私政策",
+      "privacyItems": [
+        "节奏型与设置数据默认仅保存在你的设备本地。",
+        "应用默认不会将你的个人数据上传到外部服务器。"
+      ],
+      "termsTitle": "用户协议",
+      "termsItems": [
+        "你需对上传文件与导出内容的合法性负责。",
+        "请在合法范围内使用本应用并尊重第三方版权。"
+      ],
+      "sampleSelectionTitle": "鼓组采样选择",
+      "sampleSelectionDescription": "可为每个鼓件选择 A/B/C 采样变体，点击按钮可立即预听。",
+      "statusChecking": "检查更新中...",
+      "statusDownloading": "下载中...",
+      "statusInstalling": "安装中...",
+      "statusActivating": "生效中...",
+      "statusLatestVersion": "已是最新版本",
+      "modalTitle": "关于与设置",
+      "tapHintShowSettings": "快速点击 5 次显示设置"
+    },
+    "zh-TW": {
+      "languageLabel": "語言",
+      "autoLabel": "跟隨系統",
+      "introTitle": "功能與使用說明",
+      "introDescription": "為首次使用者提供的逐步指南。請由上而下閱讀，以學習完整工作流程並發掘隱藏手勢。",
+      "privacyTitle": "隱私政策",
+      "privacyItems": [
+        "節奏型與設定資料預設僅儲存在你的裝置本機。",
+        "應用預設不會將你的個人資料上傳至外部伺服器。"
+      ],
+      "termsTitle": "使用者協議",
+      "termsItems": [
+        "你需對上傳檔案與匯出內容的合法性負責。",
+        "請在合法範圍內使用本應用並尊重第三方版權。"
+      ],
+      "sampleSelectionTitle": "鼓組取樣選擇",
+      "sampleSelectionDescription": "可為每個鼓件選擇 A/B/C 取樣變體，點擊按鈕可立即試聽。",
+      "statusChecking": "檢查更新中...",
+      "statusDownloading": "下載中...",
+      "statusInstalling": "安裝中...",
+      "statusActivating": "生效中...",
+      "statusLatestVersion": "已是最新版本",
+      "modalTitle": "關於與設定",
+      "tapHintShowSettings": "快速點擊 5 次顯示設定"
+    },
+    "ja": {
+      "languageLabel": "言語",
+      "autoLabel": "システムに従う",
+      "introTitle": "機能と使い方",
+      "introDescription": "このクイックガイドで主要な操作、ジェスチャー、全体の流れを確認できます。",
+      "privacyTitle": "プライバシーポリシー",
+      "privacyItems": [
+        "パターンと設定データは既定で端末内に保存されます。",
+        "既定では個人データを外部サーバーへ送信しません。"
+      ],
+      "termsTitle": "利用規約",
+      "termsItems": [
+        "アップロードしたファイルと書き出し内容の責任は利用者が負います。",
+        "法令を守り、第三者の著作権を尊重して利用してください。"
+      ],
+      "modalTitle": "このアプリについてと設定",
+      "sampleSelectionTitle": "ドラムサンプル選択",
+      "sampleSelectionDescription": "各ドラムでサンプルのバリアント（A/B/C）を選べます。クリックして試聴できます。",
+      "statusChecking": "チェック中...",
+      "statusDownloading": "ダウンロード中...",
+      "statusInstalling": "インストール中...",
+      "statusActivating": "有効化中...",
+      "statusLatestVersion": "最新バージョン",
+      "tapHintShowSettings": "すばやく5回タップして設定を表示"
+    },
+    "ko": {
+      "languageLabel": "언어",
+      "autoLabel": "시스템 언어 따르기",
+      "introTitle": "기능 및 사용법",
+      "introDescription": "핵심 조작, 제스처, 전체 워크플로를 빠르게 이해할 수 있습니다.",
+      "privacyTitle": "개인정보 처리방침",
+      "privacyItems": [
+        "패턴 및 설정 데이터는 기본적으로 기기에만 저장됩니다.",
+        "기본 설정에서는 개인 데이터를 외부 서버로 업로드하지 않습니다."
+      ],
+      "termsTitle": "이용약관",
+      "termsItems": [
+        "업로드 파일과 내보낸 콘텐츠에 대한 책임은 사용자에게 있습니다.",
+        "관련 법규를 준수하고 제3자 저작권을 존중해 주세요."
+      ],
+      "modalTitle": "앱 정보 및 설정",
+      "sampleSelectionTitle": "드럼 샘플 선택",
+      "sampleSelectionDescription": "각 드럼의 샘플 변형(A/B/C)을 선택할 수 있습니다. 클릭해서 미리 들어보세요.",
+      "statusChecking": "확인 중...",
+      "statusDownloading": "다운로드 중...",
+      "statusInstalling": "설치 중...",
+      "statusActivating": "적용 중...",
+      "statusLatestVersion": "최신 버전",
+      "tapHintShowSettings": "빠르게 5번 탭하여 설정 표시"
+    },
+    "fr": {
+      "languageLabel": "Langue",
+      "autoLabel": "Suivre le système",
+      "introTitle": "Fonctions et utilisation",
+      "introDescription": "Consultez ce guide rapide pour comprendre les commandes principales et le flux complet.",
+      "privacyTitle": "Politique de confidentialité",
+      "privacyItems": [
+        "Les données de rythme et de réglages sont stockées localement sur votre appareil.",
+        "L'application n'envoie pas vos données personnelles vers des serveurs externes par défaut."
+      ],
+      "termsTitle": "Conditions d'utilisation",
+      "termsItems": [
+        "Vous êtes responsable des fichiers importés et du contenu exporté.",
+        "Veuillez utiliser l'application légalement et respecter les droits d'auteur tiers."
+      ],
+      "modalTitle": "À propos et paramètres",
+      "sampleSelectionTitle": "Sélection des échantillons de batterie",
+      "sampleSelectionDescription": "Choisissez une variante d’échantillon (A/B/C) pour chaque élément. Cliquez pour préécouter.",
+      "statusChecking": "Vérification...",
+      "statusDownloading": "Téléchargement...",
+      "statusInstalling": "Installation...",
+      "statusActivating": "Activation...",
+      "statusLatestVersion": "Dernière version",
+      "tapHintShowSettings": "Touchez rapidement 5 fois pour afficher les réglages"
+    },
+    "de": {
+      "languageLabel": "Sprache",
+      "autoLabel": "Systemsprache",
+      "introTitle": "Funktionen und Nutzung",
+      "introDescription": "Diese Kurzanleitung erklärt die wichtigsten Bedienungen, Gesten und den Ablauf.",
+      "privacyTitle": "Datenschutz",
+      "privacyItems": [
+        "Rhythmus- und Einstellungsdaten werden standardmäßig lokal auf deinem Gerät gespeichert.",
+        "Standardmäßig werden keine personenbezogenen Daten an externe Server übertragen."
+      ],
+      "termsTitle": "Nutzungsbedingungen",
+      "termsItems": [
+        "Für hochgeladene Dateien und exportierte Inhalte bist du selbst verantwortlich.",
+        "Bitte nutze die App rechtmäßig und beachte Urheberrechte Dritter."
+      ],
+      "modalTitle": "Info & Einstellungen",
+      "sampleSelectionTitle": "Auswahl der Drum-Samples",
+      "sampleSelectionDescription": "Wähle für jedes Drum eine Sample-Variante (A/B/C). Klicke zum Vorhören.",
+      "statusChecking": "Prüfen...",
+      "statusDownloading": "Herunterladen...",
+      "statusInstalling": "Installieren...",
+      "statusActivating": "Aktivieren...",
+      "statusLatestVersion": "Aktuelle Version",
+      "tapHintShowSettings": "Tippe schnell 5-mal, um die Einstellungen anzuzeigen"
+    },
+    "es": {
+      "languageLabel": "Idioma",
+      "autoLabel": "Seguir sistema",
+      "introTitle": "Funciones y uso",
+      "introDescription": "Lee esta guía rápida para conocer controles, gestos y el flujo completo.",
+      "privacyTitle": "Política de privacidad",
+      "privacyItems": [
+        "Los datos de patrones y ajustes se guardan localmente en tu dispositivo.",
+        "La aplicación no sube datos personales a servidores externos por defecto."
+      ],
+      "termsTitle": "Términos de uso",
+      "termsItems": [
+        "Eres responsable de los archivos subidos y del contenido exportado.",
+        "Usa la aplicación legalmente y respeta derechos de autor de terceros."
+      ],
+      "modalTitle": "Acerca de y ajustes",
+      "sampleSelectionTitle": "Selección de muestras de batería",
+      "sampleSelectionDescription": "Elige una variante de muestra (A/B/C) para cada tambor. Haz clic para previsualizar.",
+      "statusChecking": "Comprobando...",
+      "statusDownloading": "Descargando...",
+      "statusInstalling": "Instalando...",
+      "statusActivating": "Activando...",
+      "statusLatestVersion": "Última versión",
+      "tapHintShowSettings": "Toca 5 veces rápido para mostrar los ajustes"
+    },
+    "pt": {
+      "languageLabel": "Idioma",
+      "autoLabel": "Seguir sistema",
+      "introTitle": "Recursos e uso",
+      "introDescription": "Leia este guia rápido para entender controles, gestos e o fluxo completo.",
+      "privacyTitle": "Política de privacidade",
+      "privacyItems": [
+        "Os dados de padrões e configurações são armazenados localmente no seu dispositivo.",
+        "Por padrão, o app não envia dados pessoais para servidores externos."
+      ],
+      "termsTitle": "Termos de uso",
+      "termsItems": [
+        "Você é responsável pelos arquivos enviados e conteúdo exportado.",
+        "Use o app de forma legal e respeite direitos autorais de terceiros."
+      ],
+      "modalTitle": "Sobre e configurações",
+      "sampleSelectionTitle": "Seleção de amostras de bateria",
+      "sampleSelectionDescription": "Escolha uma variante de amostra (A/B/C) para cada peça. Clique para pré-ouvir.",
+      "statusChecking": "Verificando...",
+      "statusDownloading": "Baixando...",
+      "statusInstalling": "Instalando...",
+      "statusActivating": "Ativando...",
+      "statusLatestVersion": "Versão mais recente",
+      "tapHintShowSettings": "Toque 5 vezes rapidamente para mostrar as configurações"
+    },
+    "it": {
+      "languageLabel": "Lingua",
+      "autoLabel": "Segui sistema",
+      "introTitle": "Funzioni e utilizzo",
+      "introDescription": "Consulta questa guida rapida per conoscere controlli, gesti e flusso completo.",
+      "privacyTitle": "Informativa sulla privacy",
+      "privacyItems": [
+        "I dati di pattern e impostazioni sono salvati localmente sul dispositivo.",
+        "Per impostazione predefinita l'app non invia dati personali a server esterni."
+      ],
+      "termsTitle": "Termini di utilizzo",
+      "termsItems": [
+        "Sei responsabile dei file caricati e dei contenuti esportati.",
+        "Usa l'app in modo legale e rispetta i copyright di terze parti."
+      ],
+      "modalTitle": "Informazioni e impostazioni",
+      "sampleSelectionTitle": "Selezione campioni di batteria",
+      "sampleSelectionDescription": "Scegli una variante di campione (A/B/C) per ogni tamburo. Clicca per ascoltare l’anteprima.",
+      "statusChecking": "Controllo...",
+      "statusDownloading": "Download...",
+      "statusInstalling": "Installazione...",
+      "statusActivating": "Attivazione...",
+      "statusLatestVersion": "Ultima versione",
+      "tapHintShowSettings": "Tocca rapidamente 5 volte per mostrare le impostazioni"
+    },
+    "ru": {
+      "languageLabel": "Язык",
+      "autoLabel": "Как в системе",
+      "introTitle": "Функции и использование",
+      "introDescription": "Прочитайте краткое руководство по основным действиям, жестам и рабочему процессу.",
+      "privacyTitle": "Политика конфиденциальности",
+      "privacyItems": [
+        "Данные паттернов и настроек по умолчанию хранятся локально на устройстве.",
+        "По умолчанию приложение не отправляет личные данные на внешние серверы."
+      ],
+      "termsTitle": "Пользовательское соглашение",
+      "termsItems": [
+        "Вы несете ответственность за загружаемые файлы и экспортируемый контент.",
+        "Используйте приложение законно и уважайте авторские права третьих лиц."
+      ],
+      "modalTitle": "О приложении и настройки",
+      "sampleSelectionTitle": "Выбор сэмплов ударных",
+      "sampleSelectionDescription": "Выберите вариант сэмпла (A/B/C) для каждого барабана. Нажмите, чтобы прослушать.",
+      "statusChecking": "Проверка...",
+      "statusDownloading": "Загрузка...",
+      "statusInstalling": "Установка...",
+      "statusActivating": "Активация...",
+      "statusLatestVersion": "Последняя версия",
+      "tapHintShowSettings": "Быстро нажмите 5 раз, чтобы показать настройки"
+    },
+    "ar": {
+      "languageLabel": "اللغة",
+      "autoLabel": "اتباع لغة النظام",
+      "introTitle": "الميزات وطريقة الاستخدام",
+      "introDescription": "اقرأ هذا الدليل السريع لفهم عناصر التحكم الأساسية والإيماءات وسير العمل الكامل.",
+      "privacyTitle": "سياسة الخصوصية",
+      "privacyItems": [
+        "يتم حفظ بيانات الإيقاع والإعدادات على جهازك محليًا بشكل افتراضي.",
+        "لا يقوم التطبيق برفع بياناتك الشخصية إلى خوادم خارجية بشكل افتراضي."
+      ],
+      "termsTitle": "اتفاقية المستخدم",
+      "termsItems": [
+        "أنت مسؤول عن الملفات التي ترفعها والمحتوى الذي تصدّره.",
+        "يرجى استخدام التطبيق بشكل قانوني واحترام حقوق النشر الخاصة بالغير."
+      ],
+      "modalTitle": "حول التطبيق والإعدادات",
+      "sampleSelectionTitle": "اختيار عينات الطبول",
+      "sampleSelectionDescription": "اختر نسخة عيّنة (A/B/C) لكل طبلة. انقر للمعاينة.",
+      "statusChecking": "جارٍ التحقق...",
+      "statusDownloading": "جارٍ التنزيل...",
+      "statusInstalling": "جارٍ التثبيت...",
+      "statusActivating": "جارٍ التفعيل...",
+      "statusLatestVersion": "أحدث إصدار",
+      "tapHintShowSettings": "انقر 5 مرات بسرعة لإظهار الإعدادات"
+    },
+    "hi": {
+      "languageLabel": "भाषा",
+      "autoLabel": "सिस्टम भाषा का पालन करें",
+      "introTitle": "फीचर और उपयोग",
+      "introDescription": "इस त्वरित गाइड से मुख्य कंट्रोल, जेस्चर और पूरा वर्कफ़्लो समझें।",
+      "privacyTitle": "गोपनीयता नीति",
+      "privacyItems": [
+        "पैटर्न और सेटिंग डेटा डिफ़ॉल्ट रूप से आपके डिवाइस पर स्थानीय रूप से सहेजा जाता है।",
+        "ऐप डिफ़ॉल्ट रूप से आपकी व्यक्तिगत जानकारी बाहरी सर्वर पर अपलोड नहीं करता।"
+      ],
+      "termsTitle": "उपयोग की शर्तें",
+      "termsItems": [
+        "अपलोड की गई फ़ाइलों और एक्सपोर्ट किए गए कंटेंट की ज़िम्मेदारी आपकी है।",
+        "कृपया ऐप का कानूनी रूप से उपयोग करें और तृतीय-पक्ष कॉपीराइट का सम्मान करें।"
+      ],
+      "modalTitle": "ऐप जानकारी और सेटिंग्स",
+      "sampleSelectionTitle": "ड्रम सैंपल चयन",
+      "sampleSelectionDescription": "हर ड्रम के लिए सैंपल वैरिएंट (A/B/C) चुनें। क्लिक करके प्रीव्यू सुनें।",
+      "statusChecking": "जाँच हो रही है...",
+      "statusDownloading": "डाउनलोड हो रहा है...",
+      "statusInstalling": "इंस्टॉल हो रहा है...",
+      "statusActivating": "सक्रिय किया जा रहा है...",
+      "statusLatestVersion": "नवीनतम संस्करण",
+      "tapHintShowSettings": "सेटिंग्स दिखाने के लिए जल्दी से 5 बार टैप करें"
+    },
+    "th": {
+      "languageLabel": "ภาษา",
+      "autoLabel": "ตามภาษาระบบ",
+      "introTitle": "ฟีเจอร์และการใช้งาน",
+      "introDescription": "อ่านคู่มือสั้นนี้เพื่อเข้าใจการควบคุมหลัก ท่าทาง และเวิร์กโฟลว์ทั้งหมด",
+      "privacyTitle": "นโยบายความเป็นส่วนตัว",
+      "privacyItems": [
+        "ข้อมูลแพทเทิร์นและการตั้งค่าจะถูกเก็บไว้ในอุปกรณ์ของคุณเป็นค่าเริ่มต้น",
+        "แอปจะไม่อัปโหลดข้อมูลส่วนบุคคลไปยังเซิร์ฟเวอร์ภายนอกโดยค่าเริ่มต้น"
+      ],
+      "termsTitle": "ข้อตกลงผู้ใช้",
+      "termsItems": [
+        "คุณต้องรับผิดชอบต่อไฟล์ที่อัปโหลดและเนื้อหาที่ส่งออก",
+        "โปรดใช้งานแอปอย่างถูกกฎหมายและเคารพลิขสิทธิ์ของบุคคลที่สาม"
+      ],
+      "modalTitle": "เกี่ยวกับแอปและการตั้งค่า",
+      "sampleSelectionTitle": "เลือกตัวอย่างเสียงกลอง",
+      "sampleSelectionDescription": "เลือกตัวแปรเสียงตัวอย่าง (A/B/C) สำหรับกลองแต่ละชิ้น คลิกเพื่อฟังตัวอย่าง",
+      "statusChecking": "กำลังตรวจสอบ...",
+      "statusDownloading": "กำลังดาวน์โหลด...",
+      "statusInstalling": "กำลังติดตั้ง...",
+      "statusActivating": "กำลังเปิดใช้งาน...",
+      "statusLatestVersion": "เวอร์ชันล่าสุด",
+      "tapHintShowSettings": "แตะเร็ว ๆ 5 ครั้งเพื่อแสดงการตั้งค่า"
+    },
+    "vi": {
+      "languageLabel": "Ngôn ngữ",
+      "autoLabel": "Theo hệ thống",
+      "introTitle": "Tính năng và cách dùng",
+      "introDescription": "Đọc hướng dẫn nhanh để nắm các thao tác chính, cử chỉ và toàn bộ quy trình.",
+      "privacyTitle": "Chính sách quyền riêng tư",
+      "privacyItems": [
+        "Dữ liệu nhịp và cài đặt được lưu cục bộ trên thiết bị của bạn theo mặc định.",
+        "Ứng dụng không tải dữ liệu cá nhân của bạn lên máy chủ bên ngoài theo mặc định."
+      ],
+      "termsTitle": "Điều khoản sử dụng",
+      "termsItems": [
+        "Bạn chịu trách nhiệm về tệp tải lên và nội dung xuất ra.",
+        "Vui lòng sử dụng ứng dụng hợp pháp và tôn trọng bản quyền của bên thứ ba."
+      ],
+      "modalTitle": "Giới thiệu và cài đặt",
+      "sampleSelectionTitle": "Chọn mẫu âm thanh trống",
+      "sampleSelectionDescription": "Chọn biến thể mẫu (A/B/C) cho từng trống. Nhấp để nghe thử.",
+      "statusChecking": "Đang kiểm tra...",
+      "statusDownloading": "Đang tải xuống...",
+      "statusInstalling": "Đang cài đặt...",
+      "statusActivating": "Đang kích hoạt...",
+      "statusLatestVersion": "Phiên bản mới nhất",
+      "tapHintShowSettings": "Chạm nhanh 5 lần để hiển thị cài đặt"
+    },
+    "id": {
+      "languageLabel": "Bahasa",
+      "autoLabel": "Ikuti sistem",
+      "introTitle": "Fitur dan penggunaan",
+      "introDescription": "Baca panduan singkat ini untuk memahami kontrol, gestur, dan alur kerja lengkap.",
+      "privacyTitle": "Kebijakan privasi",
+      "privacyItems": [
+        "Data pola dan pengaturan disimpan secara lokal di perangkat Anda secara default.",
+        "Aplikasi tidak mengunggah data pribadi Anda ke server eksternal secara default."
+      ],
+      "termsTitle": "Syarat penggunaan",
+      "termsItems": [
+        "Anda bertanggung jawab atas file yang diunggah dan konten yang diekspor.",
+        "Gunakan aplikasi secara legal dan hormati hak cipta pihak ketiga."
+      ],
+      "modalTitle": "Tentang & pengaturan",
+      "sampleSelectionTitle": "Pilih sampel drum",
+      "sampleSelectionDescription": "Pilih varian sampel (A/B/C) untuk tiap drum. Klik untuk pratinjau.",
+      "statusChecking": "Memeriksa...",
+      "statusDownloading": "Mengunduh...",
+      "statusInstalling": "Memasang...",
+      "statusActivating": "Mengaktifkan...",
+      "statusLatestVersion": "Versi terbaru",
+      "tapHintShowSettings": "Ketuk cepat 5 kali untuk menampilkan pengaturan"
+    },
+    "ms": {
+      "languageLabel": "Bahasa",
+      "autoLabel": "Ikut sistem",
+      "introTitle": "Ciri dan penggunaan",
+      "introDescription": "Baca panduan ringkas ini untuk memahami kawalan utama, gerak isyarat dan aliran kerja.",
+      "privacyTitle": "Dasar privasi",
+      "privacyItems": [
+        "Data corak dan tetapan disimpan secara setempat pada peranti anda secara lalai.",
+        "Aplikasi tidak memuat naik data peribadi anda ke pelayan luaran secara lalai."
+      ],
+      "termsTitle": "Terma penggunaan",
+      "termsItems": [
+        "Anda bertanggungjawab terhadap fail yang dimuat naik dan kandungan yang dieksport.",
+        "Sila gunakan aplikasi secara sah dan hormati hak cipta pihak ketiga."
+      ],
+      "modalTitle": "Perihal & tetapan",
+      "sampleSelectionTitle": "Pilihan sampel dram",
+      "sampleSelectionDescription": "Pilih varian sampel (A/B/C) untuk setiap dram. Klik untuk pratonton.",
+      "statusChecking": "Memeriksa...",
+      "statusDownloading": "Memuat turun...",
+      "statusInstalling": "Memasang...",
+      "statusActivating": "Mengaktifkan...",
+      "statusLatestVersion": "Versi terkini",
+      "tapHintShowSettings": "Ketik 5 kali dengan pantas untuk memaparkan tetapan"
+    },
+    "tr": {
+      "languageLabel": "Dil",
+      "autoLabel": "Sistemi takip et",
+      "introTitle": "Özellikler ve kullanım",
+      "introDescription": "Temel kontrolleri, hareketleri ve tüm iş akışını öğrenmek için bu kısa kılavuzu okuyun.",
+      "privacyTitle": "Gizlilik politikası",
+      "privacyItems": [
+        "Ritim ve ayar verileri varsayılan olarak cihazınızda yerel olarak saklanır.",
+        "Uygulama varsayılan olarak kişisel verilerinizi harici sunuculara yüklemez."
+      ],
+      "termsTitle": "Kullanım koşulları",
+      "termsItems": [
+        "Yüklenen dosyalar ve dışa aktarılan içeriklerden siz sorumlusunuz.",
+        "Lütfen uygulamayı yasal şekilde kullanın ve üçüncü taraf telif haklarına saygı gösterin."
+      ],
+      "modalTitle": "Hakkında ve ayarlar",
+      "sampleSelectionTitle": "Davul örnekleri seçimi",
+      "sampleSelectionDescription": "Her davul için örnek varyantı (A/B/C) seçin. Önizlemek için tıklayın.",
+      "statusChecking": "Kontrol ediliyor...",
+      "statusDownloading": "İndiriliyor...",
+      "statusInstalling": "Yükleniyor...",
+      "statusActivating": "Etkinleştiriliyor...",
+      "statusLatestVersion": "En son sürüm",
+      "tapHintShowSettings": "Ayarları göstermek için hızlıca 5 kez dokunun"
+    },
+    "pl": {
+      "languageLabel": "Język",
+      "autoLabel": "Zgodnie z systemem",
+      "introTitle": "Funkcje i użycie",
+      "introDescription": "Przeczytaj krótki przewodnik, aby poznać główne sterowanie, gesty i cały przepływ pracy.",
+      "privacyTitle": "Polityka prywatności",
+      "privacyItems": [
+        "Dane rytmów i ustawień są domyślnie zapisywane lokalnie na urządzeniu.",
+        "Aplikacja domyślnie nie wysyła danych osobowych na zewnętrzne serwery."
+      ],
+      "termsTitle": "Warunki użytkowania",
+      "termsItems": [
+        "Użytkownik odpowiada za przesłane pliki i eksportowane treści.",
+        "Korzystaj z aplikacji zgodnie z prawem i szanuj prawa autorskie osób trzecich."
+      ],
+      "modalTitle": "Informacje i ustawienia",
+      "sampleSelectionTitle": "Wybór sampli perkusji",
+      "sampleSelectionDescription": "Wybierz wariant sampla (A/B/C) dla każdego bębna. Kliknij, aby odsłuchać.",
+      "statusChecking": "Sprawdzanie...",
+      "statusDownloading": "Pobieranie...",
+      "statusInstalling": "Instalowanie...",
+      "statusActivating": "Aktywowanie...",
+      "statusLatestVersion": "Najnowsza wersja",
+      "tapHintShowSettings": "Stuknij szybko 5 razy, aby pokazać ustawienia"
+    },
+    "nl": {
+      "languageLabel": "Taal",
+      "autoLabel": "Systeem volgen",
+      "introTitle": "Functies en gebruik",
+      "introDescription": "Lees deze snelle gids om de belangrijkste bediening, gebaren en workflow te begrijpen.",
+      "privacyTitle": "Privacybeleid",
+      "privacyItems": [
+        "Patroon- en instellingengegevens worden standaard lokaal op je apparaat opgeslagen.",
+        "De app uploadt standaard geen persoonlijke gegevens naar externe servers."
+      ],
+      "termsTitle": "Gebruiksvoorwaarden",
+      "termsItems": [
+        "Je bent verantwoordelijk voor geüploade bestanden en geëxporteerde inhoud.",
+        "Gebruik de app legaal en respecteer auteursrechten van derden."
+      ],
+      "modalTitle": "Over en instellingen",
+      "sampleSelectionTitle": "Selectie van drumsamples",
+      "sampleSelectionDescription": "Kies per drum een samplevariant (A/B/C). Klik om te beluisteren.",
+      "statusChecking": "Controleren...",
+      "statusDownloading": "Downloaden...",
+      "statusInstalling": "Installeren...",
+      "statusActivating": "Activeren...",
+      "statusLatestVersion": "Nieuwste versie",
+      "tapHintShowSettings": "Tik snel 5 keer om instellingen te tonen"
+    },
+    "sv": {
+      "languageLabel": "Språk",
+      "autoLabel": "Följ systemet",
+      "introTitle": "Funktioner och användning",
+      "introDescription": "Läs den här snabbguiden för att förstå huvudkontroller, gester och hela arbetsflödet.",
+      "privacyTitle": "Integritetspolicy",
+      "privacyItems": [
+        "Mönster- och inställningsdata lagras lokalt på din enhet som standard.",
+        "Appen laddar inte upp personuppgifter till externa servrar som standard."
+      ],
+      "termsTitle": "Användarvillkor",
+      "termsItems": [
+        "Du ansvarar för uppladdade filer och exporterat innehåll.",
+        "Använd appen lagligt och respektera tredje parts upphovsrätt."
+      ],
+      "modalTitle": "Om appen och inställningar",
+      "sampleSelectionTitle": "Val av trumsamplingar",
+      "sampleSelectionDescription": "Välj en samplevariant (A/B/C) för varje trumma. Klicka för att förhandslyssna.",
+      "statusChecking": "Kontrollerar...",
+      "statusDownloading": "Laddar ner...",
+      "statusInstalling": "Installerar...",
+      "statusActivating": "Aktiverar...",
+      "statusLatestVersion": "Senaste versionen",
+      "tapHintShowSettings": "Tryck snabbt 5 gånger för att visa inställningar"
+    },
+    "da": {
+      "languageLabel": "Sprog",
+      "autoLabel": "Følg system",
+      "introTitle": "Funktioner og brug",
+      "introDescription": "Læs denne korte guide for at forstå hovedkontroller, bevægelser og hele arbejdsgangen.",
+      "privacyTitle": "Privatlivspolitik",
+      "privacyItems": [
+        "Mønster- og indstillingsdata gemmes lokalt på din enhed som standard.",
+        "Appen uploader ikke persondata til eksterne servere som standard."
+      ],
+      "termsTitle": "Brugervilkår",
+      "termsItems": [
+        "Du er ansvarlig for uploadede filer og eksporteret indhold.",
+        "Brug appen lovligt og respekter tredjeparts ophavsrettigheder."
+      ],
+      "modalTitle": "Om appen og indstillinger",
+      "sampleSelectionTitle": "Valg af trommesamples",
+      "sampleSelectionDescription": "Vælg en sample-variant (A/B/C) for hver tromme. Klik for at forhøre.",
+      "statusChecking": "Tjekker...",
+      "statusDownloading": "Downloader...",
+      "statusInstalling": "Installerer...",
+      "statusActivating": "Aktiverer...",
+      "statusLatestVersion": "Seneste version",
+      "tapHintShowSettings": "Tryk hurtigt 5 gange for at vise indstillinger"
+    },
+    "fi": {
+      "languageLabel": "Kieli",
+      "autoLabel": "Seuraa järjestelmää",
+      "introTitle": "Ominaisuudet ja käyttö",
+      "introDescription": "Lue tämä pikaopas, jotta ymmärrät päätoiminnot, eleet ja koko työnkulun.",
+      "privacyTitle": "Tietosuojakäytäntö",
+      "privacyItems": [
+        "Rytmi- ja asetustiedot tallennetaan oletuksena paikallisesti laitteellesi.",
+        "Sovellus ei oletuksena lähetä henkilötietojasi ulkoisille palvelimille."
+      ],
+      "termsTitle": "Käyttöehdot",
+      "termsItems": [
+        "Olet vastuussa ladatuista tiedostoista ja viedyistä sisällöistä.",
+        "Käytä sovellusta laillisesti ja kunnioita kolmansien osapuolten tekijänoikeuksia."
+      ],
+      "modalTitle": "Tietoja sovelluksesta ja asetukset",
+      "sampleSelectionTitle": "Rumpusamplejen valinta",
+      "sampleSelectionDescription": "Valitse jokaiselle rummulle sample-variantti (A/B/C). Klikkaa esikuunnellaksesi.",
+      "statusChecking": "Tarkistetaan...",
+      "statusDownloading": "Ladataan...",
+      "statusInstalling": "Asennetaan...",
+      "statusActivating": "Otetaan käyttöön...",
+      "statusLatestVersion": "Uusin versio",
+      "tapHintShowSettings": "Napauta nopeasti 5 kertaa näyttääksesi asetukset"
+    },
+    "no": {
+      "languageLabel": "Språk",
+      "autoLabel": "Følg systemet",
+      "introTitle": "Funksjoner og bruk",
+      "introDescription": "Les denne hurtigguiden for å forstå hovedkontroller, gester og hele arbeidsflyten.",
+      "privacyTitle": "Personvernerklæring",
+      "privacyItems": [
+        "Mønster- og innstillingsdata lagres lokalt på enheten din som standard.",
+        "Appen laster ikke opp personopplysninger til eksterne servere som standard."
+      ],
+      "termsTitle": "Bruksvilkår",
+      "termsItems": [
+        "Du er ansvarlig for opplastede filer og eksportert innhold.",
+        "Bruk appen lovlig og respekter tredjeparts opphavsrett."
+      ],
+      "modalTitle": "Om appen og innstillinger",
+      "sampleSelectionTitle": "Valg av trommesamples",
+      "sampleSelectionDescription": "Velg en samplevariant (A/B/C) for hver tromme. Klikk for å forhåndslytte.",
+      "statusChecking": "Sjekker...",
+      "statusDownloading": "Laster ned...",
+      "statusInstalling": "Installerer...",
+      "statusActivating": "Aktiverer...",
+      "statusLatestVersion": "Nyeste versjon",
+      "tapHintShowSettings": "Trykk raskt 5 ganger for å vise innstillinger"
+    }
+  }
+}

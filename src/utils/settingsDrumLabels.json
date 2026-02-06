@@ -1,0 +1,187 @@
+{
+  "default": {
+    "Crash 1": "Crash 1",
+    "Crash 2": "Crash 2",
+    "Hi-Hat Open": "Hi-Hat Open",
+    "Hi-Hat Closed": "Hi-Hat Closed",
+    "Ride": "Ride",
+    "Tom 1": "Tom 1",
+    "Tom 2": "Tom 2",
+    "Snare": "Snare",
+    "Tom 3": "Tom 3",
+    "Kick": "Kick"
+  },
+  "translations": {
+    "zh-CN": {
+      "Crash 1": "强音镲 1",
+      "Crash 2": "强音镲 2",
+      "Hi-Hat Open": "开镲",
+      "Hi-Hat Closed": "闭镲",
+      "Ride": "叮叮镲",
+      "Tom 1": "高音桶鼓",
+      "Tom 2": "中音桶鼓",
+      "Snare": "军鼓",
+      "Tom 3": "低音桶鼓",
+      "Kick": "底鼓"
+    },
+    "zh-TW": {
+      "Crash 1": "強音鈸 1",
+      "Crash 2": "強音鈸 2",
+      "Hi-Hat Open": "開鈸",
+      "Hi-Hat Closed": "閉鈸",
+      "Ride": "叮叮鈸",
+      "Tom 1": "高音桶鼓",
+      "Tom 2": "中音桶鼓",
+      "Snare": "軍鼓",
+      "Tom 3": "低音桶鼓",
+      "Kick": "底鼓"
+    },
+    "ja": {
+      "Hi-Hat Open": "オープンハイハット",
+      "Hi-Hat Closed": "クローズドハイハット",
+      "Ride": "ライド",
+      "Snare": "スネア",
+      "Kick": "キック"
+    },
+    "ko": {
+      "Hi-Hat Open": "오픈 하이햇",
+      "Hi-Hat Closed": "클로즈드 하이햇",
+      "Ride": "라이드",
+      "Snare": "스네어",
+      "Kick": "킥"
+    },
+    "fr": {
+      "Hi-Hat Open": "Charleston ouvert",
+      "Hi-Hat Closed": "Charleston fermé",
+      "Ride": "Ride",
+      "Snare": "Caisse claire",
+      "Kick": "Grosse caisse"
+    },
+    "de": {
+      "Hi-Hat Open": "Hi-Hat offen",
+      "Hi-Hat Closed": "Hi-Hat geschlossen",
+      "Ride": "Ride",
+      "Snare": "Snare",
+      "Kick": "Bassdrum"
+    },
+    "es": {
+      "Hi-Hat Open": "Hi-hat abierto",
+      "Hi-Hat Closed": "Hi-hat cerrado",
+      "Ride": "Ride",
+      "Snare": "Caja",
+      "Kick": "Bombo"
+    },
+    "pt": {
+      "Hi-Hat Open": "Chimbal aberto",
+      "Hi-Hat Closed": "Chimbal fechado",
+      "Ride": "Ride",
+      "Snare": "Caixa",
+      "Kick": "Bumbo"
+    },
+    "it": {
+      "Hi-Hat Open": "Charleston aperto",
+      "Hi-Hat Closed": "Charleston chiuso",
+      "Ride": "Ride",
+      "Snare": "Rullante",
+      "Kick": "Cassa"
+    },
+    "ru": {
+      "Hi-Hat Open": "Хай-хэт открытый",
+      "Hi-Hat Closed": "Хай-хэт закрытый",
+      "Ride": "Райд",
+      "Snare": "Малый барабан",
+      "Kick": "Бочка"
+    },
+    "ar": {
+      "Hi-Hat Open": "هاي هات مفتوح",
+      "Hi-Hat Closed": "هاي هات مغلق",
+      "Ride": "رايد",
+      "Snare": "سنير",
+      "Kick": "باس درام"
+    },
+    "hi": {
+      "Hi-Hat Open": "ओपन हाई-हैट",
+      "Hi-Hat Closed": "क्लोज्ड हाई-हैट",
+      "Ride": "राइड",
+      "Snare": "स्नेयर",
+      "Kick": "किक"
+    },
+    "th": {
+      "Hi-Hat Open": "ไฮแฮตเปิด",
+      "Hi-Hat Closed": "ไฮแฮตปิด",
+      "Ride": "ไรด์",
+      "Snare": "สแนร์",
+      "Kick": "กระเดื่อง"
+    },
+    "vi": {
+      "Hi-Hat Open": "Hi-hat mở",
+      "Hi-Hat Closed": "Hi-hat đóng",
+      "Ride": "Ride",
+      "Snare": "Snare",
+      "Kick": "Kick"
+    },
+    "id": {
+      "Hi-Hat Open": "Hi-hat terbuka",
+      "Hi-Hat Closed": "Hi-hat tertutup",
+      "Ride": "Ride",
+      "Snare": "Snare",
+      "Kick": "Kick"
+    },
+    "ms": {
+      "Hi-Hat Open": "Hi-hat terbuka",
+      "Hi-Hat Closed": "Hi-hat tertutup",
+      "Ride": "Ride",
+      "Snare": "Snare",
+      "Kick": "Kick"
+    },
+    "tr": {
+      "Hi-Hat Open": "Açık hi-hat",
+      "Hi-Hat Closed": "Kapalı hi-hat",
+      "Ride": "Ride",
+      "Snare": "Trampet",
+      "Kick": "Kick"
+    },
+    "pl": {
+      "Hi-Hat Open": "Hi-hat otwarty",
+      "Hi-Hat Closed": "Hi-hat zamknięty",
+      "Ride": "Ride",
+      "Snare": "Werbel",
+      "Kick": "Stopa"
+    },
+    "nl": {
+      "Hi-Hat Open": "Open hi-hat",
+      "Hi-Hat Closed": "Gesloten hi-hat",
+      "Ride": "Ride",
+      "Snare": "Snare",
+      "Kick": "Kick"
+    },
+    "sv": {
+      "Hi-Hat Open": "Öppen hi-hat",
+      "Hi-Hat Closed": "Stängd hi-hat",
+      "Ride": "Ride",
+      "Snare": "Virvel",
+      "Kick": "Bastrumma"
+    },
+    "da": {
+      "Hi-Hat Open": "Åben hi-hat",
+      "Hi-Hat Closed": "Lukket hi-hat",
+      "Ride": "Ride",
+      "Snare": "Lilletromme",
+      "Kick": "Stortromme"
+    },
+    "fi": {
+      "Hi-Hat Open": "Avoin hi-hat",
+      "Hi-Hat Closed": "Suljettu hi-hat",
+      "Ride": "Ride",
+      "Snare": "Virveli",
+      "Kick": "Bassorumpu"
+    },
+    "no": {
+      "Hi-Hat Open": "Åpen hi-hat",
+      "Hi-Hat Closed": "Lukket hi-hat",
+      "Ride": "Ride",
+      "Snare": "Skarptromme",
+      "Kick": "Basstromme"
+    }
+  }
+}
